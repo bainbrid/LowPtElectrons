@@ -20,18 +20,19 @@ git cms-init
 ```
 git cms-addpkg RecoEgamma/EgammaElectronProducers
 git cms-merge-topic CMSBParking:from-CMSSW_10_2_15_LowPtElectronsID
-git cms-addpkg RecoEgamma/ElectronIdentification
 git clone --branch 102X_LowPtElectrons_2019Jun28 git@github.com:CMSBParking/RecoEgamma-ElectronIdentification.git $CMSSW_BASE/external/$SCRAM_ARCH/data/RecoEgamma/ElectronIdentification/data
 ```
 
 ### This is required if running on CRAB!
 ```
+git cms-addpkg RecoEgamma/ElectronIdentification
 mv $CMSSW_BASE/external/$SCRAM_ARCH/data/RecoEgamma/ElectronIdentification/data/LowPtElectrons $CMSSW_BASE/src/RecoEgamma/ElectronIdentification/data # this is required if running on CRAB
  ```
 
 ### Install ntuplizer code
 ```
 git clone git@github.com:CMSBParking/LowPtElectrons.git $CMSSW_BASE/src/LowPtElectrons/LowPtElectrons 
+scram b
 cd $CMSSW_BASE/src/LowPtElectrons/LowPtElectrons/run
 voms-proxy-init --voms cms
 cmsRun ntuplizer.py 
