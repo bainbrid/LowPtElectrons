@@ -27,7 +27,7 @@ for inf in all_sets:
       if os.path.basename(inf).startswith(name):
          input_files[name].append(inf)
          break
-input_files['test'] = ['/eos/user/b/bainbrid/lowpteleid/2019Jul22/MINIAOD/output_1.root']
+input_files['test'] = ['/eos/cms/store/cmst3/group/bpark/electron_training/2019Jul22/MINIAOD/output_1.root']
 
 dataset_names = {
    'BToKee' : r'B $\to$ K ee',
