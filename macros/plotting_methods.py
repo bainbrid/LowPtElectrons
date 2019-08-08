@@ -170,32 +170,34 @@ def AxE_seed(plt,df_lowpt,df_egamma) :
 # 
 def AxE_retraining(plt,df_lowpt,df_egamma) :
 
+   has_gsf = (df_egamma.has_gsf) & (df_egamma.gsf_pt>0.5) & (np.abs(df_egamma.gsf_eta)<2.4)
+   has_ele = (df_egamma.has_ele) & (df_egamma.ele_pt>0.5) & (np.abs(df_egamma.ele_eta)<2.4)
+
    # EGamma PF ele 
    print 
-   has_ele = (df_egamma.has_ele) & (df_egamma.gsf_pt>0.5) & (np.abs(df_egamma.gsf_eta)<2.4)
+   eff1,fr1,_ = plot( plt=plt, df=df_egamma, string="EGamma GSF trk, AxE",
+                      selection=has_gsf, draw_roc=False, draw_eff=True,
+                      label='EGamma GSF track ($\mathcal{A}\epsilon$)',
+                      color='green', markersize=8, linestyle='solid',
+                   )
+
+   # EGamma PF ele 
+   print 
    plot( plt=plt, df=df_egamma, string="EGamma PF ele, AxE",
          selection=has_ele, draw_roc=False, draw_eff=True,
          label='EGamma PF ele ($\mathcal{A}\epsilon$)',
          color='purple', markersize=8, linestyle='solid',
          )
 
-   # Low-pT GSF electrons (retraining)
-   print 
+   has_gsf = (df_lowpt.has_gsf) & (df_lowpt.gsf_pt>0.5) & (np.abs(df_lowpt.gsf_eta)<2.4)
    has_ele = (df_lowpt.has_ele) & (df_lowpt.ele_pt>0.5) & (np.abs(df_lowpt.ele_eta)<2.4)
-   plot( plt=plt, df=df_lowpt, string="Low pT ele (retraining), AxE",
-         selection=has_ele, draw_roc=True, draw_eff=False,
-         label='Low-$p_{T}$ ele + retrained model ($\mathcal{A}\epsilon$)',
-         color='blue', markersize=8, linestyle='solid',
-         discriminator=df_lowpt.training_out,
-         )
 
    # Low-pT GSF electrons (PreId unbiased)
    print 
-   has_ele = (df_lowpt.has_ele) & (df_lowpt.ele_pt>0.5) & (np.abs(df_lowpt.ele_eta)<2.4)
-   plot( plt=plt, df=df_lowpt, string="Low pT ele (PreId), AxE",
-         selection=has_ele, draw_roc=True, draw_eff=False,
-         label='Low-$p_{T}$ ele + unbiased ($\mathcal{A}\epsilon$)',
-         color='blue', markersize=8, linestyle='dashed',
+   plot( plt=plt, df=df_lowpt, string="Low pT GSF trk (PreId), AxE",
+         selection=has_gsf, draw_roc=True, draw_eff=False,
+         label='Low-$p_{T}$ GSF track + unbiased ($\mathcal{A}\epsilon$)',
+         color='red', markersize=8, linestyle='dashed',
          discriminator=df_lowpt.gsf_bdtout1,
          )
 
@@ -204,10 +206,29 @@ def AxE_retraining(plt,df_lowpt,df_egamma) :
    has_ele = (df_lowpt.has_ele) & (df_lowpt.ele_pt>0.5) & (np.abs(df_lowpt.ele_eta)<2.4)
    plot( plt=plt, df=df_lowpt, string="Low pT ele (CMSSW), AxE",
          selection=has_ele, draw_roc=True, draw_eff=False,
-         label='Low-$p_{T}$ ele + CMSSW model ($\mathcal{A}\epsilon$)',
-         color='red', markersize=8, linestyle='dashdot',
+         label='Low-$p_{T}$ ele + 2019Jun28 model ($\mathcal{A}\epsilon$)',
+         color='blue', markersize=8, linestyle='dashdot',
          discriminator=df_lowpt.ele_mva_value,
          )
+
+   # Low-pT GSF electrons (retraining)
+   print 
+   eff2,fr2,roc2 = plot( plt=plt, df=df_lowpt, string="Low pT ele (latest), AxE",
+                         selection=has_ele, draw_roc=True, draw_eff=False,
+                         label='Low-$p_{T}$ ele + latest model ($\mathcal{A}\epsilon$)',
+                         color='blue', markersize=8, linestyle='solid',
+                         discriminator=df_lowpt.training_out,
+                      )
+
+   roc = (roc2[0]*fr2,roc2[1]*eff2,roc2[2]) 
+   idxL = np.abs(roc[0]-fr1).argmin()
+   idxT = np.abs(roc[1]-eff1).argmin()
+   print "   PFele: eff/fr/thresh:",\
+      "{:.3f}/{:.4f}/{:4.2f} ".format(eff1,fr1,np.nan)
+   print "   Loose: eff/fr/thresh:",\
+      "{:.3f}/{:.4f}/{:4.2f} ".format(roc[1][idxL],roc[0][idxL],roc[2][idxL])
+   print "   Tight: eff/fr/thresh:",\
+      "{:.3f}/{:.4f}/{:4.2f} ".format(roc[1][idxT],roc[0][idxT],roc[2][idxT])
 
 ################################################################################
 # 
