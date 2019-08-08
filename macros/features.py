@@ -317,11 +317,10 @@ def get_features(ftype):
       additional = seed_additional
    elif ftype == 'cmssw_mva_id':
       features = cmssw_mva_id
-      additional = id_additional + ['preid_bdtout1','preid_bdtout2',
-                                    'gsf_bdtout1','gsf_bdtout2', ] # 'has_pfele','has_pfgsf',
+      additional = id_additional + ['gsf_bdtout1','gsf_bdtout2']
    elif ftype == 'cmssw_mva_id_extended':
-      features = cmssw_mva_id + ['preid_bdtout1']
-      additional = id_additional + ['preid_bdtout1','preid_bdtout2'] # 'has_pfele','has_pfgsf',
+      features = cmssw_mva_id + ['gsf_bdtout1']
+      additional = id_additional + ['gsf_bdtout2']
    elif ftype == 'cmssw_displaced_improvedfullseeding_fixSIP':
       features = cmssw_displaced_improvedfullseeding_fixSIP
       additional = seed_additional
