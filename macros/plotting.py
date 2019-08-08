@@ -84,9 +84,11 @@ def plot( plt, df, string, selection, draw_roc, draw_eff,
                color=color,
                label=label+', AUC: %.3f'%auc)
       plt.plot([mistag], [eff], marker='o', color=color, markersize=markersize)
+      return eff,mistag,roc
    elif draw_eff :
       plt.plot([mistag], [eff], marker='o', color=color, markersize=markersize, 
                label=label)
+      return eff,mistag,None
 
 ################################################################################
 # import all methods used below 
