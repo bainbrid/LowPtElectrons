@@ -27,7 +27,14 @@ for inf in all_sets:
       if os.path.basename(inf).startswith(name):
          input_files[name].append(inf)
          break
-input_files['test'] = ['/eos/cms/store/cmst3/group/bpark/electron_training/2019Jul22/MINIAOD/output_1.root']
+input_files['test'] = [
+   '/eos/cms/store/cmst3/group/bpark/electron_training/2019Jul22/MINIAOD/output_1.root',
+   '/eos/cms/store/cmst3/group/bpark/electron_training/2019Jul22/MINIAOD/output_2.root',
+   '/eos/cms/store/cmst3/group/bpark/electron_training/2019Jul22/MINIAOD/output_3.root',
+   '/eos/cms/store/cmst3/group/bpark/electron_training/2019Jul22/MINIAOD/output_4.root',
+   '/eos/cms/store/cmst3/group/bpark/electron_training/2019Jul22/MINIAOD/output_5.root',
+   '/eos/cms/store/cmst3/group/bpark/electron_training/2019Jul22/MINIAOD/output_6.root',
+]
 
 dataset_names = {
    'BToKee' : r'B $\to$ K ee',
@@ -165,7 +172,7 @@ def pre_process_data(dataset, features, for_seeding=False, keep_nonmatch=False):
       if feat in features:
          multi_dim[feat] = data_dict.pop(feat, None)
    data = pd.DataFrame(data_dict)
-   #data = data.head(100000) #@@ useful for testing
+   #data = data.head(1000000) #@@ useful for testing
 
    ##FIXME
    ##if 'gsf_ecal_cluster_ematrix' in features:
@@ -191,9 +198,9 @@ def pre_process_data(dataset, features, for_seeding=False, keep_nonmatch=False):
       notmatched = notmatched[mask]
       data = pd.concat((data, notmatched))
    # training pre-selection
-   mask = training_selection(data) #@@ if used here, cannot determine AxE performance
-   multi_dim = {i : j[mask] for i, j in multi_dim.iteritems()}   
-   data = data[mask]
+   #mask = training_selection(data) #@@ if used here, cannot determine AxE performance
+   #multi_dim = {i : j[mask] for i, j in multi_dim.iteritems()}   
+   #data = data[mask]
    if 'trk_dxy' in data_dict and 'trk_dxy_err' in data_dict:
       sip = data.trk_dxy/data.trk_dxy_err
       sip[np.isinf(sip)] = 0
