@@ -264,10 +264,10 @@ public:
 
   // Wraps other methods to provide a sample of "signal" electrons
   void signalElectrons( std::set<reco::CandidatePtr>& signal_electrons );
-
+  
   // GEN-based method to provide a sample of "signal" electrons
   void genElectronsFromB( std::set<reco::GenParticlePtr>& electrons_from_B, 
-			  float muon_pt = 7., float muon_eta = 1.5 ); // 7. and 1.5
+			  float muon_pt = 5., float muon_eta = 2.5 );
   
   // Top-level method that creates ElectronChain objects for EGamma electrons
   void pfElectrons( std::set<reco::CandidatePtr>& signal_electrons,
@@ -1073,9 +1073,6 @@ void IDNtuplizer::lowPtElectrons_fakes( std::vector<SigToTrkDR2>& other_trk,
   // Iterate through tracks
   for ( auto iter : other_trk ) {
 
-//    // If set, apply prescale to select a subset of random tracks
-//    if ( prescale_ > 0. && ( gRandom->Rndm() > prescale_ ) ) { continue; }
-
     if ( !validPtr(iter.obj2_) ) { continue; } // Shouldn't happen
 
     // Initialise ElectronChain object
@@ -1377,13 +1374,6 @@ void IDNtuplizer::pfElectrons_signal( std::set<reco::CandidatePtr>& signal_elect
       chain.seed_ecal_driven_ = true;
 
     } else { continue; } // if no matches, move onto next "signal electron"
-
-    /*
-      if low pt gsf track found, try to match to pfgsf track
-      if match is < 0.02, then all ok and continue with pf gsf 
-      if no match, then use sig2pfgsf, set pfgsf, and reset gsf to null
-      use surrogate track from other_trk (do we need to pop?), and continue
-    */
     
     // Store GsfElectron info
     auto match_pfgsf = std::find_if( pfgsf2ele.begin(), 
@@ -1432,11 +1422,7 @@ void IDNtuplizer::pfElectrons_fakes( std::vector<SigToTrkDR2>& other_trk,
 				     std::vector<GsfToEleDR2>& pfgsf2ele ) {
   
   // Iterate through tracks
-//  std::vector<int> used;
   for ( auto iter : other_trk ) {
-    
-//    // If set, apply prescale to select a subset of random tracks
-//    if ( prescale_ > 0. && ( gRandom->Rndm() > prescale_ ) ) { continue; }
     
     if ( !validPtr(iter.obj2_) ) { continue; } // Shouldn't happen
     
@@ -1452,7 +1438,6 @@ void IDNtuplizer::pfElectrons_fakes( std::vector<SigToTrkDR2>& other_trk,
     chain.trk_ = iter.obj2_;
     chain.trk_match_ = true;
     chain.trk_dr_ = IDNtuple::NEG_FLOAT;
-//    used.push_back(chain.trk_.key());
     
     // Find matched GsfTrack match, either via ElectronSeed or just deltaR
     auto match_gsf = std::find_if( trk2gsf.begin(), 
@@ -1521,6 +1506,9 @@ void IDNtuplizer::pfElectrons_fakes( std::vector<SigToTrkDR2>& other_trk,
   // Iterate through unmatched PF GSF tracks and assign surrogate track
   for ( auto iter : gsf2pfgsf ) {
     
+    // If set, apply prescale to select a random subset of PF GSF tracks
+    if ( prescale_ > 0. && ( gRandom->Rndm() > prescale_ ) ) { continue; }
+
     if ( !validPtr(iter.obj2_) || 
 	 iter.dr2_ < dr_threshold_*dr_threshold_ ) { continue; }
     
@@ -1609,7 +1597,6 @@ void IDNtuplizer::fill( const edm::Event& event,
     
     // Set background weight
     if ( !chain.is_e_ ) { ntuple_.set_weight( prescale_ > 0. ? prescale_ : 1. ); }
-    //ntuple_.set_weight( prescale_ > 0. ? prescale_ : 1. );
 
     // "signal" info
     if ( validPtr(chain.sig_) ) {
@@ -2228,11 +2215,11 @@ void IDNtuplizer::sigToCandLinks( std::set<reco::CandidatePtr>& signal_electrons
 				 cand,
 				 deltaR2<reco::Candidate,T>(sig,cand) );
     }
-//    // Note: matched candidates are removed below
-//    if ( prescale_ < 0. || ( gRandom->Rndm() < prescale_ ) ) { 
-//      reco::CandidatePtr null;
-//      other_cand.emplace_back( null, cand, IDNtuple::NEG_FLOAT );
-//    }
+    // Note: matched candidates are removed below
+    if ( prescale_ < 0. || ( gRandom->Rndm() < prescale_ ) ) { 
+      reco::CandidatePtr null;
+      other_cand.emplace_back( null, cand, IDNtuple::NEG_FLOAT );
+    }
   }
   
   // Sort by DeltaR2!!
@@ -2264,47 +2251,16 @@ void IDNtuplizer::sigToCandLinks( std::set<reco::CandidatePtr>& signal_electrons
     if ( sig2cand.size() >= signal_electrons.size() ) { break; }
   }
   
-  // Store "other candidates" not matched to signal electrons
-  if ( !candidates.empty() ) {
-    int attempts = 0;
-    std::vector<int> used;
-    while ( attempts < 10 && // safety
-	    other_cand.size() < 2*(1+signal_electrons.size()) ) { // ensure minimum size
-      // Randomly choose a candidate
-      typename std::vector< edm::Ptr<T> >::iterator iter = candidates.begin();
-      std::advance( iter, std::rand() % candidates.size() );
-      // Check if candidate ptr is valid and has not been used (via key)
-      if ( validPtr(*iter) &&
-	   std::find( used.begin(), 
-		      used.end(), 
-		      iter->key() ) == used.end() ) { 
-	// Check if candidate is matched to a signal electron
-	auto match = std::find_if( sig2cand.begin(), 
-				   sig2cand.end(), 
-				   [iter](const DeltaR2<reco::Candidate,T>& dr2) { 
-				     return dr2.obj2_ == *iter; 
-				   }
-				   );
-	if ( match == sig2cand.end() ) { 
-	  // If not matched, store and record (used) key
-	  other_cand.emplace_back( reco::CandidatePtr(), *iter, IDNtuple::NEG_FLOAT );
-	  used.push_back(iter->key());
-	}
-      }
-      ++attempts;
-    }
+  // Remove matched candidates
+  for ( auto iter : sig2cand ) {
+    auto match = std::find_if( other_cand.begin(), 
+			       other_cand.end(), 
+			       [iter](const DeltaR2<reco::Candidate,T>& dr2) { 
+				 return dr2.obj2_ == iter.obj2_; 
+			       }
+			       );
+    if ( match != other_cand.end() ) { other_cand.erase(match); }
   }
-
-//  // Remove matched candidates
-//  for ( auto iter : sig2cand ) {
-//    auto match = std::find_if( other_cand.begin(), 
-//			       other_cand.end(), 
-//			       [iter](const DeltaR2<reco::Candidate,T>& dr2) { 
-//				 return dr2.obj2_ == iter.obj2_; 
-//			       }
-//			       );
-//    if ( match != other_cand.end() ) { other_cand.erase(match); }
-//  }
   
 }
 
