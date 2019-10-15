@@ -29,7 +29,6 @@ Then:
 
 ```
 python train_bdt.py cmssw_mva_id --load_model --config models/2019Jul22/mauro.json
-python eval_bdt.py models/2019Jul22/bdt_cmssw_mva_id --what cmssw_mva_id --dataset test --noxml --plot plots/2019Jul22
 ```
 
 ROC curves are found in ```plots/2019Jul22```. 
@@ -44,3 +43,8 @@ Low pT electron (CMSSW):     AxE = 0.496, FR = 0.121
 Low pT electron (2019Jun22): AxE = 0.496, FR = 0.121
 ```
 
+Further plots:
+
+```
+python eval_bdt.py models/2019Jul22/bdt_cmssw_mva_id --what cmssw_mva_id --dataset test --noxml --plot plots/2019Jul22
+```
