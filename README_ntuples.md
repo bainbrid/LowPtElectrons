@@ -8,7 +8,7 @@ cmsenv
 git cms-init
 ```
 
-## Get CMSSW package and model (2019Jun28) for electron ID
+## Get latest (2019Jun28) package and model in CMSSW for electron ID 
 ```
 git cms-addpkg RecoEgamma/EgammaElectronProducers
 git cms-merge-topic CMSBParking:from-CMSSW_10_2_15_LowPtElectronsID
@@ -21,7 +21,7 @@ git cms-addpkg RecoEgamma/ElectronIdentification
 mv $CMSSW_BASE/external/$SCRAM_ARCH/data/RecoEgamma/ElectronIdentification/data/LowPtElectrons $CMSSW_BASE/src/RecoEgamma/ElectronIdentification/data # this is required if running on CRAB
  ```
 
-## Install ntuplizer code to produce (2019Jun28) ntuples
+## Install ntuplizer code to produce latest (2019Jul22) ntuples
 ```
 git clone git@github.com:CMSBParking/LowPtElectrons.git $CMSSW_BASE/src/LowPtElectrons/LowPtElectrons 
 git checkout 2019Jul22_ntuples -b ntuplizer_dev
