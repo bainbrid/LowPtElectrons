@@ -2,7 +2,7 @@
 
 This is the version used to produce the 2019Jun28 model and 2019Jul22 ntuples
 
-## Init:
+## Release area
 ```
 cmsrel CMSSW_10_2_15
 cd CMSSW_10_2_15/src
