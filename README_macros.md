@@ -9,15 +9,15 @@ cmsenv
 git cms-init
 ```
 
-## Install macros (part of ntuplizer package)
+## Install latest macros to train/evaluate using 2019Jul22 ntuples
 
 ```
 git clone git@github.com:CMSBParking/LowPtElectrons.git $CMSSW_BASE/src/LowPtElectrons/LowPtElectrons
 cd $CMSSW_BASE/src/LowPtElectrons/LowPtElectrons/macros
-git checkout tags/2019Jul22_macros -b 2019Jul22_macros
+git checkout tags/2019Jul22_model -b macros_dev
 ```
 
-## Evaluating the 2019Jul22 model
+## Evaluating with the 2019Jul22 ntuples
 
 First, create a soft link to the existing XML model file.
 
