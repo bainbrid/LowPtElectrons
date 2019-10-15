@@ -40,7 +40,7 @@ Acceptance times efficiency and fake rate values:
 EGamma GSF trk:              AxE = 0.232, FR = 0.001
 EGamma PF electron:          AxE = 0.231, FR = 0.001
 Low pT GSF trk (PreId):      AxE = 0.535, FR = 0.171
-Low pT electron (CMSSW):	   AxE = 0.496, FR = 0.121
+Low pT electron (CMSSW):     AxE = 0.496, FR = 0.121
 Low pT electron (2019Jun22): AxE = 0.496, FR = 0.121
 ```
 
