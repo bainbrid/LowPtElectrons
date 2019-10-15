@@ -1,7 +1,5 @@
 # Recipe to produce ntuples used for BDT training 
 
-This is the version used to produce the 2019Jun28 model and 2019Jul22 ntuples
-
 ## Release area
 ```
 cmsrel CMSSW_10_2_15
@@ -10,7 +8,7 @@ cmsenv
 git cms-init
 ```
 
-## Get latest code and model for electron ID
+## Get CMSSW package and model (2019Jun28) for electron ID
 ```
 git cms-addpkg RecoEgamma/EgammaElectronProducers
 git cms-merge-topic CMSBParking:from-CMSSW_10_2_15_LowPtElectronsID
@@ -23,9 +21,10 @@ git cms-addpkg RecoEgamma/ElectronIdentification
 mv $CMSSW_BASE/external/$SCRAM_ARCH/data/RecoEgamma/ElectronIdentification/data/LowPtElectrons $CMSSW_BASE/src/RecoEgamma/ElectronIdentification/data # this is required if running on CRAB
  ```
 
-## Install ntuplizer code
+## Install ntuplizer code to produce (2019Jun28) ntuples
 ```
 git clone git@github.com:CMSBParking/LowPtElectrons.git $CMSSW_BASE/src/LowPtElectrons/LowPtElectrons 
+git checkout 2019Jul22_ntuples -b ntuplizer_dev
 scram b
 cd $CMSSW_BASE/src/LowPtElectrons/LowPtElectrons/run
 voms-proxy-init --voms cms
