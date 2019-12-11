@@ -4,8 +4,8 @@ from glob import glob
 #tag = '2019Feb05'
 #posix = '2019Feb05'
 
-tag = '2019Jun28'
-posix = '2019Jun28'
+tag = '2019Jul22'
+posix = '2019Jul22'
 target_dataset = 'test'
 
 import socket
@@ -27,13 +27,14 @@ for inf in all_sets:
       if os.path.basename(inf).startswith(name):
          input_files[name].append(inf)
          break
-#input_files['test'] = input_files['BToJPsieeK'][:1]
-#input_files['test'] = ['/eos/cms/store/cmst3/group/bpark/electron_training/2019May15/output_1.root'] #@@ new ntuple
-#input_files['test'] = ['/afs/cern.ch/user/b/bainbrid/work/public/6-ntuplizer/CMSSW_10_2_14/src/2-ntuples-from-crab/lowpteleid/crab_lowpteleid/results/output_10.root'] #@@ reverted defaults
-input_files['limited'] = [j for i, j in enumerate(input_files['all']) if i % 2]
-input_files['debug'] = ['/afs/cern.ch/user/m/mverzett/work/RK94v4/src/LowPtElectrons/LowPtElectrons/run/track_features.root']
-
-input_files['test'] = ['/eos/cms/store/cmst3/group/bpark/electron_training/2019Jun28/output_3.root']
+input_files['test'] = [
+   '/eos/cms/store/cmst3/group/bpark/electron_training/2019Jul22/MINIAOD/output_1.root',
+   '/eos/cms/store/cmst3/group/bpark/electron_training/2019Jul22/MINIAOD/output_2.root',
+   '/eos/cms/store/cmst3/group/bpark/electron_training/2019Jul22/MINIAOD/output_3.root',
+   '/eos/cms/store/cmst3/group/bpark/electron_training/2019Jul22/MINIAOD/output_4.root',
+   '/eos/cms/store/cmst3/group/bpark/electron_training/2019Jul22/MINIAOD/output_5.root',
+   '/eos/cms/store/cmst3/group/bpark/electron_training/2019Jul22/MINIAOD/output_6.root',
+]
 
 dataset_names = {
    'BToKee' : r'B $\to$ K ee',
@@ -112,7 +113,7 @@ apply_weight = np.vectorize(lambda x, y: y.get(x), excluded={2})
 def kmeans_weighter(features, fname):
    kmeans = joblib.load(fname)
    cluster = kmeans.predict(features)
-   str_weights = json.load(open(fname.replace('.plk', '.json')))   
+   str_weights = json.load(open(fname.replace('.pkl', '.json')))
    weights = {}
    for i in str_weights:
       try:
@@ -121,10 +122,10 @@ def kmeans_weighter(features, fname):
          pass
    return apply_weight(cluster, weights)
 
-def training_selection(df,low=0.,high=15.):
+def training_selection(df,low=0.5,high=15.):
    #'ensures there is a GSF Track and a KTF track within eta/pt boundaries'
-   return (df.trk_pt > low) & (df.trk_pt < high) & (np.abs(df.trk_eta) < 2.4)
-   #return (df.gen_pt < 0.) | (df.gen_pt > 0.)
+   return (df.trk_pt > low) & (df.trk_pt < high) & (np.abs(df.trk_eta) < 2.4) #@@ original filter
+   #return (df.gen_pt < 0.) | (df.gen_pt > 0.) #@@ use for AxE performance
 
 import rootpy.plotting as rplt
 import root_numpy
@@ -147,7 +148,6 @@ class HistWeighter(object):
       ix = self._hist.xaxis.FindFixBin(x)
       iy = self._hist.yaxis.FindFixBin(y)
       return self._hist.GetBinContent(ix, iy)
-
    def get_weight(self, x, y):
       cnt = lambda x, y: self._get_weight(x, y)
       cnt = np.vectorize(cnt)
@@ -172,7 +172,7 @@ def pre_process_data(dataset, features, for_seeding=False, keep_nonmatch=False):
       if feat in features:
          multi_dim[feat] = data_dict.pop(feat, None)
    data = pd.DataFrame(data_dict)
-   #data = data.head(10000) #@@
+   #data = data.head(1000000) #@@ useful for testing
 
    ##FIXME
    ##if 'gsf_ecal_cluster_ematrix' in features:
@@ -198,9 +198,9 @@ def pre_process_data(dataset, features, for_seeding=False, keep_nonmatch=False):
       notmatched = notmatched[mask]
       data = pd.concat((data, notmatched))
    # training pre-selection
-   mask = training_selection(data)
-   multi_dim = {i : j[mask] for i, j in multi_dim.iteritems()}   
-   data = data[mask]
+   #mask = training_selection(data) #@@ if used here, cannot determine AxE performance
+   #multi_dim = {i : j[mask] for i, j in multi_dim.iteritems()}   
+   #data = data[mask]
    if 'trk_dxy' in data_dict and 'trk_dxy_err' in data_dict:
       sip = data.trk_dxy/data.trk_dxy_err
       sip[np.isinf(sip)] = 0
@@ -218,10 +218,11 @@ def pre_process_data(dataset, features, for_seeding=False, keep_nonmatch=False):
    ## from sklearn.externals import joblib
    ## reweighter = joblib.load('%s/%s_reweighting.pkl' % (mods, dataset))
    ## weights = reweighter.predict_weights(data[['trk_pt', 'trk_eta']])
-   kmeans_model = '%s/kmeans_%s_weighter.plk' % (mods, dataset)
+   kmeans_model = '%s/kmeans_%s_weighter.pkl' % (mods, dataset)
    if not os.path.isfile(kmeans_model):
       print 'I could not find the appropriate model, using the general instead'
-      kmeans_model = '%s/kmeans_%s_weighter.plk' % (mods, tag)
+      print '!!! NOTA BENE: use .pkl not .plk !!!'
+      kmeans_model = '%s/kmeans_%s_weighter.pkl' % (mods, tag)
    weights = kmeans_weighter(
       data[['log_trkpt', 'trk_eta']],
       kmeans_model

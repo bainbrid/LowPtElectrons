@@ -85,14 +85,14 @@ import json
 if args.config:
    #config overrides eveything
    cfg = json.load(open(args.config))
-   args.reg_alpha = cfg['reg_alpha'] 
-   args.colsample_bytree = cfg['colsample_bytree'] 
-   args.lrate = cfg['learning_rate'] 
-   args.min_child_weight = cfg['min_child_weight'] 
-   args.ntrees = cfg['n_estimators'] 
-   args.subsample = cfg['subsample'] 
-   args.reg_lambda = cfg['reg_lambda'] 
-   args.depth = cfg['max_depth'] 
+   args.reg_alpha = cfg['reg_alpha']
+   args.colsample_bytree = cfg['colsample_bytree']
+   args.lrate = cfg['learning_rate']
+   args.min_child_weight = cfg['min_child_weight']
+   args.ntrees = cfg['n_estimators']
+   args.subsample = cfg['subsample']
+   args.reg_lambda = cfg['reg_lambda']
+   args.depth = cfg['max_depth']
    args.gamma = cfg['gamma']
 
 import matplotlib.pyplot as plt
@@ -199,17 +199,27 @@ elif not args.load_model :
    print 'Input features:\n',features
 
    clf = xgb.XGBClassifier(
-      #basic stuff
-      max_depth=args.depth, learning_rate=args.lrate, n_estimators=args.ntrees,
+      # general parameters
+      booster='gbtree',
+      silent=False,
+      nthread=args.nthreads,
+      # booster parameters
+      n_estimators=args.ntrees,
+      learning_rate=args.lrate,
+      min_child_weight=args.min_child_weight,
+      max_depth=args.depth,
+      gamma=args.gamma,
+      max_delta_step=0, #??
+      subsample=args.subsample,
+      colsample_bytree=args.colsample_bytree,
+      colsample_bylevel=1, # use subsample and colsample_bytree instead
+      reg_lambda=args.reg_lambda,
+      reg_alpha=args.reg_alpha,
+      scale_pos_weight=1,
+      # learning task parameters
       objective='binary:logitraw',
-      #many different ways of regularization
-      gamma=args.gamma, min_child_weight=args.min_child_weight, max_delta_step=0, 
-      colsample_bytree=args.colsample_bytree, colsample_bylevel=1, subsample=args.subsample,
-      reg_alpha=args.reg_alpha, reg_lambda=args.reg_lambda, 
-      #running settings and weight balancing
-      silent=False, nthread=args.nthreads, scale_pos_weight=1, 
-   )
-   
+      )
+
    early_stop_kwargs = {
       'eval_set' : [(test[features].as_matrix(), test.is_e.as_matrix().astype(int))],
       #'sample_weight_eval_set' : [test.weight.as_matrix()], #undefined in this version
@@ -249,6 +259,7 @@ if not args.notraining :
       (validation, 'validation')
       ]:
       training_out = clf.predict_proba(df[features].as_matrix())[:, 1]
+      df['training_out'] = training_out
       rocs[name] = roc_curve(
          df.is_e.as_matrix().astype(int), 
          training_out)[:2]
@@ -306,3 +317,7 @@ except : pass
 try : plt.savefig('%s/%s_%s_%s_log_BDT.pdf' % (plots, dataset, args.jobtag, args.what))
 except : pass
 plt.clf()
+
+from plotting import *
+debug(validation,egamma)
+plotting(plots,dataset,args,validation,egamma,data)
