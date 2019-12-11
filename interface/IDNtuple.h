@@ -58,10 +58,12 @@ class IDNtuple {
   void has_trk( bool f = false ) { has_trk_ = f; }
   void has_seed( bool f = false ) { has_seed_ = f; }
   void has_gsf( bool f = false ) { has_gsf_ = f; }
+  void has_pfgsf( bool f = false ) { has_pfgsf_ = f; }
   void has_ele( bool f = false ) { has_ele_ = f; }
 
   void trk_dr( float dr ) { trk_dr_ = dr; }
   void gsf_dr( float dr ) { gsf_dr_ = dr; }
+  void pfgsf_dr( float dr ) { pfgsf_dr_ = dr; }
   void ele_dr( float dr ) { ele_dr_ = dr; }
 
   void fill_evt( const edm::EventID& id );
@@ -91,14 +93,18 @@ class IDNtuple {
 		   const double rho, 
 		   noZS::EcalClusterLazyTools& ecalTools );
 
-  void fill_gsf( const reco::GsfTrackPtr trk,
+  void fill_gsf( const reco::GsfTrackPtr gsf,
+		 const reco::BeamSpot& spot );
+
+  void fill_pfgsf( const reco::GsfTrackPtr pfgsf,
 		 const reco::BeamSpot& spot );
 
   void fill_ele( const reco::GsfElectronPtr ele,
 		 float mva_value,
 		 int mva_id,
 		 float ele_conv_vtx_fit_prob,
-		 const double rho );
+		 const double rho,
+		 bool is_egamma = false );
   
  public:
 
@@ -123,10 +129,12 @@ class IDNtuple {
   bool has_trk_ = false;
   bool has_seed_ = false;
   bool has_gsf_ = false;
+  bool has_pfgsf_ = false;
   bool has_ele_ = false;
 
   float trk_dr_ = IDNtuple::NEG_FLOAT;
   float gsf_dr_ = IDNtuple::NEG_FLOAT;
+  float pfgsf_dr_ = IDNtuple::NEG_FLOAT;
   float ele_dr_ = IDNtuple::NEG_FLOAT;
 
   // GEN electrons
@@ -208,6 +216,40 @@ class IDNtuple {
   float gsf_hit_dpt_unc_[NHITS_MAX] = {0}; //@@ {IDNtuple::NEG_FLOAT};
   //std::vector<float> gsf_extapolated_eta_;
   //std::vector<float> gsf_extapolated_phi_;
+
+  // PF GSF tracks: kine
+  float pfgsf_pt_ = IDNtuple::NEG_FLOAT;
+  float pfgsf_eta_ = IDNtuple::NEG_FLOAT;
+  float pfgsf_phi_ = IDNtuple::NEG_FLOAT;
+  float pfgsf_p_ = IDNtuple::NEG_FLOAT;
+  int pfgsf_charge_ = 0; //@@ IDNtuple::NEG_INT;
+  float pfgsf_inp_ = IDNtuple::NEG_FLOAT;
+  float pfgsf_outp_ = IDNtuple::NEG_FLOAT;
+  float pfgsf_dpt_ = IDNtuple::NEG_FLOAT;
+
+  // PF GSF tracks: kine (mode)
+  float pfgsf_mode_pt_ = IDNtuple::NEG_FLOAT;
+  float pfgsf_mode_eta_ = IDNtuple::NEG_FLOAT;
+  float pfgsf_mode_phi_ = IDNtuple::NEG_FLOAT;
+  float pfgsf_mode_p_ = IDNtuple::NEG_FLOAT;
+
+  // PF GSF tracks: quality
+  int pfgsf_nhits_ = IDNtuple::NEG_INT;
+  int pfgsf_missing_inner_hits_ = IDNtuple::NEG_INT;
+  float pfgsf_chi2red_ = IDNtuple::NEG_FLOAT;
+
+  // PF GSF tracks: displacement
+  float pfgsf_dxy_ = IDNtuple::NEG_FLOAT;
+  float pfgsf_dxy_err_ = IDNtuple::NEG_FLOAT;
+  float pfgsf_dz_ = IDNtuple::NEG_FLOAT;
+  float pfgsf_dz_err_ = IDNtuple::NEG_FLOAT;
+
+  // PF GSF tracks: tangents
+  int pfgsf_ntangents_ = 0; //@@ IDNtuple::NEG_INT;
+  float pfgsf_hit_dpt_[NHITS_MAX] = {0}; //@@ {IDNtuple::NEG_FLOAT};
+  float pfgsf_hit_dpt_unc_[NHITS_MAX] = {0}; //@@ {IDNtuple::NEG_FLOAT};
+  //std::vector<float> pfgsf_extapolated_eta_;
+  //std::vector<float> pfgsf_extapolated_phi_;
 
   // GSF electrons: kinematics
   float ele_pt_ = IDNtuple::NEG_FLOAT;

@@ -27,10 +27,12 @@ void IDNtuple::link_tree( TTree *tree ) {
   tree->Branch("has_trk", &has_trk_, "has_trk/O");
   tree->Branch("has_seed", &has_seed_, "has_seed/O");
   tree->Branch("has_gsf", &has_gsf_, "has_gsf/O");
+  tree->Branch("has_pfgsf", &has_pfgsf_, "has_pfgsf/O");
   tree->Branch("has_ele", &has_ele_, "has_ele/O");
 
   tree->Branch("trk_dr", &trk_dr_, "trk_dr/f");
   tree->Branch("gsf_dr", &gsf_dr_, "gsf_dr/f");
+  tree->Branch("pfgsf_dr", &pfgsf_dr_, "pfgsf_dr/f");
   tree->Branch("ele_dr", &ele_dr_, "ele_dr/f");
   
   tree->Branch("gen_pt" , &gen_pt_ , "gen_pt/f" );
@@ -103,6 +105,35 @@ void IDNtuple::link_tree( TTree *tree ) {
   //tree->Branch("gsf_hit_dpt_unc", gsf_hit_dpt_unc_, "gsf_hit_dpt_unc[gsf_ntangents]/f");
   //tree->Branch("gsf_extapolated_eta", &gsf_extapolated_eta_);
   //tree->Branch("gsf_extapolated_phi", &gsf_extapolated_phi_);
+
+  tree->Branch("pfgsf_pt", &pfgsf_pt_, "pfgsf_pt/f");
+  tree->Branch("pfgsf_eta", &pfgsf_eta_, "pfgsf_eta/f");
+  tree->Branch("pfgsf_phi", &pfgsf_phi_, "pfgsf_phi/f");
+  tree->Branch("pfgsf_p", &pfgsf_p_, "pfgsf_p/f");
+  tree->Branch("pfgsf_charge", &pfgsf_charge_, "pfgsf_charge/I");
+  tree->Branch("pfgsf_inp", &pfgsf_inp_, "pfgsf_inp/f");
+  tree->Branch("pfgsf_outp", &pfgsf_outp_, "pfgsf_outp/f");
+  tree->Branch("pfgsf_dpt", &pfgsf_dpt_, "pfgsf_dpt/f");
+
+  tree->Branch("pfgsf_mode_pt", &pfgsf_mode_pt_, "pfgsf_mode_pt/f");
+  tree->Branch("pfgsf_mode_eta", &pfgsf_mode_eta_, "pfgsf_mode_eta/f");
+  tree->Branch("pfgsf_mode_phi", &pfgsf_mode_phi_, "pfgsf_mode_phi/f");
+  tree->Branch("pfgsf_mode_p", &pfgsf_mode_p_, "pfgsf_mode_p/f");
+
+  tree->Branch("pfgsf_nhits",&pfgsf_nhits_, "pfgsf_nhits/I");
+  tree->Branch("pfgsf_missing_inner_hits", &pfgsf_missing_inner_hits_, "pfgsf_missing_inner_hits/I");
+  tree->Branch("pfgsf_chi2red", &pfgsf_chi2red_, "pfgsf_chi2red/f"); 
+  
+  tree->Branch("pfgsf_dxy",  &pfgsf_dxy_, "pfgsf_dxy/f");
+  tree->Branch("pfgsf_dxy_err",&pfgsf_dxy_err_, "pfgsf_dxy_err/f");
+  tree->Branch("pfgsf_dz",  &pfgsf_dz_, "pfgsf_dz/f");
+  tree->Branch("pfgsf_dz_err",&pfgsf_dz_err_, "pfgsf_dz_err/f");
+
+  //tree->Branch("pfgsf_ntangents", &pfgsf_ntangents_, "pfgsf_ntangents/I");
+  //tree->Branch("pfgsf_hit_dpt", pfgsf_hit_dpt_, "pfgsf_hit_dpt[pfgsf_ntangents]/f");
+  //tree->Branch("pfgsf_hit_dpt_unc", pfgsf_hit_dpt_unc_, "pfgsf_hit_dpt_unc[pfgsf_ntangents]/f");
+  //tree->Branch("pfgsf_extapolated_eta", &pfgsf_extapolated_eta_);
+  //tree->Branch("pfgsf_extapolated_phi", &pfgsf_extapolated_phi_);
   
   tree->Branch("ele_pt", &ele_pt_, "ele_pt/f");
   tree->Branch("ele_p", &ele_p_, "ele_p/f");
@@ -356,17 +387,81 @@ void IDNtuple::fill_gsf( const reco::GsfTrackPtr gsf,
 
 /////////////////////////////////////////////////////////////////////////////////
 //
+void IDNtuple::fill_pfgsf( const reco::GsfTrackPtr pfgsf, 
+			   const reco::BeamSpot& spot ) {
+
+  if ( pfgsf.isNull() ) {
+    //@@ Shouldn't happen, but do we just take dummy values...? 
+  } else {
+
+    // Kinematics
+    pfgsf_pt_ = pfgsf->pt();
+    pfgsf_eta_ = pfgsf->eta();
+    pfgsf_phi_ = pfgsf->phi();
+    pfgsf_p_ = pfgsf->p();
+    pfgsf_charge_ = pfgsf->charge();
+    if ( pfgsf->extra().isAvailable() && pfgsf->extra().isNonnull() ) {
+      pfgsf_inp_ = sqrt(pfgsf->innerMomentum().mag2());
+      pfgsf_outp_ = sqrt(pfgsf->outerMomentum().mag2());
+      pfgsf_dpt_ = ( pfgsf_inp_ > 0. ) ? fabs( pfgsf_outp_ - pfgsf_inp_ ) / pfgsf_inp_ : 0.; //@@ redundant?
+    }
+    
+    // Kinematics (MODE)
+    pfgsf_mode_pt_ = pfgsf->ptMode();
+    pfgsf_mode_eta_ = pfgsf->etaMode();
+    pfgsf_mode_phi_ = pfgsf->phiMode();
+    pfgsf_mode_p_ = pfgsf->pMode();
+
+    // Quality
+    pfgsf_nhits_ = pfgsf->found();
+    pfgsf_missing_inner_hits_ = pfgsf->hitPattern().numberOfLostHits(reco::HitPattern::MISSING_INNER_HITS);
+    pfgsf_chi2red_ = pfgsf->normalizedChi2();
+
+    // Displacement
+    pfgsf_dxy_ = pfgsf->dxy(spot);
+    pfgsf_dxy_err_ = pfgsf->dxyError();
+    pfgsf_dz_ = pfgsf->dz(spot.position());
+    pfgsf_dz_err_ = pfgsf->dzError();
+
+    // Tangents (requires TrackExtra)
+    //    const auto& extra = pfgsf->pfgsfExtra(); //@@ Collection does not exist?!
+    //    if ( extra.isNonnull() ) {
+    //      pfgsf_ntangents_ = (extra->tangentsSize() > NHITS_MAX) ? NHITS_MAX : extra->tangentsSize();
+    //      for (int idx = 0; idx < pfgsf_ntangents_; idx++ ) {
+    //	pfgsf_hit_dpt_[idx] = extra->tangents().at(idx).deltaP().value();
+    //	pfgsf_hit_dpt_unc_[idx] = extra->tangents().at(idx).deltaP().error();
+    //      }
+    //    }
+    
+  } 
+}
+
+/////////////////////////////////////////////////////////////////////////////////
+//
 void IDNtuple::fill_ele( const reco::GsfElectronPtr ele,
 			 float mva_value,
 			 int mva_id,
 			 float ele_conv_vtx_fit_prob,
-			 const double rho ) {
+			 const double rho,
+			 bool is_egamma ) {
 
   // Kinematics
-  ele_p_ = ele->p();
-  ele_pt_ = ele->pt();
-  ele_eta_ = ele->eta();
-  ele_phi_ = ele->phi();
+  if ( is_egamma ) {
+    ele_p_ = ele->p();
+    ele_pt_ = ele->pt();
+    ele_eta_ = ele->eta();
+    ele_phi_ = ele->phi();
+  } else {
+    reco::GsfTrackRef gsf = ele->gsfTrack();
+    if ( gsf.isNonnull() && gsf.isAvailable() ) {
+      ele_p_ = gsf->p();
+      ele_pt_ = gsf->pt();
+      ele_eta_ = gsf->eta();
+      ele_phi_ = gsf->phi();
+    } else {
+      std::cout << "[IDNtuple::fill_ele] ERROR: Null GsfTrackRef!" << std::endl;
+    }
+  }
   
   // MVA IDs: only filled if 'ValueMap->size() == electrons->size()' in IDFeatures::analyze()
   if ( mva_value > -666. ) { ele_mva_value_ = mva_value; }

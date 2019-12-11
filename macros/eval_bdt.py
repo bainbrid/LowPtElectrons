@@ -328,39 +328,39 @@ if 'seeding' in args.what and 'baseline' in test.columns:
     plt.plot([mistag], [eff], 'o', label='baseline_ptcut', markersize=5)    
 elif 'id' in args.what:
     eff = \
-        test.original_weight[(test.has_pfele & test.is_e)].sum() / \
+        test.original_weight[(test.has_ele & test.is_e)].sum() / \
         test.original_weight[test.is_e].sum()
     mistag = \
-        test.original_weight[(test.has_pfele & np.invert(test.is_e))].sum() / \
+        test.original_weight[(test.has_ele & np.invert(test.is_e))].sum() / \
         test.original_weight[np.invert(test.is_e)].sum()
     plt.plot([mistag], [eff], 'o', label='PF ele', markersize=5)
     eff = \
-        test.original_weight[(test.has_pfgsf & test.is_e)].sum() / \
+        test.original_weight[(test.has_gsf & test.is_e)].sum() / \
         test.original_weight[test.is_e].sum()
     mistag = \
-        test.original_weight[(test.has_pfgsf & np.invert(test.is_e))].sum() / \
+        test.original_weight[(test.has_gsf & np.invert(test.is_e))].sum() / \
         test.original_weight[np.invert(test.is_e)].sum()
     plt.plot([mistag], [eff], 'o', label='PF gsf', markersize=5)
 
-    mva_v2 = roc_curve(test.is_e, test.ele_mvaIdV2, sample_weight=test.original_weight)[:2]
-    mva_v2_auc = roc_auc_score(test.is_e, test.ele_mvaIdV2, sample_weight=test.original_weight)
+    mva_v2 = roc_curve(test.is_e, test.ele_mva_value, sample_weight=test.original_weight)[:2]
+    mva_v2_auc = roc_auc_score(test.is_e, test.ele_mva_value, sample_weight=test.original_weight)
     plt.plot(*mva_v2, label='MVA ID V2 (AUC: %.3f)'  % mva_v2_auc)
 
-    unbiased = roc_curve(test.is_e, test.preid_bdtout1, sample_weight=test.original_weight)[:2]
-    unbiased_auc = roc_auc_score(test.is_e, test.preid_bdtout1, sample_weight=test.original_weight)
+    unbiased = roc_curve(test.is_e, test.gsf_bdtout1, sample_weight=test.original_weight)[:2]
+    unbiased_auc = roc_auc_score(test.is_e, test.gsf_bdtout1, sample_weight=test.original_weight)
     plt.plot(*unbiased, label='Unbiased (AUC: %.3f)'  % unbiased_auc)
 
-    ptbiased = roc_curve(test.is_e, test.preid_bdtout2, sample_weight=test.original_weight)[:2]
-    ptbiased_auc = roc_auc_score(test.is_e, test.preid_bdtout2, sample_weight=test.original_weight)
+    ptbiased = roc_curve(test.is_e, test.gsf_bdtout2, sample_weight=test.original_weight)[:2]
+    ptbiased_auc = roc_auc_score(test.is_e, test.gsf_bdtout2, sample_weight=test.original_weight)
     plt.plot(*ptbiased, label='Ptbiased (AUC: %.3f)'  % ptbiased_auc)
 
-    test['preid_bdtoutOR'] = test[['preid_bdtout1','preid_bdtout2']].max(axis=1)
-    orbiased = roc_curve(test.is_e, test.preid_bdtoutOR, sample_weight=test.original_weight)[:2]
-    orbiased_auc = roc_auc_score(test.is_e, test.preid_bdtoutOR, sample_weight=test.original_weight)
-    plt.plot(*orbiased, label='Logical OR (AUC: %.3f)'  % unbiased_auc)
+#    test['gsf_bdtoutOR'] = test[['gsf_bdtout1','gsf_bdtout2']].max(axis=1)
+#    orbiased = roc_curve(test.is_e, test.gsf_bdtoutOR, sample_weight=test.original_weight)[:2]
+#    orbiased_auc = roc_auc_score(test.is_e, test.gsf_bdtoutOR, sample_weight=test.original_weight)
+#    plt.plot(*orbiased, label='Logical OR (AUC: %.3f)'  % unbiased_auc)
 
-    lowPtId = roc_curve(test.is_e, test.ele_lowPtMva, sample_weight=test.original_weight)[:2]
-    lowPtId_auc = roc_auc_score(test.is_e, test.ele_lowPtMva, sample_weight=test.original_weight)
+    lowPtId = roc_curve(test.is_e, test.ele_mva_id, sample_weight=test.original_weight)[:2]
+    lowPtId_auc = roc_auc_score(test.is_e, test.ele_mva_id, sample_weight=test.original_weight)
     plt.plot(*lowPtId, label='CMSSW Low-pT ID (AUC: %.3f)'  % lowPtId_auc)
 
 plt.xlabel('Mistag Rate')
