@@ -169,6 +169,7 @@ public:
   reco::GsfElectronPtr ele_;
   float ele_dr_ = IDNtuple::NEG_FLOAT;
   bool ele_match_ = false;
+  float id_ = IDNtuple::NEG_FLOAT;
 
 };
 
@@ -232,7 +233,8 @@ std::ostream& operator<< ( std::ostream& out, const ElectronChain& obj ) {
      << ", ECAL driven: " << obj.seed_ecal_driven_;
   //ss << "\n PREID: "; key_id(obj.preid_ecal_,ss);
   ss << "\n BDTs:  " << "unbiased: " << std::setprecision(4) << obj.unbiased_ 
-     << ", ptbiased: " << std::setprecision(4) << obj.ptbiased_;
+     << ", ptbiased: " << std::setprecision(4) << obj.ptbiased_
+     << ", ID: " << std::setprecision(4) << obj.id_;
   ss << "\n MATCH: "
      << "trk: " << obj.trk_match_ << "/" << std::setprecision(4) << obj.trk_dr_ 
      << ", gsf: " << obj.gsf_match_ << "/" << std::setprecision(4) << obj.gsf_dr_ 
@@ -624,13 +626,13 @@ void IDNtuplizer::analyze( const edm::Event& event, const edm::EventSetup& setup
   std::vector<SigToTrkDR2> sig2trk;
   std::vector<SigToTrkDR2> other_trk;
   sigToCandLinks<reco::Track>( signal_electrons, tracks_, sig2trk, other_trk );
-  if ( verbose_ > 0 ) {
+  if ( verbose_ > 1 ) {
     std::cout << "[IDNtuplizer::analyze] sigToCandLinks<reco::Track>:" << std::endl
 	      << " signal_electrons.size(): " << signal_electrons.size() << std::endl
 	      << " tracks_.size(): " << tracks_.size() << std::endl
 	      << " sig2trk.size(): " << sig2trk.size() << std::endl
 	      << " other_trk.size(): " << other_trk.size() << std::endl;
-    if ( verbose_ > 1 ) {
+    if ( verbose_ > 2 ) {
       for ( auto iter : sig2trk ) { if ( iter.dr2_ >= 0. ) { std::cout << iter << std::endl; } }
     }
     std::cout << std::endl;
@@ -641,12 +643,12 @@ void IDNtuplizer::analyze( const edm::Event& event, const edm::EventSetup& setup
   gsfToPfGsfLinks( gsfTracksH_, //@@ low-pT GSF tracks!
 		   gsfTracksEGammaH_, 
 		   gsf2pfgsf );
-  if ( verbose_ > 0 ) {
+  if ( verbose_ > 1 ) {
     std::cout << "[IDNtuplizer::analyze] gsfToPfGsfLinks:" << std::endl
 	      << " gsfTracksH_->size(): " << gsfTracksH_->size() << std::endl
 	      << " gsfTracksEGammaH_->size(): " << gsfTracksEGammaH_->size() << std::endl
 	      << " gsf2pfgsf.size(): " << gsf2pfgsf.size() << std::endl;
-    if ( verbose_ > 1 ) {
+    if ( verbose_ > 2 ) {
       for ( auto iter : gsf2pfgsf ) { if ( iter.dr2_ >= 0. ) { std::cout << iter << std::endl; } }
     }
     std::cout << std::endl;
@@ -658,14 +660,17 @@ void IDNtuplizer::analyze( const edm::Event& event, const edm::EventSetup& setup
   // Populate ElectronChain objects using PF electrons
   pfElectrons( signal_electrons, sig2trk, other_trk, gsf2pfgsf );
   
-  // Print ElectronChain objects
-  if ( verbose_ > 0 ) {
-    for ( auto iter : chains_ ) { std::cout << iter << std::endl; }
-  }
-  
   // Fill ntuple
   fill(event,setup);
-
+  
+  // Print ElectronChain objects
+  if ( verbose_ > 0 ) {
+    for ( auto iter : chains_ ) { 
+      if ( iter.is_egamma_ || !iter.is_e_ ) { continue; } // skip PF and fakes
+      std::cout << iter << std::endl; 
+    }
+  }
+  
 }
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -855,7 +860,7 @@ void IDNtuplizer::genElectronsFromB( std::set<reco::GenParticlePtr>& electrons_f
     // is coming from a B
     if ( is_ele && ( ( resonant || non_resonant ) || !check_from_B_ ) ) {
       electrons_from_B.insert(gen);
-      if ( verbose_ > 0 ) {
+      if ( verbose_ > 1 ) {
 	std::cout << "[IDNtuplizer::genElectronsFromB] "
 		  << " #signal_electrons: " << electrons_from_B.size()
 		  << " resonant? " << resonant
@@ -887,13 +892,13 @@ void IDNtuplizer::lowPtElectrons( std::set<reco::CandidatePtr>& signal_electrons
 				  gsfTracksH_, 
 				  sig2gsf, 
 				  other_gsf );
-  if ( verbose_ > 0 ) {
+  if ( verbose_ > 1 ) {
     std::cout << "[IDNtuplizer::lowPtElectrons] sigToCandLinks<reco::GsfTrack>:" << std::endl
 	      << " signal_electrons.size(): " << signal_electrons.size() << std::endl
 	      << " gsfTracksH_->size(): " << gsfTracksH_->size() << std::endl
 	      << " sig2gsf.size(): " << sig2gsf.size() << std::endl
 	      << " other_gsf.size(): " << other_gsf.size() << std::endl;
-    if ( verbose_ > 1 ) {
+    if ( verbose_ > 2 ) {
       for ( auto iter : sig2gsf ) { if ( iter.dr2_ >= 0. ) { std::cout << iter << std::endl; } }
     }
     std::cout << std::endl;
@@ -904,12 +909,12 @@ void IDNtuplizer::lowPtElectrons( std::set<reco::CandidatePtr>& signal_electrons
   trkToGsfLinks( tracks_, 
 		 gsfTracksH_, 
 		 trk2gsf );
-  if ( verbose_ > 0 ) {
+  if ( verbose_ > 1 ) {
     std::cout << "[IDNtuplizer::lowPtElectrons] trkToGsfLinks:" << std::endl
 	      << " tracks_.size(): " << tracks_.size() << std::endl
 	      << " gsfTracksH_->size(): " << gsfTracksH_->size() << std::endl
 	      << " trk2gsf.size(): " << trk2gsf.size() << std::endl;
-    if ( verbose_ > 1 ) {
+    if ( verbose_ > 2 ) {
       for ( auto iter : trk2gsf ) { if ( iter.dr2_ >= 0. ) { std::cout << iter << std::endl; } }
     }
     std::cout << std::endl;
@@ -920,12 +925,12 @@ void IDNtuplizer::lowPtElectrons( std::set<reco::CandidatePtr>& signal_electrons
   gsfToEleLinks( gsfTracksH_, 
 		 gsfElectronsH_, 
 		 gsf2ele );
-  if ( verbose_ > 0 ) {
+  if ( verbose_ > 1 ) {
     std::cout << "[IDNtuplizer::lowPtElectrons] gsfToEleLinks:" << std::endl 
 	      << " gsfTracksH_->size(): " << gsfTracksH_->size() << std::endl
 	      << " gsfElectronsH_->size(): " << gsfElectronsH_->size() << std::endl
 	      << " gsf2ele.size(): " << gsf2ele.size() << std::endl;
-    if ( verbose_ > 1 ) {
+    if ( verbose_ > 2 ) {
       for ( auto iter : gsf2ele ) { if ( iter.dr2_ >= 0. ) { std::cout << iter << std::endl; } }
     }
     std::cout << std::endl;
@@ -1188,13 +1193,13 @@ void IDNtuplizer::pfElectrons( std::set<reco::CandidatePtr>& signal_electrons,
 				  gsfTracksH_, //@@ low-pT GSF tracks!
 				  sig2gsf, 
 				  other_gsf );
-  if ( verbose_ > 0 ) {
+  if ( verbose_ > 1 ) {
     std::cout << "[IDNtuplizer::pfElectrons] sigToCandLinks<reco::GsfTrack>:" << std::endl
 	      << " signal_electrons.size(): " << signal_electrons.size() << std::endl
 	      << " gsfTracksH_->size(): " << gsfTracksH_->size() << std::endl
 	      << " sig2gsf.size(): " << sig2gsf.size() << std::endl
 	      << " other_gsf.size(): " << other_gsf.size() << std::endl;
-    if ( verbose_ > 1 ) {
+    if ( verbose_ > 2 ) {
       for ( auto iter : sig2gsf ) { if ( iter.dr2_ >= 0. ) { std::cout << iter << std::endl; } }
     }
     std::cout << std::endl;
@@ -1205,12 +1210,12 @@ void IDNtuplizer::pfElectrons( std::set<reco::CandidatePtr>& signal_electrons,
   trkToGsfLinks( tracks_, 
 		 gsfTracksH_, //@@ low-pT GSF tracks! 
 		 trk2gsf );
-  if ( verbose_ > 0 ) {
+  if ( verbose_ > 1 ) {
     std::cout << "[IDNtuplizer::pfElectrons] trkToGsfLinks:" << std::endl
 	      << " tracks_.size(): " << tracks_.size() << std::endl
 	      << " gsfTracksH_->size(): " << gsfTracksH_->size() << std::endl
 	      << " trk2gsf.size(): " << trk2gsf.size() << std::endl;
-    if ( verbose_ > 1 ) {
+    if ( verbose_ > 2 ) {
       for ( auto iter : trk2gsf ) { if ( iter.dr2_ >= 0. ) { std::cout << iter << std::endl; } }
     }
     std::cout << std::endl;
@@ -1223,13 +1228,13 @@ void IDNtuplizer::pfElectrons( std::set<reco::CandidatePtr>& signal_electrons,
 				  gsfTracksEGammaH_,
 				  sig2pfgsf, 
 				  other_pfgsf );
-  if ( verbose_ > 0 ) {
+  if ( verbose_ > 1 ) {
     std::cout << "[IDNtuplizer::pfElectrons] sigToCandLinks<reco::GsfTrack>:" << std::endl
 	      << " signal_electrons.size(): " << signal_electrons.size() << std::endl
 	      << " gsfTracksEGammaH_->size(): " << gsfTracksEGammaH_->size() << std::endl
 	      << " sig2pfgsf.size(): " << sig2pfgsf.size() << std::endl
 	      << " other_pfgsf.size(): " << other_pfgsf.size() << std::endl;
-    if ( verbose_ > 1 ) {
+    if ( verbose_ > 2 ) {
       for ( auto iter : sig2pfgsf ) { if ( iter.dr2_ >= 0. ) { std::cout << iter << std::endl; } }
     }
     std::cout << std::endl;
@@ -1240,12 +1245,12 @@ void IDNtuplizer::pfElectrons( std::set<reco::CandidatePtr>& signal_electrons,
   gsfToEleLinks( gsfTracksEGammaH_, 
 		 gsfElectronsEGammaH_, 
 		 pfgsf2ele );
-  if ( verbose_ > 0 ) {
+  if ( verbose_ > 1 ) {
     std::cout << "[IDNtuplizer::pfElectrons] gsfToEleLinks:" << std::endl 
 	      << " gsfTracksEGammaH_->size(): " << gsfTracksEGammaH_->size() << std::endl
 	      << " gsfElectronsEGammaH_->size(): " << gsfElectronsEGammaH_->size() << std::endl
 	      << " pfgsf2ele.size(): " << pfgsf2ele.size() << std::endl;
-    if ( verbose_ > 1 ) {
+    if ( verbose_ > 2 ) {
       for ( auto iter : pfgsf2ele ) { if ( iter.dr2_ >= 0. ) { std::cout << iter << std::endl; } }
     }
     std::cout << std::endl;
@@ -1575,7 +1580,7 @@ void IDNtuplizer::pfElectrons_fakes( std::vector<SigToTrkDR2>& other_trk,
 void IDNtuplizer::fill( const edm::Event& event,
 			const edm::EventSetup& setup ) {
   
-  for ( auto chain : chains_ ) {
+  for ( auto& chain : chains_ ) {
     
     // Init tree here
     ntuple_.reset();
@@ -1659,6 +1664,7 @@ void IDNtuplizer::fill( const edm::Event& event,
 	if ( mvaValueLowPtH_.isValid() && 
 	     mvaValueLowPtH_->size() == gsfElectronsH_->size() ) {
 	  mva_value = mvaValueLowPtH_->get( chain.ele_.key() );
+	  chain.id_ = mva_value; 
 	} else {
 	  std::cout << "[IDNtuplizer::fill] ERROR! Issue matching MVA output to GsfElectrons!" << std::endl;
 	}
@@ -1666,6 +1672,7 @@ void IDNtuplizer::fill( const edm::Event& event,
 	if ( mvaValueEGammaH_.isValid() && 
 	     mvaValueEGammaH_->size() == gsfElectronsEGammaH_->size() ) {
 	  mva_value = mvaValueEGammaH_->get( chain.ele_.key() );
+	  chain.id_ = mva_value; 
 	} else {
 	  std::cout << "[IDNtuplizer::fill] ERROR! Issue matching MVA output to GsfElectrons!" << std::endl;
 	}
@@ -1745,7 +1752,7 @@ bool IDNtuplizer::gsfToTrk( reco::GsfTrackPtr& gsf,
   
   // Shouldn't happen (but "link maps" may contain a invalid ptr)
   if ( !validPtr(gsf) ) {
-    if ( verbose_ > 0 ) {
+    if ( verbose_ > 1 ) {
       std::cout << "[IDNtuplizer::gsfToTrk] ERROR! GsfTrackPtr:"
 		<< " gsf.isNull(): " << gsf.isNull()
 		<< " gsf.isAvailable(): " << gsf.isAvailable()
@@ -1820,7 +1827,7 @@ bool IDNtuplizer::eleToGsf( reco::GsfElectronPtr& ele, reco::GsfTrackPtr& gsf ) 
 //
 bool IDNtuplizer::gsfToSeed( reco::GsfTrackPtr& gsf, reco::ElectronSeedPtr& seed ) {
   if ( !validPtr(gsf) ) {
-    if ( verbose_ > 0 ) {
+    if ( verbose_ > 1 ) {
       std::cout << "[IDNtuplizer::gsfToSeed] ERROR! GsfTrackPtr:"
 		<< " gsf.isNull(): " << gsf.isNull()
 		<< " gsf.isAvailable(): " << gsf.isAvailable()
@@ -1841,7 +1848,7 @@ bool IDNtuplizer::gsfToSeed( reco::GsfTrackPtr& gsf, reco::ElectronSeedPtr& seed
     return false;
   }
   if ( traj.isNull() || !traj.isAvailable() ) { 
-    if ( verbose_ > 0 ) {
+    if ( verbose_ > 1 ) {
       std::cout << "[IDNtuplizer::gsfToSeed] ERROR: TrajectorySeedRef:" 
 		<< " traj.isNull(): " << traj.isNull()
 		<< " traj.isAvailable(): " << traj.isAvailable()
@@ -1851,7 +1858,7 @@ bool IDNtuplizer::gsfToSeed( reco::GsfTrackPtr& gsf, reco::ElectronSeedPtr& seed
   }
   seed = edm::refToPtr(traj.castTo<reco::ElectronSeedRef>());
   if ( !validPtr(seed) ) { 
-    if ( verbose_ > 0 ) {
+    if ( verbose_ > 1 ) {
       std::cout << "[IDNtuplizer::gsfToSeed] ERROR! ElectronSeedPtr:"
 		<< " seed.isNull(): " << seed.isNull()
 		<< " seed.isAvailable(): " << seed.isAvailable()
@@ -1866,7 +1873,7 @@ bool IDNtuplizer::gsfToSeed( reco::GsfTrackPtr& gsf, reco::ElectronSeedPtr& seed
 //
 bool IDNtuplizer::seedToTrk( reco::ElectronSeedPtr& seed, reco::TrackPtr& trk ) {
   if ( !validPtr(seed) ) { 
-    if ( verbose_ > 0 ) {
+    if ( verbose_ > 1 ) {
       std::cout << "[IDNtuplizer::seedToTrk] ERROR! ElectronSeedPtr:"
 		<< " seed.isNull(): " << seed.isNull()
 		<< " seed.isAvailable(): " << seed.isAvailable()
@@ -1898,7 +1905,7 @@ bool IDNtuplizer::seedToTrk( reco::ElectronSeedPtr& seed, reco::TrackPtr& trk ) 
 //
 bool IDNtuplizer::seedToCalo( reco::ElectronSeedPtr& seed, reco::CaloClusterPtr& calo ) {
   if ( !validPtr(seed) ) { 
-    if ( verbose_ > 0 ) {
+    if ( verbose_ > 3 ) {
       std::cout << "[IDNtuplizer::seedToCalo] ERROR! ElectronSeedPtr:"
 		<< " seed.isNull(): " << seed.isNull()
 		<< " seed.isAvailable(): " << seed.isAvailable()
