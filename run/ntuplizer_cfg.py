@@ -28,14 +28,11 @@ process.TFileService = cms.Service(
     fileName = cms.string(output_file)
     )
 
-process.ntuplizer_seq = cms.Sequence()
-
 from PhysicsTools.SelectorUtils.tools.vid_id_tools import *
 if options.useAOD : switchOnVIDElectronIdProducer(process,DataFormat.AOD)
 else :           switchOnVIDElectronIdProducer(process,DataFormat.MiniAOD)
 for idmod in ['RecoEgamma.ElectronIdentification.Identification.mvaElectronID_Fall17_noIso_V2_cff'] :
     setupAllVIDIdsInModule(process,idmod,setupVIDElectronSelection)
-
 
 process.ntuplizer_seq = cms.Sequence()
 
