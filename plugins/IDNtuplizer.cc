@@ -269,7 +269,7 @@ public:
   
   // GEN-based method to provide a sample of "signal" electrons
   void genElectronsFromB( std::set<reco::GenParticlePtr>& electrons_from_B, 
-			  float muon_pt = 5., float muon_eta = 2.5 );
+			  float muon_pt = 7., float muon_eta = 1.5 );
   
   // Top-level method that creates ElectronChain objects for EGamma electrons
   void pfElectrons( std::set<reco::CandidatePtr>& signal_electrons,
