@@ -153,22 +153,22 @@ if not dataset.endswith('.hdf'): # if not args.load_model :
       data['weight'] = 1
    train_test, validation = train_test_split(data, 10, 8)
    train, test = train_test_split(train_test, 10, 6)
-   validation.to_hdf(
-      '%s/bdt_%s_testdata.hdf' % (mods, args.what),
-      'data'
-      ) 
-   train.to_hdf(
-      '%s/bdt_%s_traindata.hdf' % (mods, args.what),
-      'data'
-      ) 
-   test.to_hdf(
-      '%s/bdt_%s_valdata.hdf' % (mods, args.what),
-      'data'
-      ) 
+#   validation.to_hdf(
+#      '%s/bdt_%s_testdata.hdf' % (mods, args.what),
+#      'data'
+#      ) 
+#   train.to_hdf(
+#      '%s/bdt_%s_traindata.hdf' % (mods, args.what),
+#      'data'
+#      ) 
+#   test.to_hdf(
+#      '%s/bdt_%s_valdata.hdf' % (mods, args.what),
+#      'data'
+#      ) 
 else:   
-   train = pd.read_hdf('%s/bdt_%s_traindata.hdf' % (mods, args.what), 'data')
-   test = pd.read_hdf('%s/bdt_%s_valdata.hdf' % (mods, args.what), 'data') #mis-used name in this script 
-   validation = pd.read_hdf('%s/bdt_%s_testdata.hdf' % (mods, args.what), 'data')
+#   train = pd.read_hdf('%s/bdt_%s_traindata.hdf' % (mods, args.what), 'data')
+#   test = pd.read_hdf('%s/bdt_%s_valdata.hdf' % (mods, args.what), 'data') #mis-used name in this script 
+#   validation = pd.read_hdf('%s/bdt_%s_testdata.hdf' % (mods, args.what), 'data')
    if args.selection:
       train = train.query(args.selection)
       test  = test.query(args.selection)
@@ -184,6 +184,11 @@ else:
       validation['weight'] = 1
    dataset = os.path.basename(dataset).split('.')[0]
 
+# mask for training
+if args.notraining == False and args.load_model == False : 
+   mask = (train.trk_pt > 0.5) & (train.trk_pt < 15.) & (np.abs(train.trk_eta) < 2.4) & (train.gsf_pt > 0.) 
+   train = train[mask]
+
 from sklearn.externals import joblib
 import xgboost as xgb
 #
@@ -191,6 +196,7 @@ import xgboost as xgb
 #
 
 clf = None
+results = None
 if args.notraining :
    print 'No training done, no pre-existing model loaded!'
 elif not args.load_model :
@@ -221,9 +227,10 @@ elif not args.load_model :
       )
 
    early_stop_kwargs = {
-      'eval_set' : [(test[features].as_matrix(), test.is_e.as_matrix().astype(int))],
+      'eval_set' : [(train[features].as_matrix(), train.is_e.as_matrix().astype(int)),
+                    (test[features].as_matrix(), test.is_e.as_matrix().astype(int)),],
       #'sample_weight_eval_set' : [test.weight.as_matrix()], #undefined in this version
-      'eval_metric' : 'auc',
+      'eval_metric' : ['error','auc'],
       'early_stopping_rounds' : 10
    } if not args.no_early_stop else {}
 
@@ -233,6 +240,7 @@ elif not args.load_model :
       sample_weight=train.weight.as_matrix(),
       **early_stop_kwargs
    )
+   results = clf.evals_result()
 
    full_model = '%s/%s_%s_%s_BDT.pkl' % (mods, dataset, args.jobtag, args.what)
    joblib.dump(clf, full_model, compress=True)
@@ -302,21 +310,54 @@ for key in rocs:
 with open('%s/%s_%s_%s_ROCS.json' % (plots, dataset, args.jobtag, args.what), 'w') as rr:
    rr.write(json.dumps(rocs))
 
-plt.xlabel('Mistag Rate')
-plt.ylabel('Efficiency')
-plt.legend(loc='best')
-plt.xlim(0., 1)
-try : plt.savefig('%s/%s_%s_%s_BDT.png' % (plots, dataset, args.jobtag, args.what))
-except : pass
-try : plt.savefig('%s/%s_%s_%s_BDT.pdf' % (plots, dataset, args.jobtag, args.what))
-except : pass
-plt.gca().set_xscale('log')
-plt.xlim(1e-4, 1)
-try : plt.savefig('%s/%s_%s_%s_log_BDT.png' % (plots, dataset, args.jobtag, args.what))
-except : pass
-try : plt.savefig('%s/%s_%s_%s_log_BDT.pdf' % (plots, dataset, args.jobtag, args.what))
-except : pass
-plt.clf()
+#plt.xlabel('Mistag Rate')
+#plt.ylabel('Efficiency')
+#plt.legend(loc='best')
+#plt.xlim(0., 1)
+#try : plt.savefig('%s/%s_%s_%s_BDT.png' % (plots, dataset, args.jobtag, args.what))
+#except : pass
+#try : plt.savefig('%s/%s_%s_%s_BDT.pdf' % (plots, dataset, args.jobtag, args.what))
+#except : pass
+#plt.gca().set_xscale('log')
+#plt.xlim(1e-4, 1)
+#try : plt.savefig('%s/%s_%s_%s_log_BDT.png' % (plots, dataset, args.jobtag, args.what))
+#except : pass
+#try : plt.savefig('%s/%s_%s_%s_log_BDT.pdf' % (plots, dataset, args.jobtag, args.what))
+#except : pass
+#plt.clf()
+
+if results is not None :
+   print results
+   epochs = len(results['validation_0']['auc'])
+   x_axis = range(0, epochs)
+   # plot auc
+   fig, ax = plt.subplots()
+   ax.plot(x_axis, results['validation_0']['auc'], label='Train')
+   ax.plot(x_axis, results['validation_1']['auc'], label='Test')
+   ax.legend()
+   plt.xlabel('epoch')
+   plt.ylabel('AUC')
+   plt.title('XGBClassifier')
+   plt.grid(True)
+   plt.tight_layout()
+   try : plt.savefig('%s/%s_%s_%s_auc.png' % (plots, dataset, args.jobtag, args.what))
+   except : pass
+   try : plt.savefig('%s/%s_%s_%s_auc.pdf' % (plots, dataset, args.jobtag, args.what))
+   except : pass
+   # plot loss
+   fig, ax = plt.subplots()
+   ax.plot(x_axis, results['validation_0']['error'], label='Train')
+   ax.plot(x_axis, results['validation_1']['error'], label='Test')
+   ax.legend()
+   plt.xlabel('epoch')
+   plt.ylabel('Loss')
+   plt.title('XGBClassifier')
+   plt.grid(True)
+   plt.tight_layout()
+   try : plt.savefig('%s/%s_%s_%s_loss.png' % (plots, dataset, args.jobtag, args.what))
+   except : pass
+   try : plt.savefig('%s/%s_%s_%s_loss.pdf' % (plots, dataset, args.jobtag, args.what))
+   except : pass
 
 from plotting import *
 debug(validation,egamma)
