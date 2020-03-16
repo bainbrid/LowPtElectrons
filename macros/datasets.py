@@ -4,8 +4,12 @@ from glob import glob
 #tag = '2019Feb05'
 #posix = '2019Feb05'
 
-tag = '2019Jul22'
-posix = '2019Jul22'
+#tag = '2019Jul22'
+#posix = '2019Jul22'
+#target_dataset = 'test'
+
+tag = '2020Feb28'
+posix = '2020Feb28'
 target_dataset = 'test'
 
 import socket
@@ -28,6 +32,7 @@ for inf in all_sets:
          input_files[name].append(inf)
          break
 input_files['test'] = [
+   '/eos/cms/store/cmst3/group/bpark/electron_training/2019Jul22/MINIAOD/output_0.root',
    '/eos/cms/store/cmst3/group/bpark/electron_training/2019Jul22/MINIAOD/output_1.root',
    '/eos/cms/store/cmst3/group/bpark/electron_training/2019Jul22/MINIAOD/output_2.root',
    '/eos/cms/store/cmst3/group/bpark/electron_training/2019Jul22/MINIAOD/output_3.root',
@@ -86,6 +91,7 @@ def get_data_sync(dataset, columns, nthreads=2*multiprocessing.cpu_count(), excl
    print ' \n'.join(input_files[dataset])
    infiles = [uproot.open(i) for i in input_files[dataset]]
    print 'available branches:\n',infiles[0][path].keys()
+   print 'extracted branches:\n',columns
    if columns == 'all':
       columns = [i for i in infiles[0][path].keys() if i not in exclude]
    try:
@@ -124,7 +130,7 @@ def kmeans_weighter(features, fname):
 
 def training_selection(df,low=0.5,high=15.):
    #'ensures there is a GSF Track and a KTF track within eta/pt boundaries'
-   return (df.trk_pt > low) & (df.trk_pt < high) & (np.abs(df.trk_eta) < 2.4) #@@ original filter
+   return (df.trk_pt > low) & (df.trk_pt < high) & (np.abs(df.trk_eta) < 2.4) & (df.gsf_pt > 0.) 
    #return (df.gen_pt < 0.) | (df.gen_pt > 0.) #@@ use for AxE performance
 
 import rootpy.plotting as rplt
@@ -172,7 +178,7 @@ def pre_process_data(dataset, features, for_seeding=False, keep_nonmatch=False):
       if feat in features:
          multi_dim[feat] = data_dict.pop(feat, None)
    data = pd.DataFrame(data_dict)
-   #data = data.head(1000000) #@@ useful for testing
+   data = data.head(100000) #@@ useful for testing
 
    ##FIXME
    ##if 'gsf_ecal_cluster_ematrix' in features:
@@ -198,9 +204,9 @@ def pre_process_data(dataset, features, for_seeding=False, keep_nonmatch=False):
       notmatched = notmatched[mask]
       data = pd.concat((data, notmatched))
    # training pre-selection
-   #mask = training_selection(data) #@@ if used here, cannot determine AxE performance
-   #multi_dim = {i : j[mask] for i, j in multi_dim.iteritems()}   
+   mask = training_selection(data) #@@ if used here, cannot determine AxE performance
    #data = data[mask]
+   #multi_dim = {i : j[mask] for i, j in multi_dim.iteritems()}   
    if 'trk_dxy' in data_dict and 'trk_dxy_err' in data_dict:
       sip = data.trk_dxy/data.trk_dxy_err
       sip[np.isinf(sip)] = 0
