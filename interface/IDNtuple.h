@@ -26,6 +26,8 @@ namespace reco { typedef edm::Ptr<Track> TrackPtr; }
 namespace reco { typedef edm::Ptr<GsfTrack> GsfTrackPtr; }
 namespace reco { typedef edm::Ptr<GsfElectron> GsfElectronPtr; }
 
+constexpr size_t ARRAY_SIZE = 20;
+
 // Small class to provide fillers and hide tree I/O
 class IDNtuple {
 
@@ -105,6 +107,28 @@ class IDNtuple {
 		 float ele_conv_vtx_fit_prob,
 		 const double rho,
 		 bool is_egamma = false );
+  
+  void fill_image( const float gsf_ref_eta, const float gsf_ref_phi,
+		   const float gsf_ref_p, const float gsf_ref_pt,
+		   const float gen_eta_inner, const float gen_phi_inner,
+		   const float gen_eta_proj, const float gen_phi_proj,
+		   const float gen_p_inner, const float gen_pt_inner,
+		   const float gsf_eta_inner, const float gsf_phi_inner, 
+		   const float gsf_p_inner, const float gsf_pt_inner,
+		   const int gsf_charge,
+		   const float gsf_eta_proj, const float gsf_phi_proj, 
+		   const float gsf_p_proj,
+		   const float gsf_eta_atcalo, const float gsf_phi_atcalo, 
+		   const float gsf_p_atcalo,
+		   const std::vector<float>& clu_eta,
+		   const std::vector<float>& clu_phi,
+		   const std::vector<float>& clu_e,
+		   const std::vector<float>& pf_eta,
+		   const std::vector<float>& pf_phi,
+		   const std::vector<float>& pf_p,
+		   const std::vector<int>& pf_pdgid,
+		   const std::vector<int>& pf_matched,
+		   const std::vector<int>& pf_lost );
   
  public:
 
@@ -291,7 +315,51 @@ class IDNtuple {
   float eid_shape_full5x5_circularity_ = -666; //@@ IDNtuple::NEG_FLOAT;
 
   float eid_brem_frac_ = -666; //@@ IDNtuple::NEG_FLOAT;
-  
+
+  float image_gsf_ref_eta_ = IDNtuple::NEG_FLOAT*10.;
+  float image_gsf_ref_phi_ = IDNtuple::NEG_FLOAT*10.;
+  float image_gsf_ref_p_ = IDNtuple::NEG_FLOAT*10.;
+  float image_gsf_ref_pt_ = IDNtuple::NEG_FLOAT*10.;
+
+  float image_gen_eta_inner_ = IDNtuple::NEG_FLOAT*10.;
+  float image_gen_phi_inner_ = IDNtuple::NEG_FLOAT*10.;
+  float image_gen_p_inner_ = IDNtuple::NEG_FLOAT*10.;
+  float image_gen_pt_inner_ = IDNtuple::NEG_FLOAT*10.;
+
+  float image_gsf_eta_inner_ = IDNtuple::NEG_FLOAT*10.;
+  float image_gsf_phi_inner_ = IDNtuple::NEG_FLOAT*10.;
+  float image_gsf_p_inner_ = IDNtuple::NEG_FLOAT*10.;
+  float image_gsf_pt_inner_ = IDNtuple::NEG_FLOAT*10.;
+  int image_gsf_charge_ = IDNtuple::NEG_INT*10;
+
+  float image_gsf_eta_proj_ = IDNtuple::NEG_FLOAT*10.;
+  float image_gsf_phi_proj_ = IDNtuple::NEG_FLOAT*10.;
+  float image_gsf_p_proj_ = IDNtuple::NEG_FLOAT*10.;
+
+  float image_gsf_eta_atcalo_ = IDNtuple::NEG_FLOAT*10.;
+  float image_gsf_phi_atcalo_ = IDNtuple::NEG_FLOAT*10.;
+  float image_gsf_p_atcalo_ = IDNtuple::NEG_FLOAT*10.;
+
+  unsigned int image_clu_n_ = 0;
+  //std::vector<float> image_clu_eta_ = {};
+  //std::vector<float> image_clu_phi_ = {};
+  //std::vector<float> image_clu_e_ = {};
+  float image_clu_eta_[ARRAY_SIZE] = {};
+  float image_clu_phi_[ARRAY_SIZE] = {};
+  float image_clu_e_[ARRAY_SIZE] = {};
+
+  unsigned int image_pf_n_ = 0;
+  //std::vector<float> image_pf_eta_ = {};
+  //std::vector<float> image_pf_phi_ = {};
+  //std::vector<float> image_pf_p_ = {};
+  //std::vector<int> image_pf_pdgid_ = {};
+  float image_pf_eta_[ARRAY_SIZE] = {};
+  float image_pf_phi_[ARRAY_SIZE] = {};
+  float image_pf_p_[ARRAY_SIZE] = {};
+  int image_pf_pdgid_[ARRAY_SIZE] = {};
+  int image_pf_matched_[ARRAY_SIZE] = {};
+  int image_pf_lost_[ARRAY_SIZE] = {};
+
 };
 
 #endif // LowPtElectrons_LowPtElectrons_IDNtuple

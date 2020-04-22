@@ -23,6 +23,10 @@
 #include "DataFormats/HepMCCandidate/interface/GenParticle.h"
 #include "DataFormats/HepMCCandidate/interface/GenParticleFwd.h"
 #include "DataFormats/Math/interface/deltaR.h"
+#include "DataFormats/Math/interface/deltaPhi.h"
+#include "DataFormats/Math/interface/Vector.h"
+#include "DataFormats/Math/interface/Vector3D.h"
+#include "DataFormats/Math/interface/Point3D.h"
 #include "DataFormats/ParticleFlowReco/interface/PreId.h"
 #include "DataFormats/ParticleFlowReco/interface/PreIdFwd.h"
 #include "DataFormats/PatCandidates/interface/PackedCandidate.h"
@@ -31,6 +35,7 @@
 #include "DataFormats/TrajectorySeed/interface/TrajectorySeed.h"
 #include "DataFormats/TrackReco/interface/Track.h"
 #include "DataFormats/TrackReco/interface/TrackFwd.h"
+#include "FastSimulation/BaseParticlePropagator/interface/BaseParticlePropagator.h"
 #include "FWCore/Framework/interface/EDAnalyzer.h"
 #include "FWCore/Framework/interface/ESHandle.h"
 #include "FWCore/Framework/interface/Frameworkfwd.h"
@@ -172,6 +177,47 @@ public:
   bool ele_match_ = false;
   float id_ = IDNtuple::NEG_FLOAT;
 
+  // Inner GSF track P4: defines reference coords in eta-phi space 
+  float gsf_ref_eta_ = IDNtuple::NEG_FLOAT;
+  float gsf_ref_phi_ = IDNtuple::NEG_FLOAT;
+  float gsf_ref_p_   = IDNtuple::NEG_FLOAT;
+  float gsf_ref_pt_  = IDNtuple::NEG_FLOAT;
+
+  // GEN channel (2 points: inner P4 + inner P4 extrapolated to ECAL)
+  float gen_eta_inner_ = IDNtuple::NEG_FLOAT;
+  float gen_phi_inner_ = IDNtuple::NEG_FLOAT;
+  float gen_eta_proj_ = IDNtuple::NEG_FLOAT;
+  float gen_phi_proj_ = IDNtuple::NEG_FLOAT;
+  float gen_p_ = IDNtuple::NEG_FLOAT;
+  float gen_pt_ = IDNtuple::NEG_FLOAT;
+
+  // GSF channel (3 points: inner P4 + inner P4 extrapolated to ECAL + outer P4 at ECAL surface)
+  float gsf_eta_inner_ = IDNtuple::NEG_FLOAT;
+  float gsf_phi_inner_ = IDNtuple::NEG_FLOAT;
+  float gsf_p_inner_ = IDNtuple::NEG_FLOAT;
+  float gsf_pt_inner_ = IDNtuple::NEG_FLOAT;
+
+  float gsf_eta_proj_ = IDNtuple::NEG_FLOAT;
+  float gsf_phi_proj_ = IDNtuple::NEG_FLOAT;
+  float gsf_p_proj_ = IDNtuple::NEG_FLOAT;
+
+  float gsf_eta_atcalo_ = IDNtuple::NEG_FLOAT;
+  float gsf_phi_atcalo_ = IDNtuple::NEG_FLOAT;
+  float gsf_p_atcalo_ = IDNtuple::NEG_FLOAT;
+
+  // Cluster constituents of SC
+  std::vector<float> clu_eta_;
+  std::vector<float> clu_phi_;
+  std::vector<float> clu_e_;
+
+  // PF candidates
+  std::vector<float> pf_eta_;
+  std::vector<float> pf_phi_;
+  std::vector<float> pf_p_;
+  std::vector<int> pf_pdgid_;
+  std::vector<int> pf_matched_;
+  std::vector<int> pf_lost_;
+
 };
 
 template <typename T> 
@@ -253,7 +299,7 @@ class IDNtuplizer : public edm::EDAnalyzer {
 public:
   
   explicit IDNtuplizer( const edm::ParameterSet& );
-  ~IDNtuplizer() {}
+  ~IDNtuplizer();
   
   virtual void beginRun( const edm::Run&, const edm::EventSetup& ) override;
   virtual void analyze( const edm::Event&, const edm::EventSetup& ) override;
@@ -386,6 +432,27 @@ public:
 
   // Check is Ptr is valid and available
   template <typename T> bool validPtr( edm::Ptr<T>& ptr );
+
+
+  // Electron "images"
+  typedef math::XYZVector Vector;
+  typedef math::XYZPoint Point;
+  void extrapolate_track( const Vector& mom, const Point& pos, int charge,
+			  int& reach_ECAL, GlobalPoint& pos_ECAL,
+			  int& reach_HCAL, GlobalPoint& pos_HCAL,
+			  int& reach_EXIT, GlobalPoint& pos_EXIT );
+  //void debug_image( const edm::Event& event, const edm::EventSetup& setup );
+  void build_image( const edm::Event& event, const edm::EventSetup& setup );
+
+  inline float adj_eta( float eta, float ref_eta, int charge = 0 ) { 
+    //return eta-ref_eta; 
+    return eta; //@@ DON'T MODIFY ETA !!!
+  }
+  inline float adj_phi( float phi, float ref_phi, int charge = 0 ) { 
+    //return charge == 0 ? reco::deltaPhi(phi,ref_phi) : float(charge)*reco::deltaPhi(phi,ref_phi); 
+    //return charge == 0 ? phi : -1.*float(charge)*phi; //@@ DON'T SUBTRACT REF_PHI !!!
+    return phi; //@@ DON'T MODIFY PHI !!!
+  }
   
 private:
   
@@ -417,13 +484,16 @@ private:
 
   const edm::EDGetTokenT< edm::View<reco::Track> > ctfTracks_; // AOD
   edm::Handle< edm::View<reco::Track> > ctfTracksH_;
-
+ 
   const edm::EDGetTokenT< edm::View<pat::PackedCandidate> > packedCands_; // MINIAOD
   edm::Handle< edm::View<pat::PackedCandidate> > packedCandsH_;
-
+ 
   const edm::EDGetTokenT< edm::View<pat::PackedCandidate> > lostTracks_; // MINIAOD
   edm::Handle< edm::View<pat::PackedCandidate> > lostTracksH_;
 
+  const edm::EDGetTokenT< edm::Association<pat::PackedCandidateCollection> > pfToPackedCands_; // MINIAOD
+  edm::Handle< edm::Association<pat::PackedCandidateCollection> > pfToPackedCandsH_;
+  
   const edm::EDGetTokenT<EcalRecHitCollection> ebRecHits_;
   edm::Handle<EcalRecHitCollection> ebRecHitsH_;
 
@@ -505,7 +575,19 @@ private:
   std::vector<reco::TrackPtr> tracks_;
   PdgIds pdgids_;
 
+  std::vector<int> pf_pdgids_;
+
 };
+
+////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////
+//
+IDNtuplizer::~IDNtuplizer() {
+  std::cout << "pf_pdgids: ";
+  for ( auto id : pf_pdgids_ ) { std::cout << id << " "; }
+  std::cout << std::endl;
+}
 
 ////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////
@@ -536,6 +618,8 @@ IDNtuplizer::IDNtuplizer( const edm::ParameterSet& cfg )
     packedCandsH_(),
     lostTracks_(consumes< edm::View<pat::PackedCandidate> >(cfg.getParameter<edm::InputTag>("lostTracks"))),
     lostTracksH_(),
+    pfToPackedCands_(consumes<edm::Association<pat::PackedCandidateCollection> >(cfg.getParameter<edm::InputTag>("packedCands"))),
+    pfToPackedCandsH_(),
     ebRecHits_(consumes<EcalRecHitCollection>(cfg.getParameter<edm::InputTag>("ebRecHits"))),
     ebRecHitsH_(),
     eeRecHits_(consumes<EcalRecHitCollection>(cfg.getParameter<edm::InputTag>("eeRecHits"))),
@@ -661,6 +745,10 @@ void IDNtuplizer::analyze( const edm::Event& event, const edm::EventSetup& setup
   // Populate ElectronChain objects using PF electrons
   pfElectrons( signal_electrons, sig2trk, other_trk, gsf2pfgsf );
 
+  // Debug info for electron "image"
+  //debug_image(event,setup);
+  build_image(event,setup);
+  
   // Fill ntuple
   fill(event,setup);
   
@@ -734,6 +822,7 @@ void IDNtuplizer::readCollections( const edm::Event& event, const edm::EventSetu
   } else if ( isAOD_ == 0 ) { 
     event.getByToken(packedCands_,packedCandsH_);
     event.getByToken(lostTracks_,lostTracksH_);
+    event.getByToken(pfToPackedCands_,pfToPackedCandsH_);
   }
 
   // RecHits and SuperClusters
@@ -1716,11 +1805,27 @@ void IDNtuplizer::fill( const edm::Event& event,
       //}
       
       ntuple_.fill_ele( chain.ele_, mva_value, mva_id, conv_vtx_fit_prob, *rhoH_, chain.is_egamma_ );
-
+      
       //ntuple_.fill_supercluster(chain.ele_);
-
+      
     }
     
+    if ( validPtr(chain.gsf_) ) {
+      ntuple_.fill_image( chain.gsf_ref_eta_, chain.gsf_ref_phi_, // Ref 
+			  chain.gsf_ref_p_, chain.gsf_ref_pt_, // Ref
+			  chain.gen_eta_inner_, chain.gen_phi_inner_, // GEN
+			  chain.gen_eta_proj_, chain.gen_phi_proj_, // GEN
+			  chain.gen_p_, chain.gen_pt_, // GEN
+			  chain.gsf_eta_inner_, chain.gsf_phi_inner_, // GSF
+			  chain.gsf_p_inner_, chain.gsf_pt_inner_, chain.gsf_->charge(), // GSF
+			  chain.gsf_eta_proj_, chain.gsf_phi_proj_, chain.gsf_p_proj_, // GSF
+			  chain.gsf_eta_atcalo_, chain.gsf_phi_atcalo_, chain.gsf_p_atcalo_, // GSF
+			  chain.clu_eta_, chain.clu_phi_, chain.clu_e_, // Cluster
+			  chain.pf_eta_, chain.pf_phi_, chain.pf_p_, // PFCands
+			  chain.pf_pdgid_, chain.pf_matched_, chain.pf_lost_ // PFCands
+			  );
+    }
+
     tree_->Fill(); 
     
   }
@@ -2433,6 +2538,402 @@ bool IDNtuplizer::filterCand( edm::Ptr<reco::GsfTrack>& gsf ) {
 template <typename T> 
 bool IDNtuplizer::validPtr( edm::Ptr<T>& ptr ) {
   return ( ptr.isNonnull() && ptr.isAvailable() );
+}
+
+////////////////////////////////////////////////////////////////////////////////
+//
+void IDNtuplizer::extrapolate_track( const Vector& mom, const Point& pos, int charge,
+				     int& reach_ECAL, GlobalPoint& pos_ECAL,
+				     int& reach_HCAL, GlobalPoint& pos_HCAL,
+				     int& reach_EXIT, GlobalPoint& pos_EXIT ) {
+  
+  // Propagate 'electron' to ECAL surface
+  double energy = mom.R() + 0.000511*0.000511; // electron mass
+  BaseParticlePropagator particle( RawParticle(XYZTLorentzVector( mom.x(), mom.y(), mom.z(), energy ),
+					       XYZTLorentzVector( pos.x(), pos.y(), pos.z(), 0. )),
+				   0., 0., 3.8 ); // fixed Z value for B-field
+  particle.setCharge(charge);
+
+  // ECAL: true = first half loop; 0 = does not reach ECAL; 1 = yes, barrel; 2 = yes, endcaps
+  particle.propagateToEcalEntrance(true);
+  reach_ECAL = particle.getSuccess();
+  pos_ECAL = GlobalPoint( particle.x(),  particle.y(), particle.z() );
+
+  // ECAL: true = first half loop; 0 = does not reach ECAL; 1 = yes, barrel; 2 = yes, endcaps 
+  particle.propagateToHcalEntrance(true);
+  reach_HCAL = particle.getSuccess(); 
+  pos_HCAL = GlobalPoint( particle.x(),  particle.y(), particle.z() );
+
+  // ECAL: true = first half loop; 0 = does not reach ECAL; 1 = yes, barrel; 2 = yes, endcaps 
+  particle.propagateToHcalExit(true);
+  reach_EXIT = particle.getSuccess(); 
+  pos_EXIT = GlobalPoint( particle.x(),  particle.y(), particle.z() );
+
+}
+
+////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////
+//
+void IDNtuplizer::build_image( const edm::Event& event,
+			       const edm::EventSetup& setup ) {
+
+  if ( isAOD_ == 0 ) {
+    
+    for ( auto& chain : chains_ ) {
+
+      //@@ BARREL ONLY!!!
+      if ( validPtr(chain.gsf_) ) {
+	if ( fabs( chain.gsf_->momentumMode().eta() ) > 1.47 ) { continue; } 
+      }
+      
+      // Print RECO chain 
+      std::stringstream ss;
+      ss << std::endl
+	 << "VALID:      "
+	 << std::fixed << std::setprecision(0) 
+	 << " GEN: " << std::setw(1) << validPtr(chain.sig_)
+	 << " TRK: " << std::setw(1) << validPtr(chain.trk_)
+	 << " GSF: " << std::setw(1) << validPtr(chain.gsf_)
+	 << " ELE: " << std::setw(1) << validPtr(chain.ele_);
+
+      // Reference coords in eta-phi space (using Inner GSF track P4)
+      float ref_eta = 0.;
+      float ref_phi = 0.;
+      if ( validPtr(chain.gsf_) ) {
+	chain.gsf_ref_eta_ = chain.gsf_->momentumMode().eta();
+	chain.gsf_ref_phi_ = chain.gsf_->momentumMode().phi();
+	chain.gsf_ref_p_ = sqrt(chain.gsf_->momentumMode().Mag2());
+	chain.gsf_ref_pt_ = sqrt(chain.gsf_->momentumMode().Perp2());
+	ref_eta = chain.gsf_->momentumMode().eta();
+	ref_phi = chain.gsf_->momentumMode().phi();
+      }
+      
+      // Print reference (eta,phi) position
+      ss << std::endl
+	 << "REFERENCE:  "
+	 << std::fixed << std::setprecision(2) 
+	 << " eta: " << std::setw(5) << ref_eta
+	 << " phi: " << std::setw(5) << ref_phi
+	 << "  pt: " << std::setw(5) << chain.gsf_ref_pt_
+	 << "   p: " << std::setw(5) << chain.gsf_ref_p_;
+    
+      // GSF-based eta-phi window
+      int charge = 0;
+      float window_eta_min = -5.;
+      float window_eta_max = -5.;
+      float window_eta_ext =  0.;//05;
+      float window_phi_min = -5.;
+      float window_phi_max = -5.;
+      float window_phi_ext =  0.;//05;
+      if ( validPtr(chain.gsf_) ) {
+
+	int reach_ECAL = 0; GlobalPoint pos_ECAL;
+	int reach_HCAL = 0; GlobalPoint pos_HCAL;
+	int reach_EXIT = 0; GlobalPoint pos_EXIT;
+	extrapolate_track( chain.gsf_->momentumMode(),
+			   chain.gsf_->referencePoint(), // same as deprecated vertex()
+			   chain.gsf_->charge(),
+			   reach_ECAL, pos_ECAL,
+			   reach_HCAL, pos_HCAL,
+			   reach_EXIT, pos_EXIT );
+
+	charge = chain.gsf_->charge();
+
+	// Min/max eta/phi values (w.r.t. ref) based on inner P4
+	window_eta_min = adj_eta(chain.gsf_->momentumMode().eta(),ref_eta,charge);
+	window_phi_min = adj_phi(chain.gsf_->momentumMode().phi(),ref_phi,charge);
+	window_eta_max = adj_eta(chain.gsf_->momentumMode().eta(),ref_eta,charge);
+	window_phi_max = adj_phi(chain.gsf_->momentumMode().phi(),ref_phi,charge);
+
+	// "Maximum" eta/phi values (w.r.t. ref) based on extrapolated P4
+	float tmp_eta = adj_eta(pos_ECAL.eta(),ref_eta,charge);
+	if ( tmp_eta > window_eta_max ) { window_eta_max = tmp_eta; }
+	if ( tmp_eta < window_eta_min ) { window_eta_min = tmp_eta; }
+	float tmp_phi = adj_phi(pos_ECAL.phi(),ref_phi,charge);
+	if ( tmp_phi > window_phi_max ) { window_phi_max = tmp_phi; }
+	if ( tmp_phi < window_phi_min ) { window_phi_min = tmp_phi; }
+
+	if ( validPtr(chain.ele_) ) {
+	  // Check "maximum" eta/phi values (w.r.t. ref) at the ECAL surface
+	  float tmp_eta = adj_eta(chain.ele_->trackPositionAtCalo().eta(),ref_eta,charge);
+	  if ( tmp_eta > window_eta_max ) { window_eta_max = tmp_eta; }
+	  if ( tmp_eta < window_eta_min ) { window_eta_min = tmp_eta; }
+	  float tmp_phi = adj_phi(chain.ele_->trackPositionAtCalo().phi(),ref_phi,charge);
+	  if ( tmp_phi > window_phi_max ) { window_phi_max = tmp_phi; }
+	  if ( tmp_phi < window_phi_min ) { window_phi_min = tmp_phi; }
+	} 
+
+//	// Min/max eta/phi values (w.r.t. ref) based on inner P4
+//	window_eta_min = adj_eta(chain.gsf_->momentumMode().eta(),ref_eta,charge);
+//	window_phi_min = adj_phi(chain.gsf_->momentumMode().phi(),ref_phi,charge);
+//
+//	// "Maximum" eta/phi values (w.r.t. ref) based on extrapolated P4
+//	window_eta_max = adj_eta(pos_ECAL.eta(),ref_eta,charge);
+//	window_phi_max = adj_phi(pos_ECAL.phi(),ref_phi,charge);
+//
+//	if ( validPtr(chain.ele_) ) {
+//	  // Check "maximum" eta/phi values (w.r.t. ref) at the ECAL surface
+//	  float tmp_eta_max = adj_eta(chain.ele_->trackPositionAtCalo().eta(),ref_eta,charge);
+//	  if ( tmp_eta_max > window_eta_max ) { window_eta_max = tmp_eta_max; }
+//	  float tmp_phi_max = adj_phi(chain.ele_->trackPositionAtCalo().phi(),ref_phi,charge);
+//	  if ( tmp_phi_max > window_phi_max ) { window_phi_max = tmp_phi_max; }
+//	} 
+//	
+//	// Ensure correct order for eta min/max
+//	if ( std::fabs(window_eta_min) > window_eta_max ) {
+//	  float window_eta_tmp = window_eta_min;
+//	  window_eta_min = window_eta_max;
+//	  window_eta_max = window_eta_tmp;
+//	}
+
+//	// Open up window further by the "_ext" values (0.1?)
+//	window_eta_min -= window_eta_ext;
+//	window_eta_max += window_eta_ext;
+//	window_phi_min -= window_phi_ext;
+//	window_phi_max += window_phi_ext;
+	
+	if ( validPtr(chain.ele_) ) {
+	  ss << std::endl
+	     << "MomMode:    "
+	     << std::fixed << std::setprecision(2) 
+	     << " eta: " << std::setw(5) << chain.gsf_->momentumMode().eta()
+	     << " phi: " << std::setw(5) << chain.gsf_->momentumMode().phi()
+	     << "  pt: " << std::setw(5) << sqrt(chain.gsf_->momentumMode().perp2())
+	     << " (#1 inner)"
+	     << std::endl
+	     << "posECAL:    "
+	     << std::fixed << std::setprecision(2) 
+	     << " eta: " << std::setw(5) << pos_ECAL.eta()
+	     << " phi: " << std::setw(5) << pos_ECAL.phi()
+	     << "   R: " << std::setw(6) << sqrt(pos_ECAL.perp2())
+	     << "   z: " << std::setw(6) << pos_ECAL.z()
+	     << " (#2 proj)"
+	     << std::endl
+	    //<< "posHCAL:   "
+	    //<< std::fixed << std::setprecision(2) 
+	    //<< "  eta: " << std::setw(5) << pos_HCAL.eta()
+	    //<< "  phi: " << std::setw(5) << pos_HCAL.phi()
+	    //<< "  R: " << std::setw(6) << sqrt(pos_HCAL.perp2())
+	    //<< "  z: " << std::setw(6) << pos_HCAL.z()
+	    //<< std::endl
+	    //<< "posEXIT:   "
+	    //<< std::fixed << std::setprecision(2) 
+	    //<< "  eta: " << std::setw(5) << pos_EXIT.eta()
+	    //<< "  phi: " << std::setw(5) << pos_EXIT.phi()
+	    //<< "  R: " << std::setw(6) << sqrt(pos_EXIT.perp2())
+	    //<< "  z: " << std::setw(6) << pos_EXIT.z()
+	    //<< std::endl
+	     << "PosAtCalo:  "
+	     << std::fixed << std::setprecision(2) 
+	     << " eta: " << std::setw(5) << chain.ele_->trackPositionAtCalo().eta()
+	     << " phi: " << std::setw(5) << chain.ele_->trackPositionAtCalo().phi()
+	     << "   R: " << std::setw(6) << sqrt(chain.ele_->trackPositionAtCalo().perp2())
+	     << "   z: " << std::setw(6) << chain.ele_->trackPositionAtCalo().z()
+	     << " (#3 atcalo)"
+	     << std::endl
+	     << "MomOut:     "
+	     << std::fixed << std::setprecision(2) 
+	     << " eta: " << std::setw(5) << chain.ele_->trackMomentumOut().eta()
+	     << " phi: " << std::setw(5) << chain.ele_->trackMomentumOut().phi()
+	     << "  pt: " << std::setw(5) << sqrt(chain.ele_->trackMomentumOut().perp2())
+	     << " (atcalo)"
+	     << std::endl
+	     << "MomAtCalo:  "
+	     << std::fixed << std::setprecision(2) 
+	     << " eta: " << std::setw(5) << chain.ele_->trackMomentumAtCalo().eta()
+	     << " phi: " << std::setw(5) << chain.ele_->trackMomentumAtCalo().phi()
+	     << "  pt: " << std::setw(5) << sqrt(chain.ele_->trackMomentumAtCalo().perp2())
+	     << " (not used)"
+	    ;//<< std::endl;
+	}
+	
+      }
+
+      // Print eta-phi window
+      ss << std::endl
+	 << "WINDOW eta: "
+	 << std::fixed << std::setprecision(2) 
+	 << " min: " << std::setw(5) << window_eta_min
+	 << " max: " << std::setw(5) << window_eta_max
+	 << " del: " << std::setw(5) << window_eta_max - window_eta_min
+	 << " ext: " << std::setw(5) << window_eta_ext
+	 << std::fixed << std::setprecision(0) 
+	 << " charge: " << std::setw(2) << charge << std::endl
+	 << "WINDOW phi: "
+	 << std::fixed << std::setprecision(2) 
+	 << " min: " << std::setw(5) << window_phi_min
+	 << " max: " << std::setw(5) << window_phi_max
+	 << " del: " << std::setw(5) << reco::deltaPhi(window_phi_max,window_phi_min)
+	//<< " del: " << std::setw(5) << window_phi_max - window_phi_min
+	 << " ext: " << std::setw(5) << window_phi_ext;
+      //std::cout << ss.str() << std::endl;
+
+//      if ( validPtr(chain.gsf_) ) {
+//	std::cout << std::endl
+//		  << "MISC:"
+//		  << std::fixed << std::setprecision(2) 
+//		  << " ref_eta: " << std::setw(5) << ref_eta
+//		  << " ref_phi: " << std::setw(5) << ref_phi
+//		  << " pt: " << std::setw(5) << chain.gsf_inner_pt_
+//		  << " d_eta: " << std::setw(5) << window_eta_max - window_eta_min
+//		  << " d_phi: " << std::setw(5) << window_phi_max - window_phi_min
+//		  << std::fixed << std::setprecision(0) 
+//		  << " charge: " << std::setw(2) << chain.gsf_->charge();
+//      }
+
+      // GEN channel (only useful when drawing images!)
+      if ( chain.is_mc_ && validPtr(chain.sig_) ) {
+	int reach_ECAL = 0; GlobalPoint pos_ECAL;
+	int reach_HCAL = 0; GlobalPoint pos_HCAL;
+	int reach_EXIT = 0; GlobalPoint pos_EXIT;
+	extrapolate_track( chain.sig_->momentum(),
+			   chain.sig_->vertex(),
+			   chain.sig_->charge(),
+			   reach_ECAL, pos_ECAL,
+			   reach_HCAL, pos_HCAL,
+			   reach_EXIT, pos_EXIT );
+	// 1st point: inner P4 (i.e. as if extrapolated to ECAL surface as a neutral)
+	chain.gen_eta_inner_ = adj_eta(chain.sig_->momentum().eta(),ref_eta,chain.sig_->charge());
+	chain.gen_phi_inner_ = adj_phi(chain.sig_->momentum().phi(),ref_phi,chain.sig_->charge());
+	// 2nd point: inner P4 extrapolated to ECAL surface (i.e. as if charged)
+	chain.gen_eta_proj_ = adj_eta(pos_ECAL.eta(),ref_eta,chain.sig_->charge());
+	chain.gen_phi_proj_ = adj_phi(pos_ECAL.phi(),ref_phi,chain.sig_->charge());
+	// Momentum
+	chain.gen_p_ = sqrt(chain.sig_->momentum().Mag2());
+	chain.gen_pt_ = sqrt(chain.sig_->momentum().Perp2());
+      }
+      
+      // GSF channel
+      if ( validPtr(chain.gsf_) ) {
+
+	int charge = chain.gsf_->charge();
+	int reach_ECAL = 0; GlobalPoint pos_ECAL;
+	int reach_HCAL = 0; GlobalPoint pos_HCAL;
+	int reach_EXIT = 0; GlobalPoint pos_EXIT;
+	extrapolate_track( chain.gsf_->momentumMode(),
+			   chain.gsf_->referencePoint(), // same as deprecated vertex()
+			   chain.gsf_->charge(),
+			   reach_ECAL, pos_ECAL,
+			   reach_HCAL, pos_HCAL,
+			   reach_EXIT, pos_EXIT );
+	// 1st point: inner P4 (i.e. as if extrapolated to ECAL surface as a neutral)
+	chain.gsf_eta_inner_ = adj_eta(chain.gsf_->momentumMode().eta(),ref_eta,charge);
+	chain.gsf_phi_inner_ = adj_phi(chain.gsf_->momentumMode().phi(),ref_phi,charge);
+	chain.gsf_p_inner_ = sqrt(chain.gsf_->momentumMode().Mag2());
+	chain.gsf_pt_inner_ = sqrt(chain.gsf_->momentumMode().Perp2());
+	// 2nd point: inner P4 extrapolated to ECAL surface (i.e. as if charged)
+	chain.gsf_eta_proj_ = adj_eta(pos_ECAL.eta(),ref_eta,charge);
+	chain.gsf_phi_proj_ = adj_phi(pos_ECAL.phi(),ref_phi,charge);
+	chain.gsf_p_proj_ = sqrt(chain.gsf_->momentumMode().Mag2());
+	// 3rd point: outer P4 at ECAL surface (actual entry point)
+	if ( validPtr(chain.ele_) ) {
+	  chain.gsf_eta_atcalo_ = adj_eta(chain.ele_->trackPositionAtCalo().eta(),ref_eta,charge);
+	  chain.gsf_phi_atcalo_ = adj_phi(chain.ele_->trackPositionAtCalo().phi(),ref_phi,charge);
+	  chain.gsf_p_atcalo_ = sqrt(chain.ele_->trackMomentumOut().Mag2());
+	}
+      }
+      
+//      ss << std::endl
+//	 << "GSFTRACKS: sizes:"
+//	 << std::fixed << std::setprecision(0) 
+//	 << " gsf_eta: " << std::setw(2) << chain.gsf_eta_.size()
+//	 << " gsf_phi: " << std::setw(2) << chain.gsf_phi_.size()
+//	 << " gsf_p: " << std::setw(2) << chain.gsf_p_.size();
+      
+      // TRK channel???
+      
+      // Clusters channel
+      ss << std::endl
+	 << "#CLUSTERS:"
+	 << std::fixed << std::setprecision(0) 
+	 << "   eta: " << std::setw(2) << chain.clu_eta_.size()
+	 << "    phi: " << std::setw(2) << chain.clu_phi_.size()
+	 << "      e: " << std::setw(2) << chain.clu_e_.size();
+      if ( validPtr(chain.ele_) ) {
+	const reco::SuperClusterRef& sc = chain.ele_->superCluster();
+	if ( sc.isNonnull() ) { 
+	  int charge = chain.gsf_->charge();
+	  for ( auto& cluster : sc->clusters() ) {
+	    chain.clu_eta_.push_back(adj_eta(cluster->eta(),ref_eta,charge));
+	    chain.clu_phi_.push_back(adj_phi(cluster->phi(),ref_phi,charge));
+	    chain.clu_e_.push_back(cluster->correctedEnergy());
+	    ss << std::endl
+	       << " CLUSTER:   "
+	       << std::fixed << std::setprecision(2) 
+	       << " eta: " << std::setw(5) << adj_eta(cluster->eta(),ref_eta,charge)
+	       << " phi: " << std::setw(5) << adj_phi(cluster->phi(),ref_phi,charge)
+	       << "   e: " << std::setw(5) << cluster->correctedEnergy();
+	  }
+	}
+      }
+      
+      // PF candidates channel
+      ss << std::endl
+	 << "#PFCANDS:"
+	 << std::fixed << std::setprecision(0) 
+	 << "    eta: " << std::setw(2) << chain.pf_eta_.size()
+	 << "    phi: " << std::setw(2) << chain.pf_phi_.size()
+	 << "      p: " << std::setw(2) << chain.pf_p_.size()
+	 << " pdg: " << std::setw(2) << chain.pf_pdgid_.size()
+	 << " match: " << std::setw(2) << chain.pf_matched_.size()
+	 << " lost: " << std::setw(2) << chain.pf_lost_.size();
+      if ( validPtr(chain.gsf_) ) { 
+	edm::Ptr<pat::PackedCandidate> ele = edm::refToPtr((*packedCandLinksH_)[chain.gsf_]);
+	if ( ele.isNonnull() ) { 
+	  size_t total_size = packedCandsH_->size() + lostTracksH_->size();
+	  for ( size_t idx = 0; idx < total_size; ++idx ) {
+	    edm::Ptr<pat::PackedCandidate> cand;
+	    if ( idx < packedCandsH_->size() ) { 
+	      cand = edm::Ptr<pat::PackedCandidate>(packedCandsH_,idx);
+	    } else {
+	      cand = edm::Ptr<pat::PackedCandidate>(lostTracksH_,idx-packedCandsH_->size());
+	    }
+	    if ( cand.isNull() ) { continue; }
+	    //if ( cand == ele ) { continue; }
+	    int matched = (cand==ele) ? 1 : 0;
+	    int charge = cand->charge();
+	    float adjusted_eta = adj_eta(cand->eta(),ref_eta,charge);
+	    float adjusted_phi = adj_phi(cand->phi(),ref_phi,charge);
+	    if ( adjusted_eta < window_eta_min || adjusted_eta > window_eta_max || 
+		 adjusted_phi < window_phi_min || adjusted_phi > window_phi_max ) { continue; }
+	    chain.pf_eta_.push_back(adjusted_eta);
+	    chain.pf_phi_.push_back(adjusted_phi);
+	    chain.pf_p_.push_back(cand->p());
+	    chain.pf_pdgid_.push_back(cand->pdgId());
+	    chain.pf_matched_.push_back(matched);
+	    chain.pf_lost_.push_back( idx < packedCandsH_->size() ? 0 : 1 );
+	    //@@
+	    if ( std::find( pf_pdgids_.begin(),
+			    pf_pdgids_.end(),
+			    cand->pdgId() ) == pf_pdgids_.end() ) {
+	      pf_pdgids_.push_back(cand->pdgId());
+	    }
+
+	    ss << std::endl
+	       << " PFCAND:    "
+	       << std::fixed << std::setprecision(2) 
+	       << " eta: " << std::setw(5) << adjusted_eta
+	       << " phi: " << std::setw(5) << adjusted_phi
+	       << "  pt: " << std::setw(5) << cand->pt()
+	       << "   p: " << std::setw(5) << cand->p()
+	       << std::fixed << std::setprecision(0) 
+	       << " pdg " << std::setw(3) << cand->pdgId()
+	       << " Q: " << std::setw(3) << cand->charge()
+	       << " idx: " << std::setw(2) << idx
+	       << " match: " << std::setw(1) << matched
+	       << " lost: " << std::setw(1) << ( idx < packedCandsH_->size() ? 0 : 1 );
+	  }
+	}
+      }
+      
+      //@@@@
+      //if ( validPtr(chain.gsf_) ) { std::cout << ss.str() << std::endl; }
+
+    } // if ( isAOD_ == 0 )
+
+  } // for ( auto& chain : chains_ )
+  
 }
 
 ////////////////////////////////////////////////////////////////////////////////

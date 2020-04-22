@@ -66,8 +66,8 @@ void IDNtuple::link_tree( TTree *tree ) {
   tree->Branch("trk_dz", &trk_dz_, "trk_dz/f");
   tree->Branch("trk_dz_err", &trk_dz_err_, "trk_dz_err/f");
   
-//  tree->Branch("preid_unbiased", &preid_unbiased_, "preid_unbiased/f");
-//  tree->Branch("preid_ptbiased", &preid_ptbiased_, "preid_ptbiased/f");
+  //tree->Branch("preid_unbiased", &preid_unbiased_, "preid_unbiased/f");
+  //tree->Branch("preid_ptbiased", &preid_ptbiased_, "preid_ptbiased/f");
   tree->Branch("preid_bdtout1", &preid_unbiased_, "preid_bdtout1/f");
   tree->Branch("preid_bdtout2", &preid_ptbiased_, "preid_bdtout2/f");
 
@@ -172,7 +172,44 @@ void IDNtuple::link_tree( TTree *tree ) {
   tree->Branch("eid_shape_full5x5_circularity", &eid_shape_full5x5_circularity_, "eid_shape_full5x5_circularity/f");
 
   tree->Branch("eid_brem_frac", &eid_brem_frac_, "eid_brem_frac/f");
+
+  tree->Branch("image_gsf_ref_eta", &image_gsf_ref_eta_, "image_gsf_ref_eta/f");
+  tree->Branch("image_gsf_ref_phi", &image_gsf_ref_phi_, "image_gsf_ref_phi/f");
+  tree->Branch("image_gsf_ref_p", &image_gsf_ref_p_, "image_gsf_ref_p/f");
+  tree->Branch("image_gsf_ref_pt", &image_gsf_ref_pt_, "image_gsf_ref_pt/f");
   
+  tree->Branch("image_gen_eta_inner", &image_gen_eta_inner_, "image_gen_eta_inner/f");
+  tree->Branch("image_gen_phi", &image_gen_phi_inner_, "image_gen_phi_inner/f");
+  tree->Branch("image_gen_p_inner", &image_gen_p_inner_, "image_gen_p_inner/f");
+  tree->Branch("image_gen_pt_inner", &image_gen_pt_inner_, "image_gen_pt_inner/f");
+
+  tree->Branch("image_gsf_eta_inner", &image_gsf_eta_inner_, "image_gsf_eta_inner/f");
+  tree->Branch("image_gsf_phi_inner", &image_gsf_phi_inner_, "image_gsf_phi_inner/f");
+  tree->Branch("image_gsf_p_inner", &image_gsf_p_inner_, "image_gsf_p_inner/f");
+  tree->Branch("image_gsf_pt_inner", &image_gsf_pt_inner_, "image_gsf_pt_inner/f");
+  tree->Branch("image_gsf_charge", &image_gsf_charge_, "image_gsf_charge/I");
+
+  tree->Branch("image_gsf_eta_proj", &image_gsf_eta_proj_, "image_gsf_eta_proj/f");
+  tree->Branch("image_gsf_phi_proj", &image_gsf_phi_proj_, "image_gsf_phi_proj/f");
+  tree->Branch("image_gsf_p_proj", &image_gsf_p_proj_, "image_gsf_p_proj/f");
+
+  tree->Branch("image_gsf_eta_atcalo", &image_gsf_eta_atcalo_, "image_gsf_eta_atcalo/f");
+  tree->Branch("image_gsf_phi_atcalo", &image_gsf_phi_atcalo_, "image_gsf_phi_atcalo/f");
+  tree->Branch("image_gsf_p_atcalo", &image_gsf_p_atcalo_, "image_gsf_p_atcalo/f");
+  
+  tree->Branch("image_clu_n", &image_clu_n_, "image_clu_n/I");
+  tree->Branch("image_clu_eta", &image_clu_eta_, "image_clu_eta[image_clu_n]/f");
+  tree->Branch("image_clu_phi", &image_clu_phi_, "image_clu_phi[image_clu_n]/f");
+  tree->Branch("image_clu_e", &image_clu_e_, "image_clu_e[image_clu_n]/f");
+
+  tree->Branch("image_pf_n", &image_pf_n_, "image_pf_n/I");
+  tree->Branch("image_pf_eta", &image_pf_eta_, "image_pf_eta[image_pf_n]/f");
+  tree->Branch("image_pf_phi", &image_pf_phi_, "image_pf_phi[image_pf_n]/f");
+  tree->Branch("image_pf_p", &image_pf_p_, "image_pf_p[image_pf_n]/f");
+  tree->Branch("image_pf_pdgid", &image_pf_pdgid_, "image_pf_pdgid[image_pf_n]/I");
+  tree->Branch("image_pf_matched", &image_pf_matched_, "image_pf_matched[image_pf_n]/I");
+  tree->Branch("image_pf_lost", &image_pf_lost_, "image_pf_lost[image_pf_n]/I");
+
 }
 
 /////////////////////////////////////////////////////////////////////////////////
@@ -497,5 +534,82 @@ void IDNtuple::fill_ele( const reco::GsfElectronPtr ele,
   eid_match_seed_dEta_ = vfeatures[idx++];
   eid_sc_E_ = vfeatures[idx++];
   eid_trk_p_ = vfeatures[idx++];
+
+}
+
+
+/////////////////////////////////////////////////////////////////////////////////
+//
+void IDNtuple::fill_image( const float gsf_ref_eta, const float gsf_ref_phi,
+			   const float gsf_ref_p, const float gsf_ref_pt,
+			   const float gen_eta_inner, const float gen_phi_inner,
+			   const float gen_eta_proj, const float gen_phi_proj,
+			   const float gen_p_inner, const float gen_pt_inner,
+			   const float gsf_eta_inner, const float gsf_phi_inner, 
+			   const float gsf_p_inner, const float gsf_pt_inner,
+			   const int gsf_charge,
+			   const float gsf_eta_proj, const float gsf_phi_proj, 
+			   const float gsf_p_proj,
+			   const float gsf_eta_atcalo, const float gsf_phi_atcalo, 
+			   const float gsf_p_atcalo,
+			   const std::vector<float>& clu_eta,
+			   const std::vector<float>& clu_phi,
+			   const std::vector<float>& clu_e,
+			   const std::vector<float>& pf_eta,
+			   const std::vector<float>& pf_phi,
+			   const std::vector<float>& pf_p,
+			   const std::vector<int>& pf_pdgid,
+			   const std::vector<int>& pf_matched,
+			   const std::vector<int>& pf_lost ) {
+  if ( clu_eta.size() != clu_phi.size() ||
+       clu_eta.size() != clu_e.size() ||
+       pf_eta.size() != pf_phi.size() ||
+       pf_eta.size() != pf_p.size() ||
+       pf_eta.size() != pf_pdgid.size() ||
+       pf_eta.size() != pf_matched.size() ||
+       pf_eta.size() != pf_lost.size() ) { 
+    throw std::runtime_error("Inconsistent vector sizes!"); 
+  }
+  
+  image_gsf_ref_eta_  = gsf_ref_eta;
+  image_gsf_ref_phi_  = gsf_ref_phi;
+  image_gsf_ref_p_  = gsf_ref_p;
+  image_gsf_ref_pt_ = gsf_ref_pt;
+
+  image_gen_eta_inner_ = gen_eta_inner;
+  image_gen_phi_inner_ = gen_phi_inner;
+  image_gen_p_inner_ = gen_p_inner;
+  image_gen_pt_inner_ = gen_pt_inner;
+
+  image_gsf_eta_inner_ = gsf_eta_inner;
+  image_gsf_phi_inner_ = gsf_phi_inner;
+  image_gsf_p_inner_ = gsf_p_inner;
+  image_gsf_pt_inner_ = gsf_pt_inner;
+  image_gsf_charge_ = gsf_charge;
+
+  image_gsf_eta_proj_ = gsf_eta_proj;
+  image_gsf_phi_proj_ = gsf_phi_proj;
+  image_gsf_p_proj_ = gsf_p_proj;
+
+  image_gsf_eta_atcalo_ = gsf_eta_atcalo;
+  image_gsf_phi_atcalo_ = gsf_phi_atcalo;
+  image_gsf_p_atcalo_ = gsf_p_atcalo;
+
+  image_clu_n_ = clu_eta.size() > ARRAY_SIZE ? ARRAY_SIZE : clu_eta.size();
+  for ( size_t i = 0; i < image_clu_n_; ++i )  { 
+    image_clu_eta_[i] = clu_eta[i];
+    image_clu_phi_[i] = clu_phi[i];
+    image_clu_e_[i] = clu_e[i];
+  }
+
+  image_pf_n_ = pf_eta.size() > ARRAY_SIZE ? ARRAY_SIZE : pf_eta.size();
+  for ( size_t i = 0; i < image_pf_n_; ++i )  { 
+    image_pf_eta_[i] = pf_eta[i];
+    image_pf_phi_[i] = pf_phi[i];
+    image_pf_p_[i] = pf_p[i];
+    image_pf_pdgid_[i] = pf_pdgid[i];
+    image_pf_matched_[i] = pf_matched[i];
+    image_pf_lost_[i] = pf_lost[i];
+  }
 
 }
