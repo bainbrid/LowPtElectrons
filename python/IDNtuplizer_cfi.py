@@ -6,7 +6,7 @@ ntuplizer = cms.EDAnalyzer(
     checkFromB = cms.bool(True),
     drMax = cms.double(0.1),
     drThreshold = cms.double(0.02),
-    prescale = cms.double(0.1),
+    prescale = cms.double(-1.), # zero: no prescale, +ve: fractional prescale, -ve: (int) number of fakes/event
     minTrackPt = cms.double(0.5),
     # Generic collections
     rho = cms.InputTag('fixedGridRhoFastjetAll'),

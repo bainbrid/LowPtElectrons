@@ -46,6 +46,7 @@
 #include <math.h>
 #include <boost/core/demangle.hpp>
 #include <algorithm>
+#include <random>
 
 namespace reco { typedef edm::Ref<CaloClusterCollection> CaloClusterRef; }
 namespace reco { typedef edm::Ptr<GenParticle> GenParticlePtr; }
@@ -419,10 +420,10 @@ private:
 
   const edm::EDGetTokenT< edm::View<pat::PackedCandidate> > packedCands_; // MINIAOD
   edm::Handle< edm::View<pat::PackedCandidate> > packedCandsH_;
-  
+
   const edm::EDGetTokenT< edm::View<pat::PackedCandidate> > lostTracks_; // MINIAOD
   edm::Handle< edm::View<pat::PackedCandidate> > lostTracksH_;
-  
+
   const edm::EDGetTokenT<EcalRecHitCollection> ebRecHits_;
   edm::Handle<EcalRecHitCollection> ebRecHitsH_;
 
@@ -659,7 +660,7 @@ void IDNtuplizer::analyze( const edm::Event& event, const edm::EventSetup& setup
 
   // Populate ElectronChain objects using PF electrons
   pfElectrons( signal_electrons, sig2trk, other_trk, gsf2pfgsf );
-  
+
   // Fill ntuple
   fill(event,setup);
   
@@ -1508,11 +1509,35 @@ void IDNtuplizer::pfElectrons_fakes( std::vector<SigToTrkDR2>& other_trk,
     
   } // for ( auto iter : other_trk )
 
+  //@@ If prescale_ is negative, generate random indices to select an exact number of tracks per event
+  using value_type = unsigned int;
+  std::vector<value_type> random_gsf;
+  if ( prescale_ < -1.e-6 ) { 
+    // Cast negative prescale float to an unsigned int 'size'
+    unsigned int size = static_cast<value_type>(-1.*prescale_);
+    if ( size == 0 ) { size++; } // Ensure size >= 1
+    // Initialise random_gsf with all indices, shuffle, then truncate to give just 'size' elements
+    random_gsf.reserve(gsf2pfgsf.size()); 
+    for ( unsigned int i = 0; i < gsf2pfgsf.size(); ++i ) { random_gsf.push_back(i); }
+    unsigned seed = std::chrono::system_clock::now().time_since_epoch().count();
+    std::shuffle( random_gsf.begin(), random_gsf.end(), std::default_random_engine(seed) );
+    random_gsf.resize(size);
+  }
+
   // Iterate through unmatched PF GSF tracks and assign surrogate track
+  unsigned int igsf = 0;
   for ( auto iter : gsf2pfgsf ) {
-    
-    // If set, apply prescale to select a random subset of PF GSF tracks
-    if ( prescale_ > 0. && ( gRandom->Rndm() > prescale_ ) ) { continue; }
+    ++igsf;
+
+    if ( prescale_ < -1.e-6 ) { 
+      if ( std::find(random_gsf.begin(), random_gsf.end(), igsf-1) == random_gsf.end() ) { 
+	//@@ If index not found in random_gsf, then continue
+	continue; 
+      }
+    } else if ( prescale_ > 1.e-6 && ( gRandom->Rndm() > prescale_ ) ) { 
+      // If set, apply prescale to select a random subset of PF GSF tracks
+      continue; 
+    }
 
     if ( !validPtr(iter.obj2_) || 
 	 iter.dr2_ < dr_threshold_*dr_threshold_ ) { continue; }
@@ -1601,7 +1626,7 @@ void IDNtuplizer::fill( const edm::Event& event,
     ntuple_.is_other( !chain.is_e_ );
     
     // Set background weight
-    if ( !chain.is_e_ ) { ntuple_.set_weight( prescale_ > 0. ? prescale_ : 1. ); }
+    if ( !chain.is_e_ ) { ntuple_.set_weight( std::abs(prescale_) > 1.e-6 ? prescale_ : 1. ); }
 
     // "signal" info
     if ( validPtr(chain.sig_) ) {
@@ -1692,9 +1717,9 @@ void IDNtuplizer::fill( const edm::Event& event,
       
       ntuple_.fill_ele( chain.ele_, mva_value, mva_id, conv_vtx_fit_prob, *rhoH_, chain.is_egamma_ );
 
-    }
+      //ntuple_.fill_supercluster(chain.ele_);
 
-    //ntuple_.fill_supercluster(chain.ele_);
+    }
     
     tree_->Fill(); 
     
@@ -2211,10 +2236,34 @@ void IDNtuplizer::sigToCandLinks( std::set<reco::CandidatePtr>& signal_electrons
   if ( !append ) { sig2cand.clear(); }
   if ( !append ) { other_cand.clear(); }
   
+  //@@ If prescale_ is negative, generate random indices to select an exact number of candidates per event
+  using value_type = unsigned int;
+  std::vector<value_type> random_cand;
+  if ( prescale_ < -1.e-6 ) { 
+    // Cast negative prescale float to an unsigned int 'size'
+    unsigned int size = static_cast<value_type>(-1.*prescale_);
+    if ( size == 0 ) { size++; } // Ensure size >= 1
+    // Initialise random_cand with all indices, shuffle, then truncate to give just 'size' elements
+    random_cand.reserve(candidates.size()); 
+    for ( unsigned int i = 0; i < candidates.size(); ++i ) { random_cand.push_back(i); }
+//    std::cout << "size: " << size 
+//	      << " candidates.size(): " << candidates.size()
+//	      << " random_cand.size(): " << random_cand.size();
+    unsigned seed = std::chrono::system_clock::now().time_since_epoch().count();
+    std::shuffle( random_cand.begin(), random_cand.end(), std::default_random_engine(seed) );
+    random_cand.resize(size);
+//    std::cout << " seed: " << seed
+//	      << " random_cand.size(): " << random_cand.size()
+//	      << " random_cand[0]: " << ( random_cand.size() > 0 ? random_cand[0] : -1 )
+//	      << std::endl;
+  }
+
   // DeltaR2 matches for all combinations of signal electrons and reco::Candidate
   std::vector< DeltaR2<reco::Candidate,T> > sig2cand_all;
   sig2cand_all.reserve( sig2cand_all.size() + signal_electrons.size()*candidates.size() );
+  unsigned int icand = 0;
   for ( auto cand : candidates ) {
+    ++icand;
     if ( !validPtr(cand) ) { continue; }
     if ( !filterCand<T>(cand) ) { continue; }
     for ( auto sig : signal_electrons ) {
@@ -2222,12 +2271,38 @@ void IDNtuplizer::sigToCandLinks( std::set<reco::CandidatePtr>& signal_electrons
 				 cand,
 				 deltaR2<reco::Candidate,T>(sig,cand) );
     }
+
     // Note: matched candidates are removed below
-    if ( prescale_ < 0. || ( gRandom->Rndm() < prescale_ ) ) { 
-      reco::CandidatePtr null;
-      other_cand.emplace_back( null, cand, IDNtuple::NEG_FLOAT );
+    if ( prescale_ < -1.e-6 ) {
+//      std::cout << "prescale_: " << prescale_;
+      auto iter = std::find(random_cand.begin(), random_cand.end(), icand-1);
+      if ( iter == random_cand.end() ) { 
+//	std::cout << " icand-1: " << icand-1
+//		  << " found!: " << *iter
+//		  << " index]: " << int( iter-random_cand.begin() )
+//		  << std::endl;
+	//@@ If index not found in random_gsf, then continue
+	continue; 
+      } else {
+//	std::cout << " icand-1: " << icand-1
+//		  << " Not found! Continuing... "
+//		  << std::endl;
+      }
+    } else if ( prescale_ > 1.e-6 && ( gRandom->Rndm() > prescale_ ) ) { 
+      // If set, apply prescale to select a random subset of PF GSF tracks
+      continue; 
     }
+    
+    //if ( prescale_ < 0. || ( gRandom->Rndm() < prescale_ ) ) { 
+    reco::CandidatePtr null;
+    other_cand.emplace_back( null, cand, IDNtuple::NEG_FLOAT );
+//    std::cout << " emplace_back icand-1: " << icand-1
+//	      << std::endl;
+    //}
   }
+
+//  std::cout << " other_cand.size(): " << other_cand.size()
+//	    << std::endl;
   
   // Sort by DeltaR2!!
   std::sort( sig2cand_all.begin(), 
