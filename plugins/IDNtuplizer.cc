@@ -1284,12 +1284,12 @@ void IDNtuplizer::pfElectrons_signal( std::set<reco::CandidatePtr>& signal_elect
     chain.is_egamma_ = true;
     chain.sig_ = sig;
 
-//    // Store matches between "signal electron" and tracks
-//    match<reco::Track>(sig,
-//		       sig2trk,
-//		       chain.trk_, // by ref
-//		       chain.trk_dr_,
-//		       chain.trk_match_ );
+    // Store matches between "signal electron" and tracks
+    match<reco::Track>(sig,
+		       sig2trk,
+		       chain.trk_, // by ref
+		       chain.trk_dr_,
+		       chain.trk_match_ );
     
     // Store matches between "signal electron" and *low-pT* GSF tracks
     match<reco::GsfTrack>(sig,
