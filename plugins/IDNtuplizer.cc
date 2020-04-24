@@ -1104,7 +1104,7 @@ void IDNtuplizer::lowPtElectrons_fakes( std::vector<SigToTrkDR2>& other_trk,
 	 validPtr(match_trk_to_gsf->obj2_) ) {
       chain.gsf_ = match_trk_to_gsf->obj2_;
       chain.gsf_match_ = true;
-      chain.gsf_dr_ = sqrt(deltaR(chain_.trk,chain.gsf_));
+      chain.gsf_dr_ = sqrt(deltaR2(chain.trk_,chain.gsf_));
     } else {
       if ( verbose_ > 3 ) {
 	std::cout << "[IDNtuplizer::lowPtElectrons] INFO! Cannot match TrackPtr to GsfTrackPtr:"
@@ -1133,7 +1133,7 @@ void IDNtuplizer::lowPtElectrons_fakes( std::vector<SigToTrkDR2>& other_trk,
       // Store PF GSF track
       chain.pfgsf_ = match_gsf_to_pfgsf->obj2_;
       chain.pfgsf_match_ = true;
-      chain.pfgsf_dr_ = sqrt(deltaR(chain.trk_,chain.pfgsf_));
+      chain.pfgsf_dr_ = sqrt(deltaR2(chain.trk_,chain.pfgsf_));
     }
     
     // Check if GSF track is matched to a PF electron
@@ -1147,7 +1147,7 @@ void IDNtuplizer::lowPtElectrons_fakes( std::vector<SigToTrkDR2>& other_trk,
 	 validPtr(match_gsf_to_ele->obj2_) ) { 
       chain.ele_ = match_gsf_to_ele->obj2_; 
       chain.ele_match_ = true;
-      chain.ele_dr_ = sqrt(deltaR(chain.trk_,chain.ele_));
+      chain.ele_dr_ = sqrt(deltaR2(chain.trk_,chain.ele_));
 //    } else {
 //      chain.ele_ = reco::GsfElectronPtr();
 //      chain.ele_match_ = false;
@@ -1328,7 +1328,7 @@ void IDNtuplizer::pfElectrons_signal( std::set<reco::CandidatePtr>& signal_elect
 	// 1) Update PF GSF track
 	chain.pfgsf_ = match_gsf_to_pfgsf->obj2_;
 	chain.pfgsf_match_ = true;
-	chain.pfgsf_dr_ = sqrt(deltaR(chain.sig_,chain.pfgsf_));
+	chain.pfgsf_dr_ = sqrt(deltaR2(chain.sig_,chain.pfgsf_));
 
 	// 2) Update Track info (i.e. calc deltaR with seed track, probably identical to original trk...)
 	reco::TrackPtr trk; 
@@ -1400,7 +1400,7 @@ void IDNtuplizer::pfElectrons_signal( std::set<reco::CandidatePtr>& signal_elect
 					    }
 					    );
     if ( match_pfgsf_to_ele != pfgsf2ele.end() && 
-	 validPtr(match_pfgsf->obj2_) ) { 
+	 validPtr(match_pfgsf_to_ele->obj2_) ) { 
       chain.ele_ = match_pfgsf_to_ele->obj2_; 
       chain.ele_match_ = true;
       chain.ele_dr_ = sqrt(deltaR2(chain.sig_,chain.ele_));
@@ -1672,7 +1672,7 @@ void IDNtuplizer::fill( const edm::Event& event,
     
     // GsfTrack info
     if ( validPtr(chain.gsf_) ) {
-      if ( !chain.is_egamma_ ) { ntuple_.has_trk( chain.gsf_match_ ); }
+      //if ( !chain.is_egamma_ ) { ntuple_.has_trk( chain.gsf_match_ ); }
       ntuple_.has_gsf( chain.gsf_match_ );
       ntuple_.fill_gsf( chain.gsf_, *beamspotH_ );
       ntuple_.gsf_dr( chain.gsf_dr_ );
@@ -1681,7 +1681,7 @@ void IDNtuplizer::fill( const edm::Event& event,
     
     // PF GsfTrack info
     if ( validPtr(chain.pfgsf_) ) {
-      if ( chain.is_egamma_ ) { ntuple_.has_trk( chain.pfgsf_match_ ); }
+      //if ( chain.is_egamma_ ) { ntuple_.has_trk( chain.pfgsf_match_ ); }
       ntuple_.has_pfgsf( chain.pfgsf_match_ );
       ntuple_.fill_pfgsf( chain.pfgsf_, *beamspotH_ );
       ntuple_.pfgsf_dr( chain.pfgsf_dr_ );
@@ -1690,9 +1690,9 @@ void IDNtuplizer::fill( const edm::Event& event,
     // GsfElectron info
     if ( validPtr(chain.ele_) ) {
 
-      ntuple_.has_trk( chain.ele_match_ );
-      if ( chain.is_egamma_ ) { ntuple_.has_pfgsf( chain.ele_match_ ); }
-      else { ntuple_.has_gsf( chain.ele_match_ ); }
+      //ntuple_.has_trk( chain.ele_match_ );
+      //if ( chain.is_egamma_ ) { ntuple_.has_pfgsf( chain.ele_match_ ); }
+      //else { ntuple_.has_gsf( chain.ele_match_ ); }
       ntuple_.has_ele( chain.ele_match_ );
       ntuple_.ele_dr( chain.ele_dr_ );
 
@@ -2159,21 +2159,22 @@ void IDNtuplizer::gsfToPfGsfLinks( edm::Handle< std::vector<reco::GsfTrack> >& g
 
   for ( size_t ipfgsf = 0; ipfgsf < gsfTracksEGamma->size(); ++ipfgsf ) {
     reco::GsfTrackPtr pfgsf(gsfTracksEGamma, ipfgsf);
-    auto match_pfgsf = std::find_if( gsf2pfgsf_all.begin(),
-				     gsf2pfgsf_all.end(),
-				     [pfgsf](const GsfToGsfDR2& dr2) {
-				       return dr2.obj2_ == pfgsf;
-				     }
-				     );
-    if ( match_pfgsf != gsf2pfgsf.end() ) { 
-      if ( validPtr(match_pfgsf.obj1_) && match_pfgsf.dr2_ < dr_threshold_*dr_threshold_ ) { 
-	gsf2pfgsf.emplace_back(*match_pfgsf); 
+    auto match_pfgsf_to_gsf = std::find_if( gsf2pfgsf_all.begin(),
+					    gsf2pfgsf_all.end(),
+					    [pfgsf](const GsfToGsfDR2& dr2) {
+					      return pfgsf == dr2.obj2_;
+					    }
+					    );
+    if ( match_pfgsf_to_gsf != gsf2pfgsf.end() ) { 
+      if ( validPtr(match_pfgsf_to_gsf->obj1_) && 
+	   match_pfgsf_to_gsf->dr2_ < dr_threshold_*dr_threshold_ ) { 
+	gsf2pfgsf.emplace_back(*match_pfgsf_to_gsf); 
 	keys.erase( std::remove( keys.begin(), 
 				 keys.end(), 
-				 match_pfgsf->obj1_.key() ), 
+				 match_pfgsf_to_gsf->obj1_.key() ), 
 		    keys.end() ); // Erase GSF key (https://en.wikipedia.org/wiki/Erase-remove_idiom)
       } else {
-	gsf2pfgsf.emplace_back( reco::GsfTrackPtr(), match_pfgsf.obj2_, IDNtuple::NEG_FLOAT ); // null GSF
+	gsf2pfgsf.emplace_back( reco::GsfTrackPtr(), match_pfgsf_to_gsf->obj2_, IDNtuple::NEG_FLOAT ); // null GSF
       }
     } else {
       std::cout << "[IDNtuplizer::trkToGsfLinks]"
