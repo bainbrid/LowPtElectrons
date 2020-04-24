@@ -1284,12 +1284,12 @@ void IDNtuplizer::pfElectrons_signal( std::set<reco::CandidatePtr>& signal_elect
     chain.is_egamma_ = true;
     chain.sig_ = sig;
 
-    // Store matches between "signal electron" and tracks
-    match<reco::Track>(sig,
-		       sig2trk,
-		       chain.trk_, // by ref
-		       chain.trk_dr_,
-		       chain.trk_match_ );
+//    // Store matches between "signal electron" and tracks
+//    match<reco::Track>(sig,
+//		       sig2trk,
+//		       chain.trk_, // by ref
+//		       chain.trk_dr_,
+//		       chain.trk_match_ );
     
     // Store matches between "signal electron" and *low-pT* GSF tracks
     match<reco::GsfTrack>(sig,
@@ -1351,40 +1351,50 @@ void IDNtuplizer::pfElectrons_signal( std::set<reco::CandidatePtr>& signal_elect
 	
       } 
       
-    }
-//    } else if  ( chain.pfgsf_match_ && !other_trk.empty() ) {
-//      
-//      //@@ If no match to low-pT GsfTrack found, then check if there is a match to EGamma GSF track ...
-//      // ... assuming no other tracks are found. If match, then assign surrogate track and ...
-//      // ... but what about "missing match" to GSF track???...
-//      
-//      // Identify "best" surrogate track to be the closest in pT to the GSF track
-//      reco::GsfTrackPtr gsf = chain.pfgsf_;
-//      auto best = std::min_element(tracks_.begin(),
-//				   tracks_.end(),
-//				   [gsf]( const reco::TrackPtr& trk1, 
-//					  const reco::TrackPtr& trk2 ) {
-//				     return
-//				     std::abs(trk1->pt()-gsf->ptMode())/gsf->ptMode()
-//				     <
-//				     std::abs(trk2->pt()-gsf->ptMode())/gsf->ptMode();
-//				   }
-//				   );
-//      if ( best != tracks_.end() && validPtr(*best) ) {
-//	chain.trk_ = *best; // Store surrogate track
-//	chain.trk_match_ = true;
-//	chain.trk_dr_ = sqrt(deltaR2(chain.sig_,chain.trk_));
-//	PdgIds::const_iterator pos = pdgids_.find(chain.trk_.key());
-//	if ( pos != pdgids_.end() ) { chain.pdg_id_ = pos->second; }
-//      } else {
-//	std::cout << "[IDNtuplizer::pfElectrons] " 
-//		  << "ERROR: Could find a valid 'best' surrogate track matched in pT to the PF GSF track!";
-//      }
-//
-//      // Set as ECAL-driven (to record this unusual case)
-//      chain.seed_ecal_driven_ = true;
-//
-//    } else { continue; } // if no matches, move onto next "signal electron"
+    } else if  ( chain.pfgsf_match_ ) {
+
+      // Check if PF GSF track is NOT matched to GSF track
+      auto match_pfgsf_to_gsf = std::find_if( gsf2pfgsf.begin(),
+					      gsf2pfgsf.end(),
+					      [chain](const GsfToGsfDR2& dr2) {
+						return chain.pfgsf_ == dr2.obj2_;
+					      }
+					      );
+      if ( match_pfgsf_to_gsf != gsf2pfgsf.end() &&
+	   !validPtr(match_pfgsf_to_gsf->obj1_) ) {
+      
+	// Identify "best" surrogate track to be the closest in pT to the GSF track
+	reco::GsfTrackPtr gsf = chain.pfgsf_;
+	auto best = std::min_element(tracks_.begin(),
+				     tracks_.end(),
+				     [gsf]( const reco::TrackPtr& trk1, 
+					    const reco::TrackPtr& trk2 ) {
+				       return
+				       std::abs(trk1->pt()-gsf->ptMode())/gsf->ptMode()
+				       <
+				       std::abs(trk2->pt()-gsf->ptMode())/gsf->ptMode();
+				     }
+				     );
+	if ( best != tracks_.end() && validPtr(*best) ) {
+	  chain.trk_ = *best; // Store surrogate track
+	  chain.trk_match_ = true;
+	  chain.trk_dr_ = sqrt(deltaR2(chain.sig_,chain.trk_));
+	  PdgIds::const_iterator pos = pdgids_.find(chain.trk_.key());
+	  if ( pos != pdgids_.end() ) { chain.pdg_id_ = pos->second; }
+	} else {
+	  std::cout << "[IDNtuplizer::pfElectrons_signal] " 
+		    << "ERROR: Couldn't find a valid 'best' surrogate track matched in pT to the PF GSF track!";
+	}
+	
+	// Set as ECAL-driven (to record this unusual case)
+	chain.seed_ecal_driven_ = true;
+
+      } else {
+	std::cout << "[IDNtuplizer::pfElectrons_signal] " 
+		  << "ERROR: Couldn't find PF GSF track in gsf2pfgsf map!";
+      }
+      
+    } //else { continue; } // if no matches, move onto next "signal electron"
     
     /* No check here on if GSF track is found, as this we care only about PF GSF! */
 
@@ -2174,6 +2184,7 @@ void IDNtuplizer::gsfToPfGsfLinks( edm::Handle< std::vector<reco::GsfTrack> >& g
 				 match_pfgsf_to_gsf->obj1_.key() ), 
 		    keys.end() ); // Erase GSF key (https://en.wikipedia.org/wiki/Erase-remove_idiom)
       } else {
+	// If no match within dr_threshold_, then store null GSF track
 	gsf2pfgsf.emplace_back( reco::GsfTrackPtr(), match_pfgsf_to_gsf->obj2_, IDNtuple::NEG_FLOAT ); // null GSF
       }
     } else {
