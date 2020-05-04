@@ -1,6 +1,6 @@
 import FWCore.ParameterSet.Config as cms
 
-ntuplizer = cms.EDAnalyzer(
+ntuplizer = cms.EDFilter( # cms.EDAnalyzer
     "IDNtuplizer",
     verbose = cms.int32(0),
     checkFromB = cms.bool(True),
