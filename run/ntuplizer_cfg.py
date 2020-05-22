@@ -24,9 +24,9 @@ default_files = \
 process.source = cms.Source(
     "PoolSource",
     fileNames = cms.untracked.vstring(default_files),
-    secondaryFileNames = cms.untracked.vstring()
+    secondaryFileNames = cms.untracked.vstring(),
     skipEvents = cms.untracked.uint32(options.skipEvents),
-    )
+)
 
 process.maxEvents = cms.untracked.PSet(
     input = cms.untracked.int32(options.maxEvents)
