@@ -34,6 +34,7 @@ class IDNtuple {
   static constexpr size_t NHITS_MAX = 30;
   static constexpr int NEG_INT = -10;
   static constexpr float NEG_FLOAT = -10.;
+  static constexpr float NEG_FLOATSQ = -1.*NEG_FLOAT*NEG_FLOAT;
   
   IDNtuple() {}
 
@@ -49,6 +50,9 @@ class IDNtuple {
 
   void is_aod( int aod ) { is_aod_ = aod; }
   void is_mc( int mc ) { is_mc_ = mc; }
+
+  void tag_pt( float x ) { tag_pt_ = x; }
+  void tag_eta( float x ) { tag_eta_ = x; }
 
   void is_e( bool t = true ) { is_e_ = t; }
   void is_e_not_matched( bool t = true ) { is_e_not_matched_ = t; }
@@ -118,6 +122,10 @@ class IDNtuple {
   // Data sample
   int is_aod_ = -1;
   int is_mc_ = -1;
+
+  // Tag-side muon
+  float tag_pt_ = IDNtuple::NEG_FLOAT;
+  float tag_eta_ = IDNtuple::NEG_FLOAT;
 
   // Labels
   bool is_e_ = false;
