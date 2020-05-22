@@ -56,6 +56,7 @@ namespace reco { typedef edm::Ptr<GsfTrack> GsfTrackPtr; }
 namespace reco { typedef edm::Ptr<PreId> PreIdPtr; }
 namespace pat { typedef edm::Ptr<PackedCandidate> PackedCandidatePtr; }
 typedef std::map<unsigned long,int> PdgIds;
+typedef std::pair<float,float> TagMuon;
 
 ////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////
@@ -69,7 +70,7 @@ public:
   };
   edm::Ptr<T1> obj1_;
   edm::Ptr<T2> obj2_;
-  double dr2_ = IDNtuple::NEG_FLOAT;
+  double dr2_ = IDNtuple::NEG_FLOATSQ; // Use ^2 because this is deltaR^2
   static bool compare_by_dr2( const DeltaR2<T1,T2>& a, const DeltaR2<T1,T2>& b ) {
     return a.dr2_ < b.dr2_;
   };
@@ -100,7 +101,7 @@ std::ostream& operator<< ( std::ostream& out, const DeltaR2<T1,T2>& obj ) {
 	     << obj.obj2_->eta() << "/"
 	     << obj.obj2_->phi(); } 
   out  << "\n";
-  out << "  dR(1,2):         " << ( obj.dr2_ >= 0. ? sqrt(obj.dr2_) : IDNtuple::NEG_FLOAT );
+  out << "  dR2(1,2):        " << obj.dr2_;
   return out;
 };
 
@@ -130,6 +131,9 @@ public:
 
   bool is_e_ = false;
   bool is_egamma_ = false;
+
+  float tag_pt_ = IDNtuple::NEG_FLOAT;
+  float tag_eta_ = IDNtuple::NEG_FLOAT;
 
   // "Signal electron" info 
   reco::CandidatePtr sig_;
@@ -221,7 +225,10 @@ std::ostream& operator<< ( std::ostream& out, const ElectronChain& obj ) {
      << " is_egamma: " << obj.is_egamma_
      << " is_e: " << obj.is_e_
      << " is_mc: " << obj.is_mc_
-     << " is_aod:  " << obj.is_aod_;
+     << " is_aod: " << obj.is_aod_
+     << " tag pt/eta: " 
+     << std::setprecision(2) << obj.tag_pt_ << "/"
+     << std::setprecision(2) << obj.tag_eta_;
   ss << "\n SIG:   "; key_id(obj.sig_,ss); pt_eta_phi(obj.sig_,ss);
   ss << "\n TRK:   "; key_id(obj.trk_,ss); pt_eta_phi(obj.trk_,ss); 
   ss << ", PdgId: " << obj.pdg_id_;
@@ -264,61 +271,47 @@ public:
 
   // Reads all collections from the Event
   void readCollections( const edm::Event&, const edm::EventSetup& );
-
+  
   // Wraps other methods to provide a sample of "signal" electrons
-  void signalElectrons( std::set<reco::CandidatePtr>& signal_electrons );
+  void signalElectrons( std::set<reco::CandidatePtr>& signal_electrons,
+			std::set<reco::CandidatePtr>& tag_side_muons );
   
   // GEN-based method to provide a sample of "signal" electrons
   void genElectronsFromB( std::set<reco::GenParticlePtr>& electrons_from_B, 
-			  float muon_pt = 7., float muon_eta = 1.5 );
-    
-  // Top-level method that creates ElectronChain objects for low-pT electrons
-  void lowPtElectrons( std::set<reco::CandidatePtr>& signal_electrons,
-		       std::vector<SigToTrkDR2>& sig2trk,
-		       std::vector<SigToTrkDR2>& other_trk,
-		       std::vector<SigToGsfDR2>& sig2gsf,
-		       std::vector<TrkToGsfDR2>& trk2gsf,
-		       std::vector<GsfToGsfDR2>& gsf2pfgsf );
-
-  // Method that creates ElectronChain objects for low-pT electron signal candiates
-  void lowPtElectrons_signal( std::set<reco::CandidatePtr>& signal_electrons,
-			      std::vector<SigToTrkDR2>& sig2trk,
-			      std::vector<SigToTrkDR2>& other_trk,
-			      std::vector<SigToGsfDR2>& sig2gsf,
-			      std::vector<GsfToGsfDR2>& gsf2pfgsf,
-			      std::vector<GsfToEleDR2>& gsf2ele );
-
-  // Method that creates ElectronChain objects for low-pT electron fake candidates
-  void lowPtElectrons_fakes( std::vector<SigToTrkDR2>& other_trk,
-			     std::vector<TrkToGsfDR2>& trk2gsf,
-			     std::vector<GsfToGsfDR2>& gsf2pfgsf,
-			     std::vector<GsfToEleDR2>& gsf2ele );
+			  std::set<reco::GenParticlePtr>& gen_muons, 
+			  float tag_muon_pt_threshold = 5.,
+			  float tag_muon_eta_threshold = 2.5 );
   
-  // Top-level method that creates ElectronChain objects for EGamma electrons
-  void pfElectrons( std::set<reco::CandidatePtr>& signal_electrons,
-		    std::vector<SigToTrkDR2>& sig2trk,
-		    std::vector<SigToTrkDR2>& other_trk,
-		    std::vector<SigToGsfDR2>& sig2gsf,
-		    std::vector<TrkToGsfDR2>& trk2gsf,
-		    std::vector<GsfToGsfDR2>& gsf2pfgsf );
+  // 
+  void createChains( std::set<reco::CandidatePtr>& signal_electrons,
+		     std::set<reco::CandidatePtr>& tag_side_muons );
 
-  // Method that creates ElectronChain objects for EGamma signal candidates
-  void pfElectrons_signal( std::set<reco::CandidatePtr>& signal_electrons,
-			   std::vector<SigToTrkDR2>& sig2trk,
-			   std::vector<SigToTrkDR2>& other_trk,
-			   std::vector<SigToGsfDR2>& sig2gsf,
-			   std::vector<SigToGsfDR2>& sig2pfgsf,
-			   std::vector<TrkToGsfDR2>& trk2pfgsf,
-			   std::vector<GsfToGsfDR2>& gsf2pfgsf,
-			   std::vector<GsfToEleDR2>& pfgsf2ele );
+  // Method that creates ElectronChain objects for both low-pT and PF electron signal candiates
+  void signal( std::set<reco::CandidatePtr>& signal_electrons,
+	       std::set<reco::CandidatePtr>& tag_side_muons,
+	       std::vector<SigToTrkDR2>& sig2trk,
+	       std::vector<SigToGsfDR2>& sig2gsf,
+	       std::vector<SigToGsfDR2>& sig2pfgsf,
+	       std::vector<SigToTrkDR2>& other_trk,
+	       std::vector<TrkToGsfDR2>& trk2gsf,
+	       std::vector<TrkToGsfDR2>& trk2pfgsf,
+	       std::vector<GsfToGsfDR2>& gsf2pfgsf,
+	       std::vector<GsfToEleDR2>& gsf2ele,
+	       std::vector<GsfToEleDR2>& pfgsf2ele );
+
+  // Method that creates ElectronChain objects for both low-pT and PF electron bkgd candidates
+  void bkgd( std::set<reco::CandidatePtr>& signal_electrons,
+	     std::set<reco::CandidatePtr>& tag_side_muons,
+	     std::vector<SigToTrkDR2>& sig2trk,
+	     std::vector<SigToGsfDR2>& sig2gsf,
+	     std::vector<SigToGsfDR2>& sig2pfgsf,
+	     std::vector<SigToTrkDR2>& other_trk,
+	     std::vector<TrkToGsfDR2>& trk2gsf,
+	     std::vector<TrkToGsfDR2>& trk2pfgsf,
+	     std::vector<GsfToGsfDR2>& gsf2pfgsf,
+	     std::vector<GsfToEleDR2>& gsf2ele,
+	     std::vector<GsfToEleDR2>& pfgsf2ele );
   
-  // Method that creates ElectronChain objects for EGamma fake candidates
-  void pfElectrons_fakes( std::vector<SigToTrkDR2>& other_trk,
-			  std::vector<TrkToGsfDR2>& trk2gsf,
-			  std::vector<TrkToGsfDR2>& trk2pfgsf,
-			  std::vector<GsfToGsfDR2>& gsf2pfgsf,
-			  std::vector<GsfToEleDR2>& pfgsf2ele );
-    
   // Fills tree per ElectronChain object
   void fill( const edm::Event& event, const edm::EventSetup& setup );
 
@@ -512,6 +505,57 @@ private:
   std::vector<reco::TrackPtr> tracks_;
   PdgIds pdgids_;
 
+  //////////////////
+  // Obsolete methods
+  //////////////////
+
+  // Top-level method that creates ElectronChain objects for low-pT electrons
+  void lowPtElectrons( std::set<reco::CandidatePtr>& signal_electrons,
+		       std::vector<SigToTrkDR2>& sig2trk,
+		       std::vector<SigToTrkDR2>& other_trk,
+		       std::vector<SigToGsfDR2>& sig2gsf,
+		       std::vector<TrkToGsfDR2>& trk2gsf,
+		       std::vector<GsfToGsfDR2>& gsf2pfgsf );
+
+  // Method that creates ElectronChain objects for low-pT electron signal candiates
+  void lowPtElectrons_signal( std::set<reco::CandidatePtr>& signal_electrons,
+			      std::vector<SigToTrkDR2>& sig2trk,
+			      std::vector<SigToTrkDR2>& other_trk,
+			      std::vector<SigToGsfDR2>& sig2gsf,
+			      std::vector<GsfToGsfDR2>& gsf2pfgsf,
+			      std::vector<GsfToEleDR2>& gsf2ele );
+
+  // Method that creates ElectronChain objects for low-pT electron fake candidates
+  void lowPtElectrons_fakes( std::vector<SigToTrkDR2>& other_trk,
+			     std::vector<TrkToGsfDR2>& trk2gsf,
+			     std::vector<GsfToGsfDR2>& gsf2pfgsf,
+			     std::vector<GsfToEleDR2>& gsf2ele );
+  
+  // Top-level method that creates ElectronChain objects for EGamma electrons
+  void pfElectrons( std::set<reco::CandidatePtr>& signal_electrons,
+		    std::vector<SigToTrkDR2>& sig2trk,
+		    std::vector<SigToTrkDR2>& other_trk,
+		    std::vector<SigToGsfDR2>& sig2gsf,
+		    std::vector<TrkToGsfDR2>& trk2gsf,
+		    std::vector<GsfToGsfDR2>& gsf2pfgsf );
+
+  // Method that creates ElectronChain objects for EGamma signal candidates
+  void pfElectrons_signal( std::set<reco::CandidatePtr>& signal_electrons,
+			   std::vector<SigToTrkDR2>& sig2trk,
+			   std::vector<SigToTrkDR2>& other_trk,
+			   std::vector<SigToGsfDR2>& sig2gsf,
+			   std::vector<SigToGsfDR2>& sig2pfgsf,
+			   std::vector<TrkToGsfDR2>& trk2pfgsf,
+			   std::vector<GsfToGsfDR2>& gsf2pfgsf,
+			   std::vector<GsfToEleDR2>& pfgsf2ele );
+  
+  // Method that creates ElectronChain objects for EGamma fake candidates
+  void pfElectrons_fakes( std::vector<SigToTrkDR2>& other_trk,
+			  std::vector<TrkToGsfDR2>& trk2gsf,
+			  std::vector<TrkToGsfDR2>& trk2pfgsf,
+			  std::vector<GsfToGsfDR2>& gsf2pfgsf,
+			  std::vector<GsfToEleDR2>& pfgsf2ele );
+
 };
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -624,100 +668,20 @@ bool IDNtuplizer::filter( edm::Event& event, const edm::EventSetup& setup ) { //
 
   // Identify signal electrons, from (GEN) MC or data control regions
   std::set<reco::CandidatePtr> signal_electrons;
-  signalElectrons(signal_electrons);
+  std::set<reco::CandidatePtr> tag_side_muons;
+  signalElectrons(signal_electrons,tag_side_muons);
 
   // Populate std::vector<reco::TrackPtr> tracks_ (from reco::Tracks, PF candidates, lost tracks)
   // Populate std::map<unsigned long,int> pdgids_ (typedef'ed to PdgIds)
   extractTrackPtrs();
 
-  // Match "signal" electrons to generalTracks
-  std::vector<SigToTrkDR2> sig2trk;
-  std::vector<SigToTrkDR2> other_trk;
-  sigToCandLinks<reco::Track>( signal_electrons, tracks_, sig2trk, other_trk );
-  if ( verbose_ > 1 ) {
-    std::cout << "[IDNtuplizer::analyze] sigToCandLinks<reco::Track>:" << std::endl
-	      << " signal_electrons.size(): " << signal_electrons.size() << std::endl
-	      << " tracks_.size(): " << tracks_.size() << std::endl
-	      << " sig2trk.size(): " << sig2trk.size() << std::endl
-	      << " other_trk.size(): " << other_trk.size() << std::endl;
-    if ( verbose_ > 2 ) {
-      for ( auto iter : sig2trk ) { if ( iter.dr2_ >= 0. ) { std::cout << iter << std::endl; } }
-    }
-    std::cout << std::endl;
-  }
-  
-  // Match "signal" electrons to low-pT GsfTracks
-  std::vector<SigToGsfDR2> sig2gsf;
-  std::vector<SigToGsfDR2> other_gsf;
-  sigToCandLinks<reco::GsfTrack>( signal_electrons, 
-				  gsfTracksH_, 
-				  sig2gsf, 
-				  other_gsf );
-  if ( verbose_ > 1 ) {
-    std::cout << "[IDNtuplizer::analyze] sigToCandLinks<reco::GsfTrack>:" << std::endl
-	      << " signal_electrons.size(): " << signal_electrons.size() << std::endl
-	      << " gsfTracksH_->size(): " << gsfTracksH_->size() << std::endl
-	      << " sig2gsf.size(): " << sig2gsf.size() << std::endl
-	      << " other_gsf.size(): " << other_gsf.size() << std::endl;
-    if ( verbose_ > 2 ) {
-      for ( auto iter : sig2gsf ) { if ( iter.dr2_ >= 0. ) { std::cout << iter << std::endl; } }
-    }
-    std::cout << std::endl;
-  }
-
-  // Match Tracks (including surrogates) to low-pT GsfTracks
-  std::vector<TrkToGsfDR2> trk2gsf;
-  trkToGsfLinks( tracks_, 
-		 gsfTracksH_, 
-		 trk2gsf );
-  if ( verbose_ > 1 ) {
-    int good = 0, surrogate = 0, broken = 0, no_gsf = 0, no_trk = 0, empty = 0;
-    for ( auto iter : trk2gsf ) { 
-      if ( validPtr(iter.obj1_) && validPtr(iter.obj2_) ) {
-	if ( iter.dr2_ >= 0. )                       { good++; } 
-	else if  ( std::abs(iter.dr2_-IDNtuple::NEG_FLOAT) > 1.e-6 ) { surrogate++; } 
-	else                                         { broken++; } 
-      } 
-      else if ( validPtr(iter.obj1_) && !validPtr(iter.obj2_) ) { no_gsf++; }
-      else if ( !validPtr(iter.obj1_) && validPtr(iter.obj2_) ) { no_trk++; }
-      else                                                      { empty++; }
-    }
-    std::cout << "[IDNtuplizer::analyze] trkToGsfLinks:" << std::endl
-	      << " tracks_.size():      " << tracks_.size() << std::endl
-	      << " gsfTracksH_->size(): " << gsfTracksH_->size() << std::endl
-	      << " trk2gsf.size():      " << trk2gsf.size() << std::endl
-	      << " #good:      " << good << std::endl
-	      << " #surrogate: " << surrogate << std::endl
-	      << " #no_trk:    " << no_trk << std::endl
-	      << " #no_gsf:    " << no_gsf << std::endl
-	      << " #broken:    " << broken << std::endl
-	      << " #empty:     " << empty << std::endl
-	      << " #total:     " << good+surrogate+no_trk+no_gsf+broken+empty << std::endl;
-  }
-
-  // Hack: PF GsfTracks --> low-pT GsfTracks map
-  std::vector<GsfToGsfDR2> gsf2pfgsf;
-  gsfToPfGsfLinks( gsfTracksH_, //@@ low-pT GSF tracks!
-		   gsfTracksEGammaH_, 
-		   gsf2pfgsf );
-  if ( verbose_ > 1 ) {
-    std::cout << "[IDNtuplizer::analyze] gsfToPfGsfLinks:" << std::endl
-	      << " gsfTracksH_->size(): " << gsfTracksH_->size() << std::endl
-	      << " gsfTracksEGammaH_->size(): " << gsfTracksEGammaH_->size() << std::endl
-	      << " gsf2pfgsf.size(): " << gsf2pfgsf.size() << std::endl;
-    if ( verbose_ > 2 ) {
-      for ( auto iter : gsf2pfgsf ) { 
-	if ( iter.dr2_ >= 0. || validPtr(iter.obj2_) ) { std::cout << iter << std::endl; } 
-      }
-      std::cout << std::endl;
-    }
-  }
+  createChains(signal_electrons,tag_side_muons);
   
   // Populate ElectronChain objects using low-pT electrons
-  lowPtElectrons( signal_electrons, sig2trk, other_trk, sig2gsf, trk2gsf, gsf2pfgsf );
+  //lowPtElectrons( signal_electrons, sig2trk, other_trk, sig2gsf, trk2gsf, gsf2pfgsf );
 
   // Populate ElectronChain objects using PF electrons
-  pfElectrons( signal_electrons, sig2trk, other_trk, sig2gsf, trk2gsf, gsf2pfgsf );
+  //pfElectrons( signal_electrons, sig2trk, other_trk, sig2gsf, trk2gsf, gsf2pfgsf );
 
   // Fill ntuple
   fill(event,setup);
@@ -855,19 +819,25 @@ void IDNtuplizer::readCollections( const edm::Event& event, const edm::EventSetu
 ////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////
 //
-void IDNtuplizer::signalElectrons( std::set<reco::CandidatePtr>& signal_electrons ) {
-
+void IDNtuplizer::signalElectrons( std::set<reco::CandidatePtr>& signal_electrons,
+				   std::set<reco::CandidatePtr>& tag_side_muons ) {
+  
   signal_electrons.clear();
+  tag_side_muons.clear();
 
   if ( isMC_ ) { // Identify "signal" (GEN) electrons from B decays
     std::set<reco::GenParticlePtr> electrons_from_B;
-    genElectronsFromB(electrons_from_B);
+    std::set<reco::GenParticlePtr> gen_muons;
+    genElectronsFromB(electrons_from_B,gen_muons);
     for ( auto gen : electrons_from_B ) { signal_electrons.insert(gen); }
+    for ( auto gen : gen_muons ) { tag_side_muons.insert(gen); }
   } else { // Identify "signal" electrons from data control regions
     //@@ FOR NOW, A HACK ...
     std::set<reco::GenParticlePtr> electrons_from_B;
-    genElectronsFromB(electrons_from_B);
+    std::set<reco::GenParticlePtr> gen_muons;
+    genElectronsFromB(electrons_from_B,gen_muons);
     for ( auto gen : electrons_from_B ) { signal_electrons.insert(gen); }
+    for ( auto gen : gen_muons ) { tag_side_muons.insert(gen); }
   }
   
 }
@@ -877,10 +847,12 @@ void IDNtuplizer::signalElectrons( std::set<reco::CandidatePtr>& signal_electron
 ////////////////////////////////////////////////////////////////////////////////
 // From AOD
 void IDNtuplizer::genElectronsFromB( std::set<reco::GenParticlePtr>& electrons_from_B,
-				     float muon_pt, float muon_eta ) {
+				     std::set<reco::GenParticlePtr>& gen_muons,
+				     float tag_muon_pt_threshold, 
+				     float tag_muon_eta_threshold ) {
   
   electrons_from_B.clear();
-  bool tag_side_muon = false;
+  gen_muons.clear();
   
   for ( size_t idx = 0; idx < genParticlesH_->size(); idx++ ) {
     
@@ -907,23 +879,24 @@ void IDNtuplizer::genElectronsFromB( std::set<reco::GenParticlePtr>& electrons_f
       std::abs(gen->mother()->mother()->pdgId()) < 546;                   // grandmother is B
     
     //  Check for tag side muon
-    tag_side_muon |= ( std::abs(gen->pdgId()) == 13 && gen->isLastCopy() 
-		       && 
-		       ( ( gen->numberOfMothers() >= 1 &&
-			   gen->mother() &&
-			   std::abs(gen->mother()->pdgId()) > 510 &&
-			   std::abs(gen->mother()->pdgId()) < 546 && 
-			   gen->mother()->pt() > muon_pt && 
-			   std::abs(gen->mother()->eta()) < muon_eta ) 
-			 ||
-			 ( gen->numberOfMothers() >= 1 && 
-			   gen->mother() &&
-			   gen->mother()->numberOfMothers() >= 1 && 
-			   gen->mother()->mother() &&
-			   std::abs(gen->mother()->mother()->pdgId()) > 510 &&
-			   std::abs(gen->mother()->mother()->pdgId()) < 546 && 
-			   gen->mother()->mother()->pt() > muon_pt &&
-			   std::abs(gen->mother()->mother()->eta()) < muon_eta ) ) );
+    bool tag_muon = ( std::abs(gen->pdgId()) == 13 && gen->isLastCopy() 
+		      && 
+		      ( ( gen->numberOfMothers() >= 1 &&
+			  gen->mother() &&
+			  std::abs(gen->mother()->pdgId()) > 510 &&
+			  std::abs(gen->mother()->pdgId()) < 546 && 
+			  gen->mother()->pt() > tag_muon_pt_threshold && 
+			  std::abs(gen->mother()->eta()) < tag_muon_eta_threshold ) 
+			||
+			( gen->numberOfMothers() >= 1 && 
+			  gen->mother() &&
+			  gen->mother()->numberOfMothers() >= 1 && 
+			  gen->mother()->mother() &&
+			  std::abs(gen->mother()->mother()->pdgId()) > 510 &&
+			  std::abs(gen->mother()->mother()->pdgId()) < 546 && 
+			  gen->mother()->mother()->pt() > tag_muon_pt_threshold &&
+			  std::abs(gen->mother()->mother()->eta()) < tag_muon_eta_threshold ) ) );
+    if ( tag_muon ) { gen_muons.insert(gen); }
     
     // is coming from a B
     if ( is_ele && ( ( resonant || non_resonant ) || !check_from_B_ ) ) {
@@ -933,275 +906,62 @@ void IDNtuplizer::genElectronsFromB( std::set<reco::GenParticlePtr>& electrons_f
 		  << " #signal_electrons: " << electrons_from_B.size()
 		  << " resonant? " << resonant
 		  << " non resonant? " << non_resonant
-		  << " tag-side muon? " << tag_side_muon
+		  << " tag-side muon? " << !gen_muons.empty()
 		  << std::endl;
       }
     }
     
   } // genParticles loop
 
-  if ( !tag_side_muon ) { electrons_from_B.clear(); }
+  if ( gen_muons.empty() ) { electrons_from_B.clear(); }
 
 }
 
+//@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
 ////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////
 //
-void IDNtuplizer::lowPtElectrons( std::set<reco::CandidatePtr>& signal_electrons,
-				  std::vector<SigToTrkDR2>& sig2trk,
-				  std::vector<SigToTrkDR2>& other_trk,
-				  std::vector<SigToGsfDR2>& sig2gsf,
-				  std::vector<TrkToGsfDR2>& trk2gsf,
-				  std::vector<GsfToGsfDR2>& gsf2pfgsf ) {
-
-  // Match low-pT GsfTracks to low-pT GsfElectrons
-  std::vector<GsfToEleDR2> gsf2ele;
-  gsfToEleLinks( gsfTracksH_, 
-		 gsfElectronsH_, 
-		 gsf2ele );
+void IDNtuplizer::createChains( std::set<reco::CandidatePtr>& signal_electrons,
+				std::set<reco::CandidatePtr>& tag_side_muons ) {
+  
+  // Match "signal" electrons to generalTracks
+  std::vector<SigToTrkDR2> sig2trk;
+  std::vector<SigToTrkDR2> other_trk;
+  sigToCandLinks<reco::Track>( signal_electrons, 
+			       tracks_, 
+			       sig2trk, 
+			       other_trk );
   if ( verbose_ > 1 ) {
-    std::cout << "[IDNtuplizer::lowPtElectrons] gsfToEleLinks:" << std::endl 
-	      << " gsfTracksH_->size(): " << gsfTracksH_->size() << std::endl
-	      << " gsfElectronsH_->size(): " << gsfElectronsH_->size() << std::endl
-	      << " gsf2ele.size(): " << gsf2ele.size() << std::endl;
+    std::cout << "[IDNtuplizer::createChains] sigToCandLinks<reco::Track>:" << std::endl
+	      << " signal_electrons.size(): " << signal_electrons.size() << std::endl
+	      << " tracks_.size(): " << tracks_.size() << std::endl
+	      << " sig2trk.size(): " << sig2trk.size() << std::endl
+	      << " other_trk.size(): " << other_trk.size() << std::endl;
     if ( verbose_ > 2 ) {
-      for ( auto iter : gsf2ele ) { if ( iter.dr2_ >= 0. ) { std::cout << iter << std::endl; } }
+      for ( auto iter : sig2trk ) { if ( iter.dr2_ >= 0. ) { std::cout << iter << std::endl; } }
     }
     std::cout << std::endl;
   }
-
-  lowPtElectrons_signal( signal_electrons, sig2trk, other_trk, sig2gsf, gsf2pfgsf, gsf2ele );
-  lowPtElectrons_fakes( other_trk, trk2gsf, gsf2pfgsf, gsf2ele );
-    
-}
-
-////////////////////////////////////////////////////////////////////////////////
-////////////////////////////////////////////////////////////////////////////////
-////////////////////////////////////////////////////////////////////////////////
-// Iterate through "signal electrons" 
-void IDNtuplizer::lowPtElectrons_signal( std::set<reco::CandidatePtr>& signal_electrons,
-					 std::vector<SigToTrkDR2>& sig2trk,
-					 std::vector<SigToTrkDR2>& other_trk,
-					 std::vector<SigToGsfDR2>& sig2gsf,
-					 std::vector<GsfToGsfDR2>& gsf2pfgsf,
-					 std::vector<GsfToEleDR2>& gsf2ele ) {
-
-  for ( auto sig : signal_electrons ) {
-
-    // SIG: Initialise ElectronChain object
-    chains_.push_back(ElectronChain());
-    ElectronChain& chain = chains_.back();
-    chain.is_mc_ = isMC_;
-    chain.is_aod_ = isAOD_;
-    chain.is_e_ = true;
-    chain.is_egamma_ = false;
-    chain.sig_ = sig;
-
-    // TRK: Store matches between "signal electron" and KF tracks
-    match<reco::Track>(sig,
-		       sig2trk,
-		       chain.trk_, // by ref
-		       chain.trk_dr_,
-		       chain.trk_match_ );
-    
-    // GSF: Store matches between "signal electron" and GSF tracks
-    match<reco::GsfTrack>(sig,
-			  sig2gsf,
-			  chain.gsf_, // by ref
-			  chain.gsf_dr_,
-			  chain.gsf_match_ );
-
-    // ELE: No matching between signal electron and GSF electron here, done later
-
-    // GSF: If not matched to GsfTrack, then move onto next "signal electron"
-    if ( !chain.gsf_match_ ) { continue; }
-
-    // TRK: Update Track info (i.e. calc deltaR with seed track, probably identical to original trk...)
-    reco::TrackPtr trk; 
-    if ( gsfToTrk(chain.gsf_,trk) ) {
-      chain.trk_ = trk; 
-      chain.trk_match_ = true;
-      chain.trk_dr_ = sqrt(deltaR2(chain.sig_,chain.trk_));
-      PdgIds::const_iterator pos = pdgids_.find(chain.trk_.key());
-      if ( pos != pdgids_.end() ) { chain.pdg_id_ = pos->second; }
+  
+  // Match "signal" electrons to low-pT GsfTracks
+  std::vector<SigToGsfDR2> sig2gsf;
+  std::vector<SigToGsfDR2> other_gsf;
+  sigToCandLinks<reco::GsfTrack>( signal_electrons, 
+				  gsfTracksH_, 
+				  sig2gsf, 
+				  other_gsf );
+  if ( verbose_ > 1 ) {
+    std::cout << "[IDNtuplizer::createChains] sigToCandLinks<reco::GsfTrack>:" << std::endl
+	      << " signal_electrons.size(): " << signal_electrons.size() << std::endl
+	      << " gsfTracksH_->size(): " << gsfTracksH_->size() << std::endl
+	      << " sig2gsf.size(): " << sig2gsf.size() << std::endl
+	      << " other_gsf.size(): " << other_gsf.size() << std::endl;
+    if ( verbose_ > 2 ) {
+      for ( auto iter : sig2gsf ) { if ( iter.dr2_ >= 0. ) { std::cout << iter << std::endl; } }
     }
-
-    // SEED: Store Seed information
-    if ( isAOD_ == 0 ) {
-      // If no TrackExtra info, then assume tracker-driven
-      chain.seed_tracker_driven_ = true;
-      chain.seed_ecal_driven_ = false;
-    } else if ( isAOD_ == 1 ) {
-      reco::ElectronSeedPtr seed;
-      if ( gsfToSeed(chain.gsf_,seed) ) { // Store ElectronSeed info
-	chain.seed_ = seed;
-	chain.seed_tracker_driven_ = seed->isTrackerDriven();
-	chain.seed_ecal_driven_ = seed->isEcalDriven();
-	reco::CaloClusterPtr calo;
-	if ( seedToCalo(seed,calo) ) { chain.calo_ = calo; } // Store CaloCluster info
-	// Store PreId info
-	//chain.preid_ecal_ = edm::refToPtr((*preIdRefsH_)[seed->ctfTrack()]);
-	//chain.preid_hcal_ = reco::PreIdPtr( preIdsHcalH_, chain.preid_ecal_.key() );
-      } else {
-	// If no TrackExtra info, then assume tracker-driven
-	chain.seed_tracker_driven_ = true;
-	chain.seed_ecal_driven_ = false;
-      }
-    }
-    
-    // SEED: Store ElectronSeed BDT discrimator outputs
-    chain.unbiased_ = (*mvaUnbiasedH_)[chain.gsf_];
-    chain.ptbiased_ = (*mvaPtbiasedH_)[chain.gsf_];
-
-    // PFGSF: Store PF GSF track info if match found with GSF track
-    auto match_gsf_to_pfgsf = std::find_if( gsf2pfgsf.begin(),
-					    gsf2pfgsf.end(),
-					    [chain](const GsfToGsfDR2& dr2) {
-					      return chain.gsf_ == dr2.obj1_;
-					    }
-					    );
-    if ( match_gsf_to_pfgsf != gsf2pfgsf.end() && 
-	 validPtr(match_gsf_to_pfgsf->obj2_) ) {
-      chain.pfgsf_ = match_gsf_to_pfgsf->obj2_;
-      chain.pfgsf_match_ = true;
-      chain.pfgsf_dr_ = sqrt(deltaR2(chain.sig_,chain.pfgsf_));
-    }
-    
-    // PFGSF: No check here on if PF GSF is found, as this is for information only!
-
-    // ELE: Store GSF electron info if match found with GSF track
-    auto match_gsf_to_ele = std::find_if( gsf2ele.begin(), 
-					  gsf2ele.end(), 
-					  [chain](const GsfToEleDR2& dr2) { 
-					    return chain.gsf_ == dr2.obj1_;
-					  }
-					  );
-    if ( match_gsf_to_ele != gsf2ele.end() && 
-	 validPtr(match_gsf_to_ele->obj2_) ) { 
-      chain.ele_ = match_gsf_to_ele->obj2_; 
-      chain.ele_match_ = true;
-      chain.ele_dr_ = sqrt(deltaR2(chain.sig_,chain.ele_));
-    }
-    
-  } // for ( auto sig : signal_electrons )
-
-}
-
-////////////////////////////////////////////////////////////////////////////////
-////////////////////////////////////////////////////////////////////////////////
-////////////////////////////////////////////////////////////////////////////////
-// Iterate through "fake tracks" 
-void IDNtuplizer::lowPtElectrons_fakes( std::vector<SigToTrkDR2>& other_trk,
-					std::vector<TrkToGsfDR2>& trk2gsf,
-					std::vector<GsfToGsfDR2>& gsf2pfgsf,
-					std::vector<GsfToEleDR2>& gsf2ele ) {
-
-  // Iterate through tracks
-  for ( auto iter : other_trk ) {
-
-    if ( !validPtr(iter.obj2_) ) { continue; } // Shouldn't happen
-
-    // SIG: Initialise ElectronChain object
-    chains_.push_back(ElectronChain());
-    ElectronChain& chain = chains_.back();
-    chain.is_mc_ = isMC_;
-    chain.is_aod_ = isAOD_;
-    chain.is_e_ = false;
-    chain.is_egamma_ = false;
-    
-    // TRK: Store Track info
-    chain.trk_ = iter.obj2_;
-    chain.trk_match_ = true;
-    chain.trk_dr_ = 0.; // w.r.t. trk
-     
-    // GSF: Store GSF track info if match found with KF track (either via ElectronSeed or just deltaR)
-    auto match_trk_to_gsf = std::find_if( trk2gsf.begin(), 
-					  trk2gsf.end(), 
-					  [chain](const TrkToGsfDR2& dr2) { 
-					    return chain.trk_ == dr2.obj1_;
-					  }
-					  );
-    if ( match_trk_to_gsf != trk2gsf.end() && 
-	 validPtr(match_trk_to_gsf->obj2_) ) {
-      chain.gsf_ = match_trk_to_gsf->obj2_;
-      chain.gsf_match_ = true;
-      chain.gsf_dr_ = sqrt(deltaR2(chain.trk_,chain.gsf_));
-    }
-
-    // GSF: If not matched to GsfTrack, then move on to next "fake candidate"
-    if ( !chain.gsf_match_ ) { continue; }
-    // Otherwise ... 
-
-    // SEED: Store Seed information
-    if ( isAOD_ == 0 ) {
-      // If no TrackExtra info, then assume tracker-driven
-      chain.seed_tracker_driven_ = true;
-      chain.seed_ecal_driven_ = false;
-    } else if ( isAOD_ == 1 ) {
-      reco::ElectronSeedPtr seed;
-      if ( gsfToSeed(chain.gsf_,seed) ) { // Store ElectronSeed info
-	chain.seed_ = seed;
-	chain.seed_tracker_driven_ = seed->isTrackerDriven();
-	chain.seed_ecal_driven_ = seed->isEcalDriven();
-	reco::CaloClusterPtr calo;
-	if ( seedToCalo(seed,calo) ) { chain.calo_ = calo; } // Store CaloCluster info
-	// Store PreId info
-	//chain.preid_ecal_ = edm::refToPtr((*preIdRefsH_)[seed->ctfTrack()]);
-	//chain.preid_hcal_ = reco::PreIdPtr( preIdsHcalH_, chain.preid_ecal_.key() );
-      } else {
-	// If no TrackExtra info in AOD, then assume tracker-driven
-	chain.seed_tracker_driven_ = true;
-	chain.seed_ecal_driven_ = false;
-      }
-    }
-
-    // GSF: Store ElectronSeed BDT discrimator outputs
-    chain.unbiased_ = (*mvaUnbiasedH_)[chain.gsf_];
-    chain.ptbiased_ = (*mvaPtbiasedH_)[chain.gsf_];
-
-    // PFGSF: Store PF GSF track info if match found with GSF track
-    auto match_gsf_to_pfgsf = std::find_if( gsf2pfgsf.begin(),
-					    gsf2pfgsf.end(),
-					    [chain](const GsfToGsfDR2& dr2) {
-					      return chain.gsf_ == dr2.obj1_;
-					    }
-					    );
-    if ( match_gsf_to_pfgsf != gsf2pfgsf.end() && 
-	 validPtr(match_gsf_to_pfgsf->obj2_) ) {
-      chain.pfgsf_ = match_gsf_to_pfgsf->obj2_;
-      chain.pfgsf_match_ = true;
-      chain.pfgsf_dr_ = sqrt(deltaR2(chain.trk_,chain.pfgsf_));
-    }
-    
-    // ELE: Store GSF electron info if match found with GSF track
-    auto match_gsf_to_ele = std::find_if( gsf2ele.begin(), 
-					  gsf2ele.end(), 
-					  [chain](const GsfToEleDR2& dr2) { 
-					    return chain.gsf_ == dr2.obj1_;
-					  }
-					  );
-    if ( match_gsf_to_ele != gsf2ele.end() && 
-	 validPtr(match_gsf_to_ele->obj2_) ) { 
-      chain.ele_ = match_gsf_to_ele->obj2_; 
-      chain.ele_match_ = true;
-      chain.ele_dr_ = sqrt(deltaR2(chain.trk_,chain.ele_));
-    }
-    
-  } // for ( auto iter : other_trk )
-
-}
-
-////////////////////////////////////////////////////////////////////////////////
-////////////////////////////////////////////////////////////////////////////////
-////////////////////////////////////////////////////////////////////////////////
-//
-void IDNtuplizer::pfElectrons( std::set<reco::CandidatePtr>& signal_electrons,
-			       std::vector<SigToTrkDR2>& sig2trk,
-			       std::vector<SigToTrkDR2>& other_trk,
-			       std::vector<SigToGsfDR2>& sig2gsf,
-			       std::vector<TrkToGsfDR2>& trk2gsf,
-			       std::vector<GsfToGsfDR2>& gsf2pfgsf ) {
+    std::cout << std::endl;
+  }
 
   // Match "signal" electrons to PF GsfTracks
   std::vector<SigToGsfDR2> sig2pfgsf;
@@ -1211,7 +971,7 @@ void IDNtuplizer::pfElectrons( std::set<reco::CandidatePtr>& signal_electrons,
 				  sig2pfgsf, 
 				  other_pfgsf );
   if ( verbose_ > 1 ) {
-    std::cout << "[IDNtuplizer::pfElectrons] sigToCandLinks<reco::GsfTrack>:" << std::endl
+    std::cout << "[IDNtuplizer::createChains] sigToCandLinks<reco::GsfTrack>:" << std::endl
 	      << " signal_electrons.size(): " << signal_electrons.size() << std::endl
 	      << " gsfTracksEGammaH_->size(): " << gsfTracksEGammaH_->size() << std::endl
 	      << " sig2pfgsf.size(): " << sig2pfgsf.size() << std::endl
@@ -1220,6 +980,36 @@ void IDNtuplizer::pfElectrons( std::set<reco::CandidatePtr>& signal_electrons,
       for ( auto iter : sig2pfgsf ) { if ( iter.dr2_ >= 0. ) { std::cout << iter << std::endl; } }
     }
     std::cout << std::endl;
+  }
+
+  // Match Tracks (including surrogates) to low-pT GsfTracks
+  std::vector<TrkToGsfDR2> trk2gsf;
+  trkToGsfLinks( tracks_, 
+		 gsfTracksH_, 
+		 trk2gsf );
+  if ( verbose_ > 1 ) {
+    int good = 0, surrogate = 0, broken = 0, no_gsf = 0, no_trk = 0, empty = 0;
+    for ( auto iter : trk2gsf ) { 
+      if ( validPtr(iter.obj1_) && validPtr(iter.obj2_) ) {
+	if ( iter.dr2_ >= 0. )                       { good++; } 
+	else if ( std::abs(iter.dr2_-IDNtuple::NEG_FLOATSQ) > 1.e-6 ) { surrogate++; } 
+	else                                         { broken++; } 
+      } 
+      else if ( validPtr(iter.obj1_) && !validPtr(iter.obj2_) ) { no_gsf++; }
+      else if ( !validPtr(iter.obj1_) && validPtr(iter.obj2_) ) { no_trk++; }
+      else                                                      { empty++; }
+    }
+    std::cout << "[IDNtuplizer::createChains] trkToGsfLinks:" << std::endl
+	      << " tracks_.size():      " << tracks_.size() << std::endl
+	      << " gsfTracksH_->size(): " << gsfTracksH_->size() << std::endl
+	      << " trk2gsf.size():      " << trk2gsf.size() << std::endl
+	      << " #good:      " << good << std::endl
+	      << " #surrogate: " << surrogate << std::endl
+	      << " #no_trk:    " << no_trk << std::endl
+	      << " #no_gsf:    " << no_gsf << std::endl
+	      << " #broken:    " << broken << std::endl
+	      << " #empty:     " << empty << std::endl
+	      << " #total:     " << good+surrogate+no_trk+no_gsf+broken+empty << std::endl;
   }
 
   // Match Tracks (including surrogates) to PF GsfTracks
@@ -1232,15 +1022,27 @@ void IDNtuplizer::pfElectrons( std::set<reco::CandidatePtr>& signal_electrons,
     int good = 0, surrogate = 0, broken = 0, no_gsf = 0, no_trk = 0, empty = 0;
     for ( auto iter : trk2pfgsf ) { 
       if ( validPtr(iter.obj1_) && validPtr(iter.obj2_) ) {
-	if ( iter.dr2_ >= 0. )                       { good++; } 
-	else if  ( std::abs(iter.dr2_-IDNtuple::NEG_FLOAT) > 1.e-6 ) { surrogate++; } 
+	if ( iter.dr2_ >= 0. )                       { 
+	  good++; 
+	  std::cout << "good " 
+		    << validPtr(iter.obj1_) << " " 
+		    << validPtr(iter.obj2_) << " " 
+		    << iter.dr2_ << std::endl;
+	} 
+	else if ( std::abs(iter.dr2_-IDNtuple::NEG_FLOATSQ) > 1.e-6 ) { 
+	  surrogate++; 
+	  std::cout << "surrogate " 
+		    << validPtr(iter.obj1_) << " " 
+		    << validPtr(iter.obj2_) << " " 
+		    << iter.dr2_ << std::endl;
+	} 
 	else                                         { broken++; } 
       } 
       else if ( validPtr(iter.obj1_) && !validPtr(iter.obj2_) ) { no_gsf++; }
       else if ( !validPtr(iter.obj1_) && validPtr(iter.obj2_) ) { no_trk++; }
       else                                                      { empty++; }
     }
-    std::cout << "[IDNtuplizer::analyze] trkToPFGsfLinks:" << std::endl
+    std::cout << "[IDNtuplizer::createChains] trkToPFGsfLinks:" << std::endl
 	      << " tracks_.size():      " << tracks_.size() << std::endl
 	      << " gsfTracksEGammaH_->size(): " << gsfTracksEGammaH_->size() << std::endl
 	      << " trk2pfgsf.size():      " << trk2pfgsf.size() << std::endl
@@ -1253,13 +1055,47 @@ void IDNtuplizer::pfElectrons( std::set<reco::CandidatePtr>& signal_electrons,
 	      << " #total:     " << good+surrogate+no_trk+no_gsf+broken+empty << std::endl;
   }
 
+  // Hack: PF GsfTracks --> low-pT GsfTracks map
+  std::vector<GsfToGsfDR2> gsf2pfgsf;
+  gsfToPfGsfLinks( gsfTracksH_, //@@ low-pT GSF tracks!
+		   gsfTracksEGammaH_, 
+		   gsf2pfgsf );
+  if ( verbose_ > 1 ) {
+    std::cout << "[IDNtuplizer::chains] gsfToPfGsfLinks:" << std::endl
+	      << " gsfTracksH_->size(): " << gsfTracksH_->size() << std::endl
+	      << " gsfTracksEGammaH_->size(): " << gsfTracksEGammaH_->size() << std::endl
+	      << " gsf2pfgsf.size(): " << gsf2pfgsf.size() << std::endl;
+    if ( verbose_ > 2 ) {
+      for ( auto iter : gsf2pfgsf ) { 
+	if ( iter.dr2_ >= 0. || validPtr(iter.obj2_) ) { std::cout << iter << std::endl; } 
+      }
+      std::cout << std::endl;
+    }
+  }
+
+  // Match low-pT GsfTracks to low-pT GsfElectrons
+  std::vector<GsfToEleDR2> gsf2ele;
+  gsfToEleLinks( gsfTracksH_, 
+		 gsfElectronsH_, 
+		 gsf2ele );
+  if ( verbose_ > 1 ) {
+    std::cout << "[IDNtuplizer::createChains] gsfToEleLinks:" << std::endl 
+	      << " gsfTracksH_->size(): " << gsfTracksH_->size() << std::endl
+	      << " gsfElectronsH_->size(): " << gsfElectronsH_->size() << std::endl
+	      << " gsf2ele.size(): " << gsf2ele.size() << std::endl;
+    if ( verbose_ > 2 ) {
+      for ( auto iter : gsf2ele ) { if ( iter.dr2_ >= 0. ) { std::cout << iter << std::endl; } }
+    }
+    std::cout << std::endl;
+  }
+
   // Match PF GsfTracks to PF GsfElectrons
   std::vector<GsfToEleDR2> pfgsf2ele;
   gsfToEleLinks( gsfTracksEGammaH_, 
 		 gsfElectronsEGammaH_, 
 		 pfgsf2ele );
   if ( verbose_ > 1 ) {
-    std::cout << "[IDNtuplizer::pfElectrons] gsfToEleLinks:" << std::endl 
+    std::cout << "[IDNtuplizer::createChains] gsfToEleLinks:" << std::endl 
 	      << " gsfTracksEGammaH_->size(): " << gsfTracksEGammaH_->size() << std::endl
 	      << " gsfElectronsEGammaH_->size(): " << gsfElectronsEGammaH_->size() << std::endl
 	      << " pfgsf2ele.size(): " << pfgsf2ele.size() << std::endl;
@@ -1268,263 +1104,169 @@ void IDNtuplizer::pfElectrons( std::set<reco::CandidatePtr>& signal_electrons,
     }
     std::cout << std::endl;
   }
-  
-  pfElectrons_signal( signal_electrons, sig2trk, other_trk, sig2gsf, sig2pfgsf, trk2pfgsf, gsf2pfgsf, pfgsf2ele );
-  pfElectrons_fakes( other_trk, trk2gsf, trk2pfgsf, gsf2pfgsf, pfgsf2ele );
+
+  signal( signal_electrons, 
+	  tag_side_muons, 
+	  sig2trk, sig2gsf, sig2pfgsf,
+	  other_trk, trk2gsf, trk2pfgsf,
+	  gsf2pfgsf, 
+	  gsf2ele, pfgsf2ele );
+
+  bkgd( signal_electrons, 
+	tag_side_muons,
+	sig2trk, sig2gsf, sig2pfgsf,
+	other_trk, trk2gsf, trk2pfgsf,
+	gsf2pfgsf, 
+	gsf2ele, pfgsf2ele );
   
 }
 
+//@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
 ////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////
 // Iterate through "signal electrons" 
-void IDNtuplizer::pfElectrons_signal( std::set<reco::CandidatePtr>& signal_electrons,
-				      std::vector<SigToTrkDR2>& sig2trk,
-				      std::vector<SigToTrkDR2>& other_trk,
-				      std::vector<SigToGsfDR2>& sig2gsf,
-				      std::vector<SigToGsfDR2>& sig2pfgsf,
-			       	      std::vector<TrkToGsfDR2>& trk2pfgsf,
-			       	      std::vector<GsfToGsfDR2>& gsf2pfgsf,
-				      std::vector<GsfToEleDR2>& pfgsf2ele ) {
+void IDNtuplizer::signal( std::set<reco::CandidatePtr>& signal_electrons,
+			  std::set<reco::CandidatePtr>& tag_side_muons,
+			  std::vector<SigToTrkDR2>& sig2trk,
+			  std::vector<SigToGsfDR2>& sig2gsf,
+			  std::vector<SigToGsfDR2>& sig2pfgsf,
+			  std::vector<SigToTrkDR2>& other_trk,
+			  std::vector<TrkToGsfDR2>& trk2gsf,
+			  std::vector<TrkToGsfDR2>& trk2pfgsf,
+			  std::vector<GsfToGsfDR2>& gsf2pfgsf,
+			  std::vector<GsfToEleDR2>& gsf2ele,
+			  std::vector<GsfToEleDR2>& pfgsf2ele ) {
 
+  // Find highest-pT tag-side muon in event and store
+  float tag_pt = IDNtuple::NEG_FLOAT;
+  float tag_eta = IDNtuple::NEG_FLOAT;
+  for ( auto tag : tag_side_muons ) {
+    if ( tag->pt() > tag_pt ) {
+      tag_pt = tag->pt();
+      tag_eta = tag->eta();
+    }
+  }
+  
+  // Iterate through signal electrons
   for ( auto sig : signal_electrons ) {
-
-    // SIG: Initialise ElectronChain object
-    chains_.push_back(ElectronChain());
-    ElectronChain& chain = chains_.back();
-    chain.is_mc_ = isMC_;
-    chain.is_aod_ = isAOD_;
-    chain.is_e_ = true;
-    chain.is_egamma_ = true;
-    chain.sig_ = sig;
-
-    // TRK: Store matches between "signal electron" and KF tracks
-    match<reco::Track>(sig,
-		       sig2trk,
-		       chain.trk_, // by ref
-		       chain.trk_dr_,
-		       chain.trk_match_ );
     
-    // GSF: Store matches between "signal electron" and (low-pT!) GSF tracks
-    match<reco::GsfTrack>(sig,
-			  sig2gsf,
-			  chain.gsf_, // by ref
-			  chain.gsf_dr_,
-			  chain.gsf_match_ );
-	
-    // PFGSF: Store matches between "signal electron" and PF GSF tracks
-    match<reco::GsfTrack>(sig, 
-			  sig2pfgsf,
-			  chain.pfgsf_, // by ref 
-			  chain.pfgsf_dr_,
-			  chain.pfgsf_match_ );
-
-    // ELE: No matching between signal electron and GSF electron here, done later
-
-    // GSF: Check if matched to a (low-pT!) GsfTrack
-    if ( chain.gsf_match_ ) {
-
-      // SEED: Store ElectronSeed BDT discrimator outputs
-      chain.unbiased_ = (*mvaUnbiasedH_)[chain.gsf_];
-      chain.ptbiased_ = (*mvaPtbiasedH_)[chain.gsf_];
+    // Repeat for two options: low pT and PF EGamma reconstruction
+    for ( auto is_egamma : std::vector<bool>{ false, true } ) { 
       
-      // PFGSF: Store PF GSF track info if match found with GSF track
-      auto match_gsf_to_pfgsf = std::find_if( gsf2pfgsf.begin(),
-					      gsf2pfgsf.end(),
-					      [chain](const GsfToGsfDR2& dr2) {
-						return chain.gsf_ == dr2.obj1_;
-					      }
-					      );
-      if ( match_gsf_to_pfgsf != gsf2pfgsf.end() && 
-	   validPtr(match_gsf_to_pfgsf->obj2_) ) {
+      // SIG: Initialise ElectronChain object
+      chains_.push_back(ElectronChain());
+      ElectronChain& chain = chains_.back();
+      chain.is_mc_ = isMC_;
+      chain.is_aod_ = isAOD_;
+      chain.is_e_ = true;
+      chain.is_egamma_ = is_egamma; // Set here if low pT or EGamma!
+      chain.sig_ = sig;
+      chain.tag_pt_ = tag_pt;
+      chain.tag_eta_ = tag_eta;
 
-	// TRK: Update Track info (i.e. calc deltaR with seed track, probably identical to original trk...)
+      // TRK: Store matches between "signal electron" and KF tracks
+      match<reco::Track>(sig,
+			 sig2trk,
+			 chain.trk_, // by ref
+			 chain.trk_dr_,
+			 chain.trk_match_ );
+      
+      // GSF: Store matches between "signal electron" and GSF tracks
+      match<reco::GsfTrack>(sig,
+			    sig2gsf,
+			    chain.gsf_, // by ref
+			    chain.gsf_dr_,
+			    chain.gsf_match_ );
+      
+      // PFGSF: Store matches between "signal electron" and PF GSF tracks
+      match<reco::GsfTrack>(sig, 
+			    sig2pfgsf,
+			    chain.pfgsf_, // by ref 
+			    chain.pfgsf_dr_,
+			    chain.pfgsf_match_ );
+      
+      // Only for matched low-pT GSF tracks ...
+      if ( is_egamma == false && chain.gsf_match_ ) { 
+	
+	// TRK: Update Track info
 	reco::TrackPtr trk; 
-	if ( gsfToTrk(chain.pfgsf_,trk,true) ) {
+	if ( gsfToTrk(chain.gsf_,trk) ) {
 	  chain.trk_ = trk; 
 	  chain.trk_match_ = true;
 	  chain.trk_dr_ = sqrt(deltaR2(chain.sig_,chain.trk_));
 	  PdgIds::const_iterator pos = pdgids_.find(chain.trk_.key());
 	  if ( pos != pdgids_.end() ) { chain.pdg_id_ = pos->second; }
 	}
-
-	// SEED: Store Seed information associated with PF GSF track
+	
+	// SEED: Store Seed information
 	if ( isAOD_ == 0 ) {
 	  // If no TrackExtra info, then assume tracker-driven
 	  chain.seed_tracker_driven_ = true;
 	  chain.seed_ecal_driven_ = false;
 	} else if ( isAOD_ == 1 ) {
 	  reco::ElectronSeedPtr seed;
-	  if ( gsfToSeed(chain.pfgsf_,seed) ) { // Store ElectronSeed info
+	  if ( gsfToSeed(chain.gsf_,seed) ) { // Store ElectronSeed info
 	    chain.seed_ = seed;
 	    chain.seed_tracker_driven_ = seed->isTrackerDriven();
 	    chain.seed_ecal_driven_ = seed->isEcalDriven();
 	    reco::CaloClusterPtr calo;
 	    if ( seedToCalo(seed,calo) ) { chain.calo_ = calo; } // Store CaloCluster info
+	    // Store PreId info
+	    //chain.preid_ecal_ = edm::refToPtr((*preIdRefsH_)[seed->ctfTrack()]);
+	    //chain.preid_hcal_ = reco::PreIdPtr( preIdsHcalH_, chain.preid_ecal_.key() );
 	  } else {
-	    // If no TrackExtra info in AOD, then assume tracker-driven
-	    chain.seed_tracker_driven_ = true;
+	    // If no TrackExtra info or maps, then set to false
+	    chain.seed_tracker_driven_ = false;
 	    chain.seed_ecal_driven_ = false;
 	  }
 	}
+	
+	// SEED: Store BDT discrimator outputs for low-pT ElectronSeeds
+	chain.unbiased_ = (*mvaUnbiasedH_)[chain.gsf_];
+	chain.ptbiased_ = (*mvaPtbiasedH_)[chain.gsf_];
 
-	// PFGSF: Store PF GSF track
-	chain.pfgsf_ = match_gsf_to_pfgsf->obj2_;
-	chain.pfgsf_match_ = true;
-	chain.pfgsf_dr_ = sqrt(deltaR2(chain.sig_,chain.pfgsf_));
+	// GSF: Info is stored if match made above
 
-      } else {
-	// PFGSF: If do not match GSF to PFGSF, then deal with this below
-      }
-      
-    } else if  ( chain.pfgsf_match_ ) {
-
-      // PFGSF: Check if PFGSF track is NOT matched to GSF track
-      auto match_pfgsf_to_gsf = std::find_if( gsf2pfgsf.begin(),
-					      gsf2pfgsf.end(),
-					      [chain](const GsfToGsfDR2& dr2) {
-						return chain.pfgsf_ == dr2.obj2_;
+	// PFGSF: Info is stored if match made above
+	
+	// ELE: Store GSF electron info if match found with GSF track
+	auto match_gsf_to_ele = std::find_if( gsf2ele.begin(), 
+					      gsf2ele.end(), 
+					      [chain](const GsfToEleDR2& dr2) { 
+						return chain.gsf_ == dr2.obj1_;
 					      }
 					      );
-      if ( match_pfgsf_to_gsf != gsf2pfgsf.end() && // Find PFGSF entry
-	   validPtr(match_pfgsf_to_gsf->obj2_) &&   // Ensure nonnull PFGSF
-	   !validPtr(match_pfgsf_to_gsf->obj1_) ) { // Ensure null GSF
+	if ( match_gsf_to_ele != gsf2ele.end() && 
+	     validPtr(match_gsf_to_ele->obj2_) ) { 
+	  chain.ele_ = match_gsf_to_ele->obj2_; 
+	  chain.ele_match_ = true;
+	  chain.ele_dr_ = sqrt(deltaR2(chain.ele_,chain.sig_));
+	}
+	
+      } // !is_egamma and matched
       
-	// TRK: Check if PF GSF track is matched to a surrogate PF track (closest in pT)
-	reco::GsfTrackPtr pfgsf = match_pfgsf_to_gsf->obj2_;
+      // Only for matched PF GSF tracks ...
+      if ( is_egamma == true && chain.pfgsf_match_ ) { 
+      
+	// TRK: Update Track info (with surrogate track if necessary)
 	auto match_pfgsf_to_trk = std::find_if( trk2pfgsf.begin(), 
 						trk2pfgsf.end(), 
-						[pfgsf](const TrkToGsfDR2& dr2) { 
-						  return pfgsf == dr2.obj2_; 
+						[chain](const TrkToGsfDR2& dr2) { 
+						  return chain.pfgsf_ == dr2.obj2_; 
 						}
 						);
 	if ( match_pfgsf_to_trk == trk2pfgsf.end() &&
 	     validPtr(match_pfgsf_to_trk->obj1_) ) {
-	  chain.trk_ = match_pfgsf_to_trk->obj1_; // Store surrogate track
+	  chain.trk_ = match_pfgsf_to_trk->obj1_;
 	  chain.trk_match_ = true;
-	  chain.trk_dr_ = sqrt(deltaR2(chain.sig_,chain.trk_));
+	  chain.trk_dr_ = sqrt(deltaR2(chain.trk_,chain.sig_)); 
+	  if ( match_pfgsf_to_trk->dr2_ > dr_threshold_*dr_threshold_ ) { chain.trk_dr_ *= -1; } //@@ -ve for surrogates!
 	  PdgIds::const_iterator pos = pdgids_.find(chain.trk_.key());
 	  if ( pos != pdgids_.end() ) { chain.pdg_id_ = pos->second; }
 	}
-
+	
 	// SEED: Store Seed information
-	if ( isAOD_ == 0 ) {
-	  // If no TrackExtra info, then assume ECAL-driven
-	  chain.seed_tracker_driven_ = false;
-	  chain.seed_ecal_driven_ = true;
-	} else if ( isAOD_ == 1 ) {
-	  reco::ElectronSeedPtr seed;
-	  if ( gsfToSeed(chain.pfgsf_,seed) ) { // Store ElectronSeed info
-	    chain.seed_ = seed;
-	    chain.seed_tracker_driven_ = seed->isTrackerDriven();
-	    chain.seed_ecal_driven_ = seed->isEcalDriven();
-	    reco::CaloClusterPtr calo;
-	    if ( seedToCalo(seed,calo) ) { chain.calo_ = calo; } // Store CaloCluster info
-	  } else {
-	    // If no TrackExtra info in AOD, then assume ECAL-driven!
-	    chain.seed_tracker_driven_ = false;
-	    chain.seed_ecal_driven_ = true;
-	  }
-	}
-
-	// PFGSF: Information is already stored
-
-      } else {
-	std::cout << "[IDNtuplizer::pfElectrons_signal] " 
-		  << "ERROR: Couldn't find PF GSF track in gsf2pfgsf map!";
-      }
-      
-    }
-    
-    // GSF: No check here on if GSF track is found, as this we care only about PF GSF!
-
-    // PFGSF: If not matched to PF GsfTrack, then move onto next "signal electron"
-    if ( !chain.pfgsf_match_ ) { continue; }
-    // Otherwise ... 
-
-    // ELE: Store GSF electron info if match found with PF GSF track
-    auto match_pfgsf_to_ele = std::find_if( pfgsf2ele.begin(), 
-					    pfgsf2ele.end(), 
-					    [chain](const GsfToEleDR2& dr2) { 
-					      return chain.pfgsf_ == dr2.obj1_;
-					    }
-					    );
-    if ( match_pfgsf_to_ele != pfgsf2ele.end() && 
-	 validPtr(match_pfgsf_to_ele->obj2_) ) { 
-      chain.ele_ = match_pfgsf_to_ele->obj2_; 
-      chain.ele_match_ = true;
-      chain.ele_dr_ = sqrt(deltaR2(chain.sig_,chain.ele_));
-    }
-    
-  } // for ( auto sig : signal_electrons )
-
-}
-
-////////////////////////////////////////////////////////////////////////////////
-////////////////////////////////////////////////////////////////////////////////
-////////////////////////////////////////////////////////////////////////////////
-// Iterate through "fake tracks" 
-void IDNtuplizer::pfElectrons_fakes( std::vector<SigToTrkDR2>& other_trk,
-				     std::vector<TrkToGsfDR2>& trk2gsf,
-				     std::vector<TrkToGsfDR2>& trk2pfgsf,
-				     std::vector<GsfToGsfDR2>& gsf2pfgsf,
-				     std::vector<GsfToEleDR2>& pfgsf2ele ) {
-  
-  // Iterate through tracks
-  for ( auto iter : other_trk ) {
-    
-    if ( !validPtr(iter.obj2_) ) { continue; } // Shouldn't happen
-    
-    // SIG: Initialise ElectronChain object
-    chains_.push_back(ElectronChain());
-    ElectronChain& chain = chains_.back();
-    chain.is_mc_ = isMC_;
-    chain.is_aod_ = isAOD_;
-    chain.is_e_ = false;
-    chain.is_egamma_ = true;
-    
-    // TRK: Store Track info
-    chain.trk_ = iter.obj2_;
-    chain.trk_match_ = true;
-    chain.trk_dr_ = 0.; // w.r.t. trk
-    
-    // GSF: Store GSF track info if match found with KF track (either via ElectronSeed or just deltaR)
-    auto match_trk_to_gsf = std::find_if( trk2gsf.begin(), 
-					  trk2gsf.end(), 
-					  [chain](const TrkToGsfDR2& dr2) { 
-					    return dr2.obj1_ == chain.trk_;
-					  }
-					  );
-    if ( match_trk_to_gsf != trk2gsf.end() && 
-	 validPtr(match_trk_to_gsf->obj2_) ) {
-
-      // GSF: Store GSF track info
-      chain.gsf_ = match_trk_to_gsf->obj2_;
-      chain.gsf_match_ = true;
-      chain.gsf_dr_ = sqrt(deltaR2(chain.trk_,chain.gsf_));
-      
-      // SEED: Store ElectronSeed BDT discrimator outputs
-      chain.unbiased_ = (*mvaUnbiasedH_)[chain.gsf_];
-      chain.ptbiased_ = (*mvaPtbiasedH_)[chain.gsf_];
-      
-      // PFGSF: Store PF GSF track info if match found with GSF track
-      auto match_gsf_to_pfgsf = std::find_if( gsf2pfgsf.begin(),
-					      gsf2pfgsf.end(),
-					      [chain](const GsfToGsfDR2& dr2) {
-						return chain.gsf_ == dr2.obj1_;
-					      }
-					      );
-      if ( match_gsf_to_pfgsf != gsf2pfgsf.end() && 
-	   validPtr(match_gsf_to_pfgsf->obj2_) ) {
-
-	// TRK: KF track info already stored
-
-	// PFGSF: Store PF GSF track
-	chain.pfgsf_ = match_gsf_to_pfgsf->obj2_;
-	chain.pfgsf_match_ = true;
-	chain.pfgsf_dr_ = sqrt(deltaR2(chain.pfgsf_,chain.trk_));
-
-	// SEED: Store Seed information associated with PF GSF track
 	if ( isAOD_ == 0 ) {
 	  // If no TrackExtra info, then assume tracker-driven
 	  chain.seed_tracker_driven_ = true;
@@ -1538,12 +1280,16 @@ void IDNtuplizer::pfElectrons_fakes( std::vector<SigToTrkDR2>& other_trk,
 	    reco::CaloClusterPtr calo;
 	    if ( seedToCalo(seed,calo) ) { chain.calo_ = calo; } // Store CaloCluster info
 	  } else {
-	    // If no TrackExtra info in AOD, then assume tracker-driven
-	    chain.seed_tracker_driven_ = true;
+	    // If no TrackExtra info in AOD, then set to false
+	    chain.seed_tracker_driven_ = false;
 	    chain.seed_ecal_driven_ = false;
 	  }
 	}
-
+	
+	// GSF: Info is stored if match made above
+	
+	// PFGSF: Info is stored if match made above
+	
 	// ELE: Store GSF electron info if match found with PF GSF track
 	auto match_pfgsf_to_ele = std::find_if( pfgsf2ele.begin(), 
 						pfgsf2ele.end(), 
@@ -1555,181 +1301,208 @@ void IDNtuplizer::pfElectrons_fakes( std::vector<SigToTrkDR2>& other_trk,
 	     validPtr(match_pfgsf_to_ele->obj2_) ) { 
 	  chain.ele_ = match_pfgsf_to_ele->obj2_; 
 	  chain.ele_match_ = true;
-	  chain.ele_dr_ = sqrt(deltaR2(chain.trk_,chain.ele_));
+	  chain.ele_dr_ = sqrt(deltaR2(chain.ele_,chain.sig_));
 	}
+	
+      } // is_egamma and matched
+      
+    } // for ( auto is_egamma : std::vector<bool>{ false, true } ) 
+  } // for ( auto sig : signal_electrons )
+  
+}
 
-      } // if PF GSF matched to GSF then ...
-    } // if GSF matched to TRK then ...
-  } // for ( auto iter : other_trk )
+//@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////
+// Iterate through fake candidates
+void IDNtuplizer::bkgd( std::set<reco::CandidatePtr>& signal_electrons,
+			std::set<reco::CandidatePtr>& tag_side_muons,
+			std::vector<SigToTrkDR2>& sig2trk,
+			std::vector<SigToGsfDR2>& sig2gsf,
+			std::vector<SigToGsfDR2>& sig2pfgsf,
+			std::vector<SigToTrkDR2>& other_trk,
+			std::vector<TrkToGsfDR2>& trk2gsf,
+			std::vector<TrkToGsfDR2>& trk2pfgsf,
+			std::vector<GsfToGsfDR2>& gsf2pfgsf,
+			std::vector<GsfToEleDR2>& gsf2ele,
+			std::vector<GsfToEleDR2>& pfgsf2ele ) {
 
-//  // Loop through PF GSF tracks with surrogate tracks
-//  for ( auto match_trk_to_pfgsf : trk2pfgsf ) {
-//
-//    // Check if PF GSF match to surrogate TRK is found 
-//    if ( validPtr(match_trk_to_pfgsf.obj1_) && // Valid TRK Ptr
-//	 validPtr(match_trk_to_pfgsf.obj2_) && // Valid PF GSF Ptr
-//	 std::abs( match_trk_to_pfgsf.dr2_-IDNtuple::NEG_FLOAT) > 1.e-6 && // Implies valid match
-//	 match_trk_to_pfgsf.dr2_ < 0. ) { // Implies surrogate trk
-//
-//      // SIG: Initialise ElectronChain object
-//      chains_.push_back(ElectronChain());
-//      ElectronChain& chain = chains_.back();
-//      chain.is_mc_ = isMC_;
-//      chain.is_aod_ = isAOD_;
-//      chain.is_e_ = false;
-//      chain.is_egamma_ = true;
-//      
-//      // Store (surrogate) TRK info
-//      chain.trk_ = match_trk_to_pfgsf.obj1_; // Store surrogate track
-//      chain.trk_match_ = true;
-//      chain.trk_dr_ = 0.; // w.r.t. trk
-//
-//      // PFGSF: Store PF GSF track
-//      chain.pfgsf_ = match_trk_to_pfgsf.obj2_;
-//      chain.pfgsf_match_ = true;
-//      chain.pfgsf_dr_ = sqrt(deltaR2(chain.trk_,chain.pfgsf_));
-//      
-//      // SEED: Store Seed information associated with PF GSF track
-//      if ( isAOD_ == 0 ) {
-//	// If no TrackExtra info, then assume ECAL-driven
-//	chain.seed_tracker_driven_ = false;
-//	chain.seed_ecal_driven_ = true;
-//      } else if ( isAOD_ == 1 ) {
-//	reco::ElectronSeedPtr seed;
-//	if ( gsfToSeed(chain.pfgsf_,seed) ) { // Store ElectronSeed info
-//	  chain.seed_ = seed;
-//	  chain.seed_tracker_driven_ = seed->isTrackerDriven();
-//	  chain.seed_ecal_driven_ = seed->isEcalDriven();
-//	  reco::CaloClusterPtr calo;
-//	  if ( seedToCalo(seed,calo) ) { chain.calo_ = calo; } // Store CaloCluster info
-//	} else {
-//	  // If no TrackExtra info in AOD, then assume ECAL-driven!
-//	  chain.seed_tracker_driven_ = false;
-//	  chain.seed_ecal_driven_ = true;
-//	}
-//      }
-//
-//      // ELE: Store GSF electron info if match found with PF GSF track
-//      auto match_pfgsf_to_ele = std::find_if( pfgsf2ele.begin(), 
-//					      pfgsf2ele.end(), 
-//					      [chain](const GsfToEleDR2& dr2) { 
-//						return chain.pfgsf_ == dr2.obj1_;
-//					      }
-//					      );
-//      if ( match_pfgsf_to_ele != pfgsf2ele.end() && 
-//	   validPtr(match_pfgsf_to_ele->obj2_) ) { 
-//	chain.ele_ = match_pfgsf_to_ele->obj2_; 
-//	chain.ele_match_ = true;
-//	chain.ele_dr_ = sqrt(deltaR2(chain.trk_,chain.ele_));
-//      }
-//
-//    } // if PF GSF matched to (surrogate) TRK then ...
-//
-//  } // trk2pfgsf loop
+  // Find highest-pT tag-side muon in event and store
+  float tag_pt = IDNtuple::NEG_FLOAT;
+  float tag_eta = IDNtuple::NEG_FLOAT;
+  for ( auto tag : tag_side_muons ) {
+    if ( tag->pt() > tag_pt ) {
+      tag_pt = tag->pt();
+      tag_eta = tag->eta();
+    }
+  }
+  
+  // Iterate through tracks
+  for ( auto iter : other_trk ) {
+    
+    // Repeat for two options: low pT and PF EGamma reconstruction
+    for ( auto is_egamma : std::vector<bool>{ true, false } ) { 
 
-////////////////////
-////////////////////
-////////////////////
-//    } else {
-//
-//      std::cout << "!!!!! NO GSF MATCH !!!!!" << std::endl;
-//
-//      // TRK: Check if PF GSF track is matched to a surrogate PF track (closest in pT)
-//      reco::GsfTrackPtr pfgsf = match_pfgsf_to_gsf->obj2_;
-//      auto match_gsf_to_trk = std::find_if( trk2pfgsf.begin(), 
-//					    trk2pfgsf.end(), 
-//					    [pfgsf](const TrkToGsfDR2& dr2) { 
-//					      return pfgsf == dr2.obj2_; 
-//					    }
-//					    );
-//      if ( match_gsf_to_trk == trk2gsf.end() &&
-//	   validPtr(match_gsf_to_trk->obj1_) ) {
-//	chain.trk_ = match_gsf_to_trk->obj1_; // Store surrogate track
-//	chain.trk_match_ = true;
-//	chain.trk_dr_ = sqrt(deltaR2(chain.sig_,chain.trk_));
-//	PdgIds::const_iterator pos = pdgids_.find(chain.trk_.key());
-//	if ( pos != pdgids_.end() ) { chain.pdg_id_ = pos->second; }
-//      }
-//
-////      // PFGSF: Check if PFGSF track IS matched to KF track
-////      auto match_trk_to_pfgsf = std::find_if( trk2pfgsf.begin(), 
-////					      trk2pfgsf.end(), 
-////					      [chain](const TrkToGsfDR2& dr2) { 
-////						return dr2.obj1_ == chain.trk_;
-////					      }
-////					      );
-////      if ( match_trk_to_pfgsf != trk2pfgsf.end() &&
-////	   validPtr(match_trk_to_pfgsf->obj2_) ) { 
-//
-//	std::cout << "!!!!! TRK MATCHED TO PFGSF !!!!!" << std::endl;
-//      
-//	// PFGSF: Check if PFGSF track is NOT matched to GSF track
-//	auto match_pfgsf_to_gsf = std::find_if( gsf2pfgsf.begin(),
-//						gsf2pfgsf.end(),
-//						[chain](const GsfToGsfDR2& dr2) {
-//						  return chain.pfgsf_ == dr2.obj2_;
-//						}
-//						);
-//	if ( match_pfgsf_to_gsf != gsf2pfgsf.end() && // Find PFGSF entry
-//	     validPtr(match_pfgsf_to_gsf->obj2_) &&   // Ensure nonnull PFGSF
-//	     !validPtr(match_pfgsf_to_gsf->obj1_) ) { // Ensure null GSF
-//
-//	  std::cout << "!!!!! PFGSF NOT MATCHED TO GSF !!!!!" << std::endl;
-//	  
-//	  // TRK: KF track info already stored
-//	  
-//	  // PFGSF: Store PF GSF track
-//	  chain.pfgsf_ = match_pfgsf_to_gsf->obj2_;
-//	  chain.pfgsf_match_ = true;
-//	  chain.pfgsf_dr_ = sqrt(deltaR2(chain.trk_,chain.pfgsf_));
-//	  
-//	  // SEED: Store Seed information associated with PF GSF track
-//	  if ( isAOD_ == 0 ) {
-//	    // If no TrackExtra info, then assume ECAL-driven
-//	    chain.seed_tracker_driven_ = false;
-//	    chain.seed_ecal_driven_ = true;
-//	  } else if ( isAOD_ == 1 ) {
-//	    reco::ElectronSeedPtr seed;
-//	    if ( gsfToSeed(chain.pfgsf_,seed) ) { // Store ElectronSeed info
-//	      chain.seed_ = seed;
-//	      chain.seed_tracker_driven_ = seed->isTrackerDriven();
-//	      chain.seed_ecal_driven_ = seed->isEcalDriven();
-//	      reco::CaloClusterPtr calo;
-//	      if ( seedToCalo(seed,calo) ) { chain.calo_ = calo; } // Store CaloCluster info
-//	    } else {
-//	      // If no TrackExtra info in AOD, then assume ECAL-driven!
-//	      chain.seed_tracker_driven_ = false;
-//	      chain.seed_ecal_driven_ = true;
-//	    }
-//	  }
-//	  
-//	} else {
-//	  std::cout << "!!!!! PFGSF is matched to GSF !!!!!" << std::endl;
-//	}
-//      } else {
-//	std::cout << "!!!!! PFGSF is not matched to TRK !!!!!" << std::endl;
-//      }
-//      
-//    } // if GSF matched to TRK then ...
-//
-//    // PFGSF: If not matched to KF track, then move onto next "fake candidate"
-//    if ( !chain.pfgsf_match_ ) { continue; }
-//
-//    // ELE: Store GSF electron info if match found with PF GSF track
-//    auto match_pfgsf_to_ele = std::find_if( pfgsf2ele.begin(), 
-//					    pfgsf2ele.end(), 
-//					    [chain](const GsfToEleDR2& dr2) { 
-//					      return chain.pfgsf_ == dr2.obj1_;
-//					    }
-//					    );
-//    if ( match_pfgsf_to_ele != pfgsf2ele.end() && 
-//	 validPtr(match_pfgsf_to_ele->obj2_) ) { 
-//      chain.ele_ = match_pfgsf_to_ele->obj2_; 
-//      chain.ele_match_ = true;
-//      chain.ele_dr_ = sqrt(deltaR2(chain.trk_,chain.ele_));
-//    }
-//
-//  } // for ( auto iter : other_trk )
+      // SIG: Initialise ElectronChain object
+      chains_.push_back(ElectronChain());
+      ElectronChain& chain = chains_.back();
+      chain.is_mc_ = isMC_;
+      chain.is_aod_ = isAOD_;
+      chain.is_e_ = false;
+      chain.is_egamma_ = is_egamma; // Set here if low pT or EGamma!
+      chain.tag_pt_ = tag_pt;
+      chain.tag_eta_ = tag_eta;
+      
+      // TRK: Store Track info
+      chain.trk_ = iter.obj2_; 
+      chain.trk_match_ = true;
+      chain.trk_dr_ = 0.; // w.r.t. trk
+      
+      // GSF: Store GSF track info
+      auto match_trk_to_gsf = std::find_if( trk2gsf.begin(), 
+					    trk2gsf.end(), 
+					    [chain](const TrkToGsfDR2& dr2) { 
+					      return chain.trk_ == dr2.obj1_;
+					    }
+					    );
+      if ( match_trk_to_gsf != trk2gsf.end() && 
+	   validPtr(match_trk_to_gsf->obj2_) ) {
+	chain.gsf_ = match_trk_to_gsf->obj2_;
+	chain.gsf_match_ = true;
+	if ( match_trk_to_gsf->dr2_ >= 0. ) { 
+	  chain.gsf_dr_ = sqrt(match_trk_to_gsf->dr2_); 
+	} else if ( match_trk_to_gsf->dr2_ > IDNtuple::NEG_FLOATSQ ) { 
+	  chain.gsf_dr_ = -1.*sqrt(match_trk_to_gsf->dr2_*-1.); // -ve value for surrogate
+	} else { 
+	  chain.gsf_dr_ = IDNtuple::NEG_FLOAT;
+	}
+	//chain.gsf_dr_ = sqrt(deltaR2(chain.gsf_,chain.trk_));
+      }
+      
+      // PFGSF: Store PF GSF track info
+      auto match_trk_to_pfgsf = std::find_if( trk2pfgsf.begin(), 
+					      trk2pfgsf.end(), 
+					      [chain](const TrkToGsfDR2& dr2) { 
+						return chain.trk_ == dr2.obj1_; 
+					      }
+					      );
+      if ( match_trk_to_pfgsf != trk2pfgsf.end() ) {
+	if ( validPtr(match_trk_to_pfgsf->obj2_) ) {
+	  chain.pfgsf_ = match_trk_to_pfgsf->obj2_;
+	  chain.pfgsf_match_ = true;
+	  if ( match_trk_to_pfgsf->dr2_ >= 0. ) { 
+	    chain.pfgsf_dr_ = sqrt(match_trk_to_pfgsf->dr2_); 
+	  } else if ( match_trk_to_pfgsf->dr2_ > IDNtuple::NEG_FLOATSQ ) { 
+	    chain.pfgsf_dr_ = -1.*sqrt(match_trk_to_pfgsf->dr2_*-1.); // -ve value for surrogate
+	  } else { 
+	    chain.pfgsf_dr_ = IDNtuple::NEG_FLOAT;
+	  }
+	  //chain.pfgsf_dr_ = sqrt(match_trk_to_pfgsf->dr2_); // +ve or -ve values for if real or surrogate
+	  PdgIds::const_iterator pos = pdgids_.find(chain.trk_.key());
+	  if ( pos != pdgids_.end() ) { chain.pdg_id_ = pos->second; }
+	}
+      }
+      
+      // Only for matched low-pT GSF tracks ...
+      if ( is_egamma == false && chain.gsf_match_ ) { 
+	  
+	// TRK: Info is stored already
+
+	// SEED: Store Seed information
+	if ( isAOD_ == 0 ) {
+	  // If no TrackExtra info, then assume tracker-driven
+	  chain.seed_tracker_driven_ = true;
+	  chain.seed_ecal_driven_ = false;
+	} else if ( isAOD_ == 1 ) {
+	  reco::ElectronSeedPtr seed;
+	  if ( gsfToSeed(chain.gsf_,seed) ) { // Store ElectronSeed info
+	    chain.seed_ = seed;
+	    chain.seed_tracker_driven_ = seed->isTrackerDriven();
+	    chain.seed_ecal_driven_ = seed->isEcalDriven();
+	    reco::CaloClusterPtr calo;
+	    if ( seedToCalo(seed,calo) ) { chain.calo_ = calo; } // Store CaloCluster info
+	    // Store PreId info
+	    //chain.preid_ecal_ = edm::refToPtr((*preIdRefsH_)[seed->ctfTrack()]);
+	    //chain.preid_hcal_ = reco::PreIdPtr( preIdsHcalH_, chain.preid_ecal_.key() );
+	  } else {
+	    // If no TrackExtra info or maps, then set to false
+	    chain.seed_tracker_driven_ = false;
+	    chain.seed_ecal_driven_ = false;
+	  }
+	}
+	
+	// SEED: Store BDT discrimator outputs for low-pT ElectronSeeds
+	chain.unbiased_ = (*mvaUnbiasedH_)[chain.gsf_];
+	chain.ptbiased_ = (*mvaPtbiasedH_)[chain.gsf_];
+	
+	// GSF: Info is stored already
+
+	// PFGSF: Info is stored already
+	
+	// ELE: Store GSF electron info if match found with GSF track
+	auto match_gsf_to_ele = std::find_if( gsf2ele.begin(), 
+					      gsf2ele.end(), 
+					      [chain](const GsfToEleDR2& dr2) { 
+						return chain.gsf_ == dr2.obj1_;
+					      }
+					      );
+	if ( match_gsf_to_ele != gsf2ele.end() && 
+	     validPtr(match_gsf_to_ele->obj2_) ) { 
+	  chain.ele_ = match_gsf_to_ele->obj2_; 
+	  chain.ele_match_ = true;
+	  chain.ele_dr_ = sqrt(match_gsf_to_ele->dr2_);
+	}
+	
+      } // !is_egamma and matched
+
+      // Only for matched PF GSF tracks ...
+      if ( is_egamma == true && chain.pfgsf_match_ ) { 
+      
+	// TRK: Info is stored already
+
+	// SEED: Store Seed information
+	if ( isAOD_ == 0 ) {
+	  // If no TrackExtra info, then assume tracker-driven
+	  chain.seed_tracker_driven_ = true;
+	  chain.seed_ecal_driven_ = false;
+	} else if ( isAOD_ == 1 ) {
+	  reco::ElectronSeedPtr seed;
+	  if ( gsfToSeed(chain.pfgsf_,seed) ) { // Store ElectronSeed info
+	    chain.seed_ = seed;
+	    chain.seed_tracker_driven_ = seed->isTrackerDriven();
+	    chain.seed_ecal_driven_ = seed->isEcalDriven();
+	    reco::CaloClusterPtr calo;
+	    if ( seedToCalo(seed,calo) ) { chain.calo_ = calo; } // Store CaloCluster info
+	  } else {
+	    // If no TrackExtra info in AOD, then set to false
+	    chain.seed_tracker_driven_ = false;
+	    chain.seed_ecal_driven_ = false;
+	  }
+	}
+	
+	// GSF: Info is stored already
+	
+	// PFGSF: Info is stored already
+	
+	// ELE: Store GSF electron info if match found with PF GSF track
+	auto match_pfgsf_to_ele = std::find_if( pfgsf2ele.begin(), 
+						pfgsf2ele.end(), 
+						[chain](const GsfToEleDR2& dr2) { 
+						  return chain.pfgsf_ == dr2.obj1_;
+						}
+						);
+	if ( match_pfgsf_to_ele != pfgsf2ele.end() && 
+	     validPtr(match_pfgsf_to_ele->obj2_) ) { 
+	  chain.ele_ = match_pfgsf_to_ele->obj2_; 
+	  chain.ele_match_ = true;
+	  chain.ele_dr_ = sqrt(match_pfgsf_to_ele->dr2_);
+	}
+	
+      } // is_egamma and matched
+      
+    } // for ( auto is_egamma : std::vector<bool>{ false, true } ) 
+  } // for ( auto trk : other_trk )
 
 }
 
@@ -1739,26 +1512,94 @@ void IDNtuplizer::pfElectrons_fakes( std::vector<SigToTrkDR2>& other_trk,
 //
 void IDNtuplizer::fill( const edm::Event& event,
 			const edm::EventSetup& setup ) {
-  
-  for ( auto& chain : chains_ ) {
+
+  using value_type = unsigned int;
+
+  // Random seed generator
+  static value_type seed = 1; //std::chrono::system_clock::now().time_since_epoch().count(); //@@ fixed seed !!
+  static std::default_random_engine generator(seed);
+
+  // Randomise the order of the EletronChain objects
+  std::shuffle( chains_.begin(), chains_.end(), generator );
+
+   // Poisson with mean = prescale_ (used when prescale_ is -ve)
+  std::poisson_distribution<value_type> poisson(-1.*prescale_);
+
+  std::vector<value_type> cands;
+  std::vector<value_type> cands2;
+  cands.reserve(chains_.size()); 
+  cands2.reserve(chains_.size()); 
+
+  if ( prescale_ < -1.e-9 ) { 
+
+    // If prescale_ is -ve, select cands based on Poisson distr (prescale_ is mean)
+    // 1) Store indices of fakes (separately for low pT and EGamma)
+    for ( unsigned int idx = 0; idx < chains_.size(); ++idx ) { 
+      if ( chains_[idx].is_e_ == false ) { 
+	if ( chains_[idx].is_egamma_ == false ) { cands.push_back(idx); }
+	if ( chains_[idx].is_egamma_ == true ) { cands2.push_back(idx); }
+      }
+    }
+    // 2) Shuffle then truncate to give 'prescale' elements
+    unsigned int size = poisson(generator);
+    cands.resize(size);
+    cands2.resize(size);
+
+  } else if ( prescale_ > 1.e-9 ) { 
+
+    // If prescale_ is +ve, select cands based on flat probability prior (1./prescale_ is threshold)
+    for ( unsigned int idx = 0; idx < chains_.size(); ++idx ) {
+      if ( gRandom->Rndm() < (1./prescale_) ) {
+	if ( chains_[idx].is_e_ == false ) { 
+	  if ( chains_[idx].is_egamma_ == false ) { cands.push_back(idx); }
+	  if ( chains_[idx].is_egamma_ == true ) { cands2.push_back(idx); }
+	}
+      }
+    }
+    
+  } else {
+
+    // If prescale is 0, select all cands
+    for ( unsigned int idx = 0; idx < chains_.size(); ++idx ) {
+      if ( chains_[idx].is_e_ == false ) {
+	if ( chains_[idx].is_egamma_ == false ) { cands.push_back(idx); }
+	if ( chains_[idx].is_egamma_ == true ) { cands2.push_back(idx); }
+      }
+    }
+    
+  }
+
+  // Fill ntuple
+  for ( size_t idx = 0; idx < chains_.size(); ++idx ) {
+    ElectronChain chain = chains_[idx];
     
     // Init tree here
     ntuple_.reset();
 
+    // Apply prescale to fake candidates
+    if ( chain.is_e_ == false && 
+	 std::find( cands.begin(), cands.end(), idx ) == cands.end() &&
+	 std::find( cands2.begin(), cands2.end(), idx ) == cands2.end() ) { continue; }
+    
     // Data sample
     ntuple_.is_mc( chain.is_mc_ );
     ntuple_.is_aod( chain.is_aod_ );
-
-    // Event stuff
-    ntuple_.fill_evt( event.id() );
-    ntuple_.set_rho( *rhoH_ );
-
-    // EGamma of low-pT
-    ntuple_.is_egamma( chain.is_egamma_ );
+    
+    // Tag-side muon
+    ntuple_.tag_pt( chain.tag_pt_ );
+    ntuple_.tag_eta( chain.tag_eta_ );
 
     // Truth label
     ntuple_.is_e( chain.is_e_ );
     ntuple_.is_other( !chain.is_e_ );
+    
+    // Event stuff
+    ntuple_.fill_evt( event.id() );
+    ntuple_.set_rho( *rhoH_ );
+    // Number of tracks or charged/neutral PF candidates
+
+    // EGamma of low-pT
+    ntuple_.is_egamma( chain.is_egamma_ );
     
     // Set background weight
     if ( !chain.is_e_ ) { ntuple_.set_weight( std::abs(prescale_) > 1.e-6 ? prescale_ : 1. ); }
@@ -2108,12 +1949,13 @@ void IDNtuplizer::trkToGsfLinks( std::vector<reco::TrackPtr>& ctfTracks,
 
   trk2gsf.clear();
 
-//  // Record matched tracks via their keys
-//  std::vector<size_t> keys(ctfTracks.size());
-//  std::generate( keys.begin(), keys.end(), [n=0] () mutable { return n++; } );
-//
-//  // Shuffled to allow unbiased selection of surrogate tracks
-//  std::random_shuffle( keys.begin(), keys.end() );
+  // Record matched tracks via their keys
+  std::vector<size_t> keys(ctfTracks.size());
+  std::generate( keys.begin(), keys.end(), [n=0] () mutable { return n++; } );
+
+  // Shuffle keys to allow unbiased selection of surrogate tracks
+  static unsigned seed = 1; //std::chrono::system_clock::now().time_since_epoch().count(); //@@ fixed seed !!
+  std::shuffle( keys.begin(), keys.end(), std::default_random_engine(seed) );
 
   //////////
   // 1) Add GsfTracks to trk2gsf map if link (via provenence information) can be made
@@ -2122,62 +1964,102 @@ void IDNtuplizer::trkToGsfLinks( std::vector<reco::TrackPtr>& ctfTracks,
 
     // Check validity of GsfTrackPtr (shouldn't ever fail?!)
     if ( !validPtr(gsf) ) { continue; }
-    
+
+    // If gsf not linked to trk (via ElectronSeed or "link maps"), then continue
     reco::TrackPtr trk;
-    if ( gsfToTrk(gsf,trk,is_egamma) ) { 
+    if ( !gsfToTrk(gsf,trk,is_egamma) ) { continue; }
 
-      // Check if gsf is NOT already stored in map and add entry (warning: occasionally points to duplicate trks!)
-      auto match_gsf_to_trk = std::find_if( trk2gsf.begin(), 
-					    trk2gsf.end(), 
-					    [gsf](const TrkToGsfDR2& dr2) { 
-					      return gsf == dr2.obj2_; 
-					    }
-					    );
-      if ( match_gsf_to_trk == trk2gsf.end() ) {
-	trk2gsf.emplace_back( trk, gsf, deltaR2(trk,gsf) );
-//	keys.erase( std::remove( keys.begin(), 
-//				 keys.end(), 
-//				 trk.key() ), 
-//		    keys.end() ); // move key to end and erase
-      } else { 
-	// This can happen on occasion with the "link maps"
-	std::cout << "[IDNtuplizer::trkToGsfLinks] ERROR! GsfTrackPtr is already in the map!" << std::endl; 
-      }
-
-    } else {
-
-      // Check if gsf is NOT already stored in map and add entry with surrogate track
-      auto match_gsf_to_trk = std::find_if( trk2gsf.begin(), 
-					    trk2gsf.end(), 
-					    [gsf](const TrkToGsfDR2& dr2) { 
-					      return gsf == dr2.obj2_; 
-					    }
-					    );
-      if ( match_gsf_to_trk == trk2gsf.end() ) {
-
-	// Identify (by key) "best" surrogate track to be the closest in pT to the PF GSF track
-	auto best = std::min_element(tracks_.begin(),
-				     tracks_.end(),
-				     [gsf]( const reco::TrackPtr& trk1, 
-					    const reco::TrackPtr& trk2 ) {
-				       return
-				       std::abs(trk1->pt()-gsf->ptMode())/gsf->ptMode()
-				       <
-				       std::abs(trk2->pt()-gsf->ptMode())/gsf->ptMode();
-				     }
-				     );
-	if ( best != tracks_.end() && validPtr(*best) ) {
-	  trk2gsf.emplace_back( *best, gsf, -1.*deltaR2(*best,gsf) );
-	} else {
-	  std::cout << "[IDNtuplizer::pfElectrons_signal] " 
-		    << "ERROR: Couldn't find a valid 'best' surrogate track matched in pT to the PF GSF track!";
-	  trk2gsf.emplace_back( tracks_.front(), gsf, IDNtuple::NEG_FLOAT ); // hack! shouldn't ever be called
-	}
-      } else { std::cout << "[IDNtuplizer::trkToGsfLinks] ERROR! GsfTrackPtr is already in the map!!!" << std::endl; }
-
+    // Check if gsf is NOT already stored in map and add entry
+    // Warning: multiple tracks can seed same GSF! (SHOULD ADD ALL ENTRIES? ONLY MATTERS FOR FR?)
+    auto match_gsf_to_trk = std::find_if( trk2gsf.begin(), 
+					  trk2gsf.end(), 
+					  [gsf](const TrkToGsfDR2& dr2) { 
+					    return gsf == dr2.obj2_; 
+					  }
+					  );
+    if ( match_gsf_to_trk == trk2gsf.end() ) {
+      trk2gsf.emplace_back( trk, gsf, deltaR2(trk,gsf) );
+      keys.erase( std::remove( keys.begin(), 
+			       keys.end(), 
+			       trk.key() ), 
+		  keys.end() ); // move TrackPtr to end and erase
+    } else { 
+      // This can happen on occasion with the "link maps"
+      std::cout << "[IDNtuplizer::trkToGsfLinks] ERROR! GsfTrackPtr is already in the map!" << std::endl; 
     }
     
+  }
+
+  //////////
+  // 2) Add entries with GsfTracks linked to (random) surrogate tracks if link cannot be made
+  for ( size_t idx = 0; idx < gsfTracks->size(); ++idx ) {
+    reco::GsfTrackPtr gsf(gsfTracks, idx); 
+
+    if ( !validPtr(gsf) ) { continue; } //@@ shouldn't ever happen?!
+    
+    // If gsf is *linked* to trk (i.e. opposite to above), then continue
+    reco::TrackPtr trk;
+    if ( gsfToTrk(gsf,trk,is_egamma) ) { continue; }
+    
+    // Check if gsf is NOT already stored in map and add entry with surrogate track
+    auto match_gsf_to_trk = std::find_if( trk2gsf.begin(), 
+					  trk2gsf.end(), 
+					  [gsf](const TrkToGsfDR2& dr2) { 
+					    return gsf == dr2.obj2_; 
+					  }
+					  );
+    if ( match_gsf_to_trk == trk2gsf.end() ) {
+      
+      // Identify (by key) "best" surrogate track to be the closest in pT to the PF GSF track
+      auto best = std::min_element(keys.begin(),
+				   keys.end(),
+				   [gsf,ctfTracks]( const size_t& key1, 
+						    const size_t& key2 ) {
+				     return
+				     std::abs(ctfTracks[key1]->pt()-gsf->ptMode())/gsf->ptMode()
+				     <
+				     std::abs(ctfTracks[key2]->pt()-gsf->ptMode())/gsf->ptMode();
+				   }
+				   );
+      if ( best != keys.end() && validPtr(ctfTracks[*best]) ) {
+	reco::TrackPtr trk = ctfTracks[*best];
+	float dr2 = deltaR2(gsf,trk);
+	if ( dr2 < dr_threshold_*dr_threshold_ ) {
+	  trk2gsf.emplace_back( trk, gsf, deltaR2(gsf,trk) ); // Label as correct match
+	} else {
+	  trk2gsf.emplace_back( trk, gsf, -1.*deltaR2(gsf,trk) ); // Label as surrogate match
+	}
+	keys.erase( std::remove( keys.begin(), 
+				 keys.end(), 
+				 trk.key() ),
+		    keys.end() ); // move TrackPtr to end and erase
+      } else {
+	std::cout << "[IDNtuplizer::trkToGsfLinks] " 
+		  << "ERROR: Couldn't find a valid 'best' surrogate track matched in pT to the PF GSF track!";
+	trk2gsf.emplace_back( reco::TrackPtr(), gsf, IDNtuple::NEG_FLOATSQ ); // shouldn't ever be called
+      }
+
+    } else { std::cout << "[IDNtuplizer::trkToGsfLinks] ERROR! GsfTrackPtr is already in the map!!!" << std::endl; }
+  
   } // GsfTracks loop
+  
+  //////////
+  // 3) Add (null) entries for all Tracks without a match to a GsfTrack
+  for ( auto trk : ctfTracks ) {
+    
+    // Check if trk already stored in map and, if not, add "empty" entry
+    auto match_trk = std::find_if( trk2gsf.begin(), 
+				   trk2gsf.end(), 
+				   [trk](const TrkToGsfDR2& dr2) { 
+				     return dr2.obj1_ == trk; 
+				   }
+				   );
+    if ( match_trk == trk2gsf.end() ) {
+      reco::GsfTrackPtr gsf;
+      trk2gsf.emplace_back( trk, gsf, IDNtuple::NEG_FLOATSQ );
+    }
+
+  }
 
 }
 
@@ -2236,7 +2118,7 @@ void IDNtuplizer::gsfToEleLinks( const edm::Handle< std::vector<reco::GsfTrack> 
 					  }
 					  );
     if ( match_gsf_to_ele == gsf2ele.end() ) {
-      gsf2ele.emplace_back( gsf, reco::GsfElectronPtr(), IDNtuple::NEG_FLOAT ); // null GSF ele
+      gsf2ele.emplace_back( gsf, reco::GsfElectronPtr(), IDNtuple::NEG_FLOATSQ ); // null GSF ele
     }
     
   } 
@@ -2291,7 +2173,7 @@ void IDNtuplizer::gsfToPfGsfLinks( edm::Handle< std::vector<reco::GsfTrack> >& g
 		    keys.end() ); // Erase GSF key (https://en.wikipedia.org/wiki/Erase-remove_idiom)
       } else {
 	// If no match within dr_threshold_, then store null GSF track
-	gsf2pfgsf.emplace_back( reco::GsfTrackPtr(), match_pfgsf_to_gsf->obj2_, IDNtuple::NEG_FLOAT ); // null GSF
+	gsf2pfgsf.emplace_back( reco::GsfTrackPtr(), match_pfgsf_to_gsf->obj2_, IDNtuple::NEG_FLOATSQ ); // null GSF
       }
     } else {
       std::cout << "[IDNtuplizer::gsfToPfGsfLinks]"
@@ -2312,7 +2194,7 @@ void IDNtuplizer::gsfToPfGsfLinks( edm::Handle< std::vector<reco::GsfTrack> >& g
 				   }
 				   );
     if ( match_gsf == gsf2pfgsf.end() ) {
-      gsf2pfgsf.emplace_back( gsf, reco::GsfTrackPtr(), IDNtuple::NEG_FLOAT ); // null PF GSF
+      gsf2pfgsf.emplace_back( gsf, reco::GsfTrackPtr(), IDNtuple::NEG_FLOATSQ ); // null PF GSF
     }
   }    
 
@@ -2374,24 +2256,9 @@ void IDNtuplizer::sigToCandLinks( std::set<reco::CandidatePtr>& signal_electrons
   if ( !append ) { sig2cand.clear(); }
   if ( !append ) { other_cand.clear(); }
   
-  //@@ If prescale_ is negative, generate random indices to select an exact number of candidates per event
-  using value_type = unsigned int;
-  std::vector<value_type> random_cand;
-  if ( prescale_ < -1.e-6 ) { 
-    // Cast negative prescale float to an unsigned int 'size'
-    unsigned int size = static_cast<value_type>(-1.*prescale_); //@@ poisson here, using seed below
-    if ( size == 0 ) { size++; } // Ensure size >= 1
-    // Initialise random_cand with all indices, shuffle, then truncate to give just 'size' elements
-    random_cand.reserve(candidates.size()); 
-    for ( unsigned int i = 0; i < candidates.size(); ++i ) { random_cand.push_back(i); }
-    unsigned seed = std::chrono::system_clock::now().time_since_epoch().count();
-    std::shuffle( random_cand.begin(), random_cand.end(), std::default_random_engine(seed) );
-    random_cand.resize(size);
-  }
-
   // DeltaR2 matches for all combinations of signal electrons and reco::Candidate
   std::vector< DeltaR2<reco::Candidate,T> > sig2cand_all;
-  sig2cand_all.reserve( sig2cand_all.size() + signal_electrons.size()*candidates.size() );
+  sig2cand_all.reserve( sig2cand.size() + signal_electrons.size()*candidates.size() );
   unsigned int icand = 0;
   for ( auto cand : candidates ) {
     ++icand;
@@ -2402,20 +2269,7 @@ void IDNtuplizer::sigToCandLinks( std::set<reco::CandidatePtr>& signal_electrons
 				 cand,
 				 deltaR2<reco::Candidate,T>(sig,cand) );
     }
-
-    // Note: matched candidates are removed below
-    if ( prescale_ < -1.e-6 ) {
-      auto iter = std::find(random_cand.begin(), random_cand.end(), icand-1);
-      if ( iter == random_cand.end() ) { continue; }
-    } else if ( prescale_ > 1.e-6 && ( gRandom->Rndm() > prescale_ ) ) { 
-      // If set, apply prescale to select a random subset of PF GSF tracks
-      continue; 
-    }
-    
-    //if ( prescale_ < 0. || ( gRandom->Rndm() < prescale_ ) ) { 
-    reco::CandidatePtr null;
-    other_cand.emplace_back( null, cand, IDNtuple::NEG_FLOAT );
-    //}
+    other_cand.emplace_back( reco::CandidatePtr(), cand, IDNtuple::NEG_FLOATSQ ); // Null signal
   }
 
   // Sort by DeltaR2!!
@@ -2441,7 +2295,7 @@ void IDNtuplizer::sigToCandLinks( std::set<reco::CandidatePtr>& signal_electrons
     if ( sig == sig2cand.end() && cand == sig2cand.end() ) {
       if ( iter.dr2_ < dr_max_*dr_max_ ) { sig2cand.push_back(iter); }
       else { 
-	sig2cand.emplace_back( iter.obj1_, edm::Ptr<T>()/*null*/, IDNtuple::NEG_FLOAT );
+	sig2cand.emplace_back( iter.obj1_, edm::Ptr<T>(), IDNtuple::NEG_FLOATSQ ); // Null cand
       }
     }
     if ( sig2cand.size() >= signal_electrons.size() ) { break; }
@@ -2553,3 +2407,1087 @@ bool IDNtuplizer::validPtr( edm::Ptr<T>& ptr ) {
 //
 #include "FWCore/Framework/interface/MakerMacros.h"
 DEFINE_FWK_MODULE(IDNtuplizer);
+
+////////////////////
+////////////////////
+////////////////////
+// OBSOLETE METHODS
+////////////////////
+////////////////////
+////////////////////
+
+////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////
+//
+void IDNtuplizer::lowPtElectrons( std::set<reco::CandidatePtr>& signal_electrons,
+				  std::vector<SigToTrkDR2>& sig2trk,
+				  std::vector<SigToTrkDR2>& other_trk,
+				  std::vector<SigToGsfDR2>& sig2gsf,
+				  std::vector<TrkToGsfDR2>& trk2gsf,
+				  std::vector<GsfToGsfDR2>& gsf2pfgsf ) {
+
+  // Match low-pT GsfTracks to low-pT GsfElectrons
+  std::vector<GsfToEleDR2> gsf2ele;
+  gsfToEleLinks( gsfTracksH_, 
+		 gsfElectronsH_, 
+		 gsf2ele );
+  if ( verbose_ > 1 ) {
+    std::cout << "[IDNtuplizer::lowPtElectrons] gsfToEleLinks:" << std::endl 
+	      << " gsfTracksH_->size(): " << gsfTracksH_->size() << std::endl
+	      << " gsfElectronsH_->size(): " << gsfElectronsH_->size() << std::endl
+	      << " gsf2ele.size(): " << gsf2ele.size() << std::endl;
+    if ( verbose_ > 2 ) {
+      for ( auto iter : gsf2ele ) { if ( iter.dr2_ >= 0. ) { std::cout << iter << std::endl; } }
+    }
+    std::cout << std::endl;
+  }
+
+  lowPtElectrons_signal( signal_electrons, sig2trk, other_trk, sig2gsf, gsf2pfgsf, gsf2ele );
+  lowPtElectrons_fakes( other_trk, trk2gsf, gsf2pfgsf, gsf2ele );
+    
+}
+
+////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////
+// Iterate through "signal electrons" 
+void IDNtuplizer::lowPtElectrons_signal( std::set<reco::CandidatePtr>& signal_electrons,
+					 std::vector<SigToTrkDR2>& sig2trk,
+					 std::vector<SigToTrkDR2>& other_trk,
+					 std::vector<SigToGsfDR2>& sig2gsf,
+					 std::vector<GsfToGsfDR2>& gsf2pfgsf,
+					 std::vector<GsfToEleDR2>& gsf2ele ) {
+
+  for ( auto sig : signal_electrons ) {
+
+    // SIG: Initialise ElectronChain object
+    chains_.push_back(ElectronChain());
+    ElectronChain& chain = chains_.back();
+    chain.is_mc_ = isMC_;
+    chain.is_aod_ = isAOD_;
+    chain.is_e_ = true;
+    chain.is_egamma_ = false;
+    chain.sig_ = sig;
+
+    // TRK: Store matches between "signal electron" and KF tracks
+    match<reco::Track>(sig,
+		       sig2trk,
+		       chain.trk_, // by ref
+		       chain.trk_dr_,
+		       chain.trk_match_ );
+    
+    // GSF: Store matches between "signal electron" and GSF tracks
+    match<reco::GsfTrack>(sig,
+			  sig2gsf,
+			  chain.gsf_, // by ref
+			  chain.gsf_dr_,
+			  chain.gsf_match_ );
+
+    // ELE: No matching between signal electron and GSF electron here, done later
+
+    // GSF: If not matched to GsfTrack, then move onto next "signal electron"
+    if ( !chain.gsf_match_ ) { continue; }
+
+    // TRK: Update Track info
+    reco::TrackPtr trk; 
+    if ( gsfToTrk(chain.gsf_,trk) ) {
+      chain.trk_ = trk; 
+      chain.trk_match_ = true;
+      chain.trk_dr_ = sqrt(deltaR2(chain.sig_,chain.trk_));
+      PdgIds::const_iterator pos = pdgids_.find(chain.trk_.key());
+      if ( pos != pdgids_.end() ) { chain.pdg_id_ = pos->second; }
+    }
+
+    // SEED: Store Seed information
+    if ( isAOD_ == 0 ) {
+      // If no TrackExtra info, then assume tracker-driven
+      chain.seed_tracker_driven_ = true;
+      chain.seed_ecal_driven_ = false;
+    } else if ( isAOD_ == 1 ) {
+      reco::ElectronSeedPtr seed;
+      if ( gsfToSeed(chain.gsf_,seed) ) { // Store ElectronSeed info
+	chain.seed_ = seed;
+	chain.seed_tracker_driven_ = seed->isTrackerDriven();
+	chain.seed_ecal_driven_ = seed->isEcalDriven();
+	reco::CaloClusterPtr calo;
+	if ( seedToCalo(seed,calo) ) { chain.calo_ = calo; } // Store CaloCluster info
+	// Store PreId info
+	//chain.preid_ecal_ = edm::refToPtr((*preIdRefsH_)[seed->ctfTrack()]);
+	//chain.preid_hcal_ = reco::PreIdPtr( preIdsHcalH_, chain.preid_ecal_.key() );
+      } else {
+	// If no TrackExtra info, then assume tracker-driven
+	chain.seed_tracker_driven_ = true;
+	chain.seed_ecal_driven_ = false;
+      }
+    }
+    
+    // SEED: Store ElectronSeed BDT discrimator outputs
+    chain.unbiased_ = (*mvaUnbiasedH_)[chain.gsf_];
+    chain.ptbiased_ = (*mvaPtbiasedH_)[chain.gsf_];
+
+    // PFGSF: Store PF GSF track info if match found with GSF track
+    auto match_gsf_to_pfgsf = std::find_if( gsf2pfgsf.begin(),
+					    gsf2pfgsf.end(),
+					    [chain](const GsfToGsfDR2& dr2) {
+					      return chain.gsf_ == dr2.obj1_;
+					    }
+					    );
+    if ( match_gsf_to_pfgsf != gsf2pfgsf.end() && 
+	 validPtr(match_gsf_to_pfgsf->obj2_) ) {
+      chain.pfgsf_ = match_gsf_to_pfgsf->obj2_;
+      chain.pfgsf_match_ = true;
+      chain.pfgsf_dr_ = sqrt(deltaR2(chain.sig_,chain.pfgsf_));
+    }
+    
+    // PFGSF: No check here on if PF GSF is found, as this is for information only!
+
+    // ELE: Store GSF electron info if match found with GSF track
+    auto match_gsf_to_ele = std::find_if( gsf2ele.begin(), 
+					  gsf2ele.end(), 
+					  [chain](const GsfToEleDR2& dr2) { 
+					    return chain.gsf_ == dr2.obj1_;
+					  }
+					  );
+    if ( match_gsf_to_ele != gsf2ele.end() && 
+	 validPtr(match_gsf_to_ele->obj2_) ) { 
+      chain.ele_ = match_gsf_to_ele->obj2_; 
+      chain.ele_match_ = true;
+      chain.ele_dr_ = sqrt(deltaR2(chain.sig_,chain.ele_));
+    }
+    
+  } // for ( auto sig : signal_electrons )
+
+}
+
+////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////
+// Iterate through "fake tracks" 
+void IDNtuplizer::lowPtElectrons_fakes( std::vector<SigToTrkDR2>& other_trk,
+					std::vector<TrkToGsfDR2>& trk2gsf,
+					std::vector<GsfToGsfDR2>& gsf2pfgsf,
+					std::vector<GsfToEleDR2>& gsf2ele ) {
+
+  // Iterate through tracks
+  for ( auto iter : other_trk ) {
+
+    if ( !validPtr(iter.obj2_) ) { continue; } // Shouldn't happen
+
+    // SIG: Initialise ElectronChain object
+    chains_.push_back(ElectronChain());
+    ElectronChain& chain = chains_.back();
+    chain.is_mc_ = isMC_;
+    chain.is_aod_ = isAOD_;
+    chain.is_e_ = false;
+    chain.is_egamma_ = false;
+    
+    // TRK: Store Track info
+    chain.trk_ = iter.obj2_;
+    chain.trk_match_ = true;
+    chain.trk_dr_ = 0.; // w.r.t. trk
+     
+    // GSF: Store GSF track info if match found with KF track (either via ElectronSeed or just deltaR)
+    auto match_trk_to_gsf = std::find_if( trk2gsf.begin(), 
+					  trk2gsf.end(), 
+					  [chain](const TrkToGsfDR2& dr2) { 
+					    return chain.trk_ == dr2.obj1_;
+					  }
+					  );
+    if ( match_trk_to_gsf != trk2gsf.end() && 
+	 validPtr(match_trk_to_gsf->obj2_) ) {
+      chain.gsf_ = match_trk_to_gsf->obj2_;
+      chain.gsf_match_ = true;
+      chain.gsf_dr_ = sqrt(deltaR2(chain.trk_,chain.gsf_));
+    }
+
+    // GSF: If not matched to GsfTrack, then move on to next "fake candidate"
+    if ( !chain.gsf_match_ ) { continue; }
+    // Otherwise ... 
+
+    // SEED: Store Seed information
+    if ( isAOD_ == 0 ) {
+      // If no TrackExtra info, then assume tracker-driven
+      chain.seed_tracker_driven_ = true;
+      chain.seed_ecal_driven_ = false;
+    } else if ( isAOD_ == 1 ) {
+      reco::ElectronSeedPtr seed;
+      if ( gsfToSeed(chain.gsf_,seed) ) { // Store ElectronSeed info
+	chain.seed_ = seed;
+	chain.seed_tracker_driven_ = seed->isTrackerDriven();
+	chain.seed_ecal_driven_ = seed->isEcalDriven();
+	reco::CaloClusterPtr calo;
+	if ( seedToCalo(seed,calo) ) { chain.calo_ = calo; } // Store CaloCluster info
+	// Store PreId info
+	//chain.preid_ecal_ = edm::refToPtr((*preIdRefsH_)[seed->ctfTrack()]);
+	//chain.preid_hcal_ = reco::PreIdPtr( preIdsHcalH_, chain.preid_ecal_.key() );
+      } else {
+	// If no TrackExtra info in AOD, then assume tracker-driven
+	chain.seed_tracker_driven_ = true;
+	chain.seed_ecal_driven_ = false;
+      }
+    }
+
+    // GSF: Store ElectronSeed BDT discrimator outputs
+    chain.unbiased_ = (*mvaUnbiasedH_)[chain.gsf_];
+    chain.ptbiased_ = (*mvaPtbiasedH_)[chain.gsf_];
+
+    // PFGSF: Store PF GSF track info if match found with GSF track
+    auto match_gsf_to_pfgsf = std::find_if( gsf2pfgsf.begin(),
+					    gsf2pfgsf.end(),
+					    [chain](const GsfToGsfDR2& dr2) {
+					      return chain.gsf_ == dr2.obj1_;
+					    }
+					    );
+    if ( match_gsf_to_pfgsf != gsf2pfgsf.end() && 
+	 validPtr(match_gsf_to_pfgsf->obj2_) ) {
+      chain.pfgsf_ = match_gsf_to_pfgsf->obj2_;
+      chain.pfgsf_match_ = true;
+      chain.pfgsf_dr_ = sqrt(deltaR2(chain.trk_,chain.pfgsf_));
+    }
+    
+    // ELE: Store GSF electron info if match found with GSF track
+    auto match_gsf_to_ele = std::find_if( gsf2ele.begin(), 
+					  gsf2ele.end(), 
+					  [chain](const GsfToEleDR2& dr2) { 
+					    return chain.gsf_ == dr2.obj1_;
+					  }
+					  );
+    if ( match_gsf_to_ele != gsf2ele.end() && 
+	 validPtr(match_gsf_to_ele->obj2_) ) { 
+      chain.ele_ = match_gsf_to_ele->obj2_; 
+      chain.ele_match_ = true;
+      chain.ele_dr_ = sqrt(deltaR2(chain.trk_,chain.ele_));
+    }
+    
+  } // for ( auto iter : other_trk )
+
+}
+
+////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////
+//
+void IDNtuplizer::pfElectrons( std::set<reco::CandidatePtr>& signal_electrons,
+			       std::vector<SigToTrkDR2>& sig2trk,
+			       std::vector<SigToTrkDR2>& other_trk,
+			       std::vector<SigToGsfDR2>& sig2gsf,
+			       std::vector<TrkToGsfDR2>& trk2gsf,
+			       std::vector<GsfToGsfDR2>& gsf2pfgsf ) {
+
+  // Match "signal" electrons to PF GsfTracks
+  std::vector<SigToGsfDR2> sig2pfgsf;
+  std::vector<SigToGsfDR2> other_pfgsf;
+  sigToCandLinks<reco::GsfTrack>( signal_electrons, 
+				  gsfTracksEGammaH_,
+				  sig2pfgsf, 
+				  other_pfgsf );
+  if ( verbose_ > 1 ) {
+    std::cout << "[IDNtuplizer::pfElectrons] sigToCandLinks<reco::GsfTrack>:" << std::endl
+	      << " signal_electrons.size(): " << signal_electrons.size() << std::endl
+	      << " gsfTracksEGammaH_->size(): " << gsfTracksEGammaH_->size() << std::endl
+	      << " sig2pfgsf.size(): " << sig2pfgsf.size() << std::endl
+	      << " other_pfgsf.size(): " << other_pfgsf.size() << std::endl;
+    if ( verbose_ > 2 ) {
+      for ( auto iter : sig2pfgsf ) { if ( iter.dr2_ >= 0. ) { std::cout << iter << std::endl; } }
+    }
+    std::cout << std::endl;
+  }
+
+  // Match Tracks (including surrogates) to PF GsfTracks
+  std::vector<TrkToGsfDR2> trk2pfgsf;
+  trkToGsfLinks( tracks_, 
+		 gsfTracksEGammaH_, 
+		 trk2pfgsf,
+		 true ); // is_egamma
+  if ( verbose_ > 1 ) {
+    int good = 0, surrogate = 0, broken = 0, no_gsf = 0, no_trk = 0, empty = 0;
+    for ( auto iter : trk2pfgsf ) { 
+      if ( validPtr(iter.obj1_) && validPtr(iter.obj2_) ) {
+	if ( iter.dr2_ >= 0. )                       { good++; } 
+	else if ( std::abs(iter.dr2_-IDNtuple::NEG_FLOATSQ) > 1.e-6 ) { surrogate++; } 
+	else                                         { broken++; } 
+      } 
+      else if ( validPtr(iter.obj1_) && !validPtr(iter.obj2_) ) { no_gsf++; }
+      else if ( !validPtr(iter.obj1_) && validPtr(iter.obj2_) ) { no_trk++; }
+      else                                                      { empty++; }
+    }
+    std::cout << "[IDNtuplizer::pfElectrons] trkToPFGsfLinks:" << std::endl
+	      << " tracks_.size():      " << tracks_.size() << std::endl
+	      << " gsfTracksEGammaH_->size(): " << gsfTracksEGammaH_->size() << std::endl
+	      << " trk2pfgsf.size():      " << trk2pfgsf.size() << std::endl
+	      << " #good:      " << good << std::endl
+	      << " #surrogate: " << surrogate << std::endl
+	      << " #no_trk:    " << no_trk << std::endl
+	      << " #no_gsf:    " << no_gsf << std::endl
+	      << " #broken:    " << broken << std::endl
+	      << " #empty:     " << empty << std::endl
+	      << " #total:     " << good+surrogate+no_trk+no_gsf+broken+empty << std::endl;
+  }
+
+  // Match PF GsfTracks to PF GsfElectrons
+  std::vector<GsfToEleDR2> pfgsf2ele;
+  gsfToEleLinks( gsfTracksEGammaH_, 
+		 gsfElectronsEGammaH_, 
+		 pfgsf2ele );
+  if ( verbose_ > 1 ) {
+    std::cout << "[IDNtuplizer::pfElectrons] gsfToEleLinks:" << std::endl 
+	      << " gsfTracksEGammaH_->size(): " << gsfTracksEGammaH_->size() << std::endl
+	      << " gsfElectronsEGammaH_->size(): " << gsfElectronsEGammaH_->size() << std::endl
+	      << " pfgsf2ele.size(): " << pfgsf2ele.size() << std::endl;
+    if ( verbose_ > 2 ) {
+      for ( auto iter : pfgsf2ele ) { if ( iter.dr2_ >= 0. ) { std::cout << iter << std::endl; } }
+    }
+    std::cout << std::endl;
+  }
+  
+  pfElectrons_signal( signal_electrons, sig2trk, other_trk, sig2gsf, sig2pfgsf, trk2pfgsf, gsf2pfgsf, pfgsf2ele );
+  pfElectrons_fakes( other_trk, trk2gsf, trk2pfgsf, gsf2pfgsf, pfgsf2ele );
+  
+}
+
+////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////
+// Iterate through "signal electrons" 
+void IDNtuplizer::pfElectrons_signal( std::set<reco::CandidatePtr>& signal_electrons,
+				      std::vector<SigToTrkDR2>& sig2trk,
+				      std::vector<SigToTrkDR2>& other_trk,
+				      std::vector<SigToGsfDR2>& sig2gsf,
+				      std::vector<SigToGsfDR2>& sig2pfgsf,
+			       	      std::vector<TrkToGsfDR2>& trk2pfgsf,
+			       	      std::vector<GsfToGsfDR2>& gsf2pfgsf,
+				      std::vector<GsfToEleDR2>& pfgsf2ele ) {
+
+  for ( auto sig : signal_electrons ) {
+
+    // SIG: Initialise ElectronChain object
+    chains_.push_back(ElectronChain());
+    ElectronChain& chain = chains_.back();
+    chain.is_mc_ = isMC_;
+    chain.is_aod_ = isAOD_;
+    chain.is_e_ = true;
+    chain.is_egamma_ = true;
+    chain.sig_ = sig;
+
+    // TRK: Store matches between "signal electron" and KF tracks
+    match<reco::Track>(sig,
+		       sig2trk,
+		       chain.trk_, // by ref
+		       chain.trk_dr_,
+		       chain.trk_match_ );
+    
+    // GSF: Store matches between "signal electron" and (low-pT!) GSF tracks
+    match<reco::GsfTrack>(sig,
+			  sig2gsf,
+			  chain.gsf_, // by ref
+			  chain.gsf_dr_,
+			  chain.gsf_match_ );
+	
+    // PFGSF: Store matches between "signal electron" and PF GSF tracks
+    match<reco::GsfTrack>(sig, 
+			  sig2pfgsf,
+			  chain.pfgsf_, // by ref 
+			  chain.pfgsf_dr_,
+			  chain.pfgsf_match_ );
+
+    // ELE: No matching between signal electron and GSF electron here, done later
+
+    // GSF: Check if matched to a (low-pT!) GsfTrack
+    if ( chain.gsf_match_ ) {
+
+      // SEED: Store ElectronSeed BDT discrimator outputs
+      chain.unbiased_ = (*mvaUnbiasedH_)[chain.gsf_];
+      chain.ptbiased_ = (*mvaPtbiasedH_)[chain.gsf_];
+      
+      // PFGSF: Store PF GSF track info if match found with GSF track
+      auto match_gsf_to_pfgsf = std::find_if( gsf2pfgsf.begin(),
+					      gsf2pfgsf.end(),
+					      [chain](const GsfToGsfDR2& dr2) {
+						return chain.gsf_ == dr2.obj1_;
+					      }
+					      );
+      if ( match_gsf_to_pfgsf != gsf2pfgsf.end() && 
+	   validPtr(match_gsf_to_pfgsf->obj2_) ) {
+
+	// TRK: Update Track info (i.e. calc deltaR with seed track, probably identical to original trk...)
+	reco::TrackPtr trk; 
+	if ( gsfToTrk(chain.pfgsf_,trk,true) ) {
+	  chain.trk_ = trk; 
+	  chain.trk_match_ = true;
+	  chain.trk_dr_ = sqrt(deltaR2(chain.sig_,chain.trk_));
+	  PdgIds::const_iterator pos = pdgids_.find(chain.trk_.key());
+	  if ( pos != pdgids_.end() ) { chain.pdg_id_ = pos->second; }
+	}
+
+	// SEED: Store Seed information associated with PF GSF track
+	if ( isAOD_ == 0 ) {
+	  // If no TrackExtra info, then assume tracker-driven
+	  chain.seed_tracker_driven_ = true;
+	  chain.seed_ecal_driven_ = false;
+	} else if ( isAOD_ == 1 ) {
+	  reco::ElectronSeedPtr seed;
+	  if ( gsfToSeed(chain.pfgsf_,seed) ) { // Store ElectronSeed info
+	    chain.seed_ = seed;
+	    chain.seed_tracker_driven_ = seed->isTrackerDriven();
+	    chain.seed_ecal_driven_ = seed->isEcalDriven();
+	    reco::CaloClusterPtr calo;
+	    if ( seedToCalo(seed,calo) ) { chain.calo_ = calo; } // Store CaloCluster info
+	  } else {
+	    // If no TrackExtra info in AOD, then assume tracker-driven
+	    chain.seed_tracker_driven_ = true;
+	    chain.seed_ecal_driven_ = false;
+	  }
+	}
+
+	// PFGSF: Store PF GSF track
+	chain.pfgsf_ = match_gsf_to_pfgsf->obj2_;
+	chain.pfgsf_match_ = true;
+	chain.pfgsf_dr_ = sqrt(deltaR2(chain.sig_,chain.pfgsf_));
+
+      } else {
+	// PFGSF: If do not match GSF to PFGSF, then deal with this below
+      }
+      
+    } else if  ( chain.pfgsf_match_ ) {
+
+      // PFGSF: Check if PFGSF track is NOT matched to GSF track
+      auto match_pfgsf_to_gsf = std::find_if( gsf2pfgsf.begin(),
+					      gsf2pfgsf.end(),
+					      [chain](const GsfToGsfDR2& dr2) {
+						return chain.pfgsf_ == dr2.obj2_;
+					      }
+					      );
+      if ( match_pfgsf_to_gsf != gsf2pfgsf.end() && // Find PFGSF entry
+	   validPtr(match_pfgsf_to_gsf->obj2_) &&   // Ensure nonnull PFGSF
+	   !validPtr(match_pfgsf_to_gsf->obj1_) ) { // Ensure null GSF
+      
+	// TRK: Check if PF GSF track is matched to a surrogate PF track (closest in pT)
+	reco::GsfTrackPtr pfgsf = match_pfgsf_to_gsf->obj2_;
+	auto match_pfgsf_to_trk = std::find_if( trk2pfgsf.begin(), 
+						trk2pfgsf.end(), 
+						[pfgsf](const TrkToGsfDR2& dr2) { 
+						  return pfgsf == dr2.obj2_; 
+						}
+						);
+	if ( match_pfgsf_to_trk == trk2pfgsf.end() &&
+	     validPtr(match_pfgsf_to_trk->obj1_) ) {
+	  chain.trk_ = match_pfgsf_to_trk->obj1_; // Store surrogate track
+	  chain.trk_match_ = true;
+	  chain.trk_dr_ = sqrt(deltaR2(chain.sig_,chain.trk_));
+	  PdgIds::const_iterator pos = pdgids_.find(chain.trk_.key());
+	  if ( pos != pdgids_.end() ) { chain.pdg_id_ = pos->second; }
+	}
+
+	// SEED: Store Seed information
+	if ( isAOD_ == 0 ) {
+	  // If no TrackExtra info, then assume ECAL-driven
+	  chain.seed_tracker_driven_ = false;
+	  chain.seed_ecal_driven_ = true;
+	} else if ( isAOD_ == 1 ) {
+	  reco::ElectronSeedPtr seed;
+	  if ( gsfToSeed(chain.pfgsf_,seed) ) { // Store ElectronSeed info
+	    chain.seed_ = seed;
+	    chain.seed_tracker_driven_ = seed->isTrackerDriven();
+	    chain.seed_ecal_driven_ = seed->isEcalDriven();
+	    reco::CaloClusterPtr calo;
+	    if ( seedToCalo(seed,calo) ) { chain.calo_ = calo; } // Store CaloCluster info
+	  } else {
+	    // If no TrackExtra info in AOD, then assume ECAL-driven!
+	    chain.seed_tracker_driven_ = false;
+	    chain.seed_ecal_driven_ = true;
+	  }
+	}
+
+	// PFGSF: Information is already stored
+
+      } else {
+	std::cout << "[IDNtuplizer::pfElectrons_signal] " 
+		  << "ERROR: Couldn't find PF GSF track in gsf2pfgsf map!";
+      }
+      
+    }
+    
+    // GSF: No check here on if GSF track is found, as this we care only about PF GSF!
+
+    // PFGSF: If not matched to PF GsfTrack, then move onto next "signal electron"
+    if ( !chain.pfgsf_match_ ) { continue; }
+    // Otherwise ... 
+
+    // ELE: Store GSF electron info if match found with PF GSF track
+    auto match_pfgsf_to_ele = std::find_if( pfgsf2ele.begin(), 
+					    pfgsf2ele.end(), 
+					    [chain](const GsfToEleDR2& dr2) { 
+					      return chain.pfgsf_ == dr2.obj1_;
+					    }
+					    );
+    if ( match_pfgsf_to_ele != pfgsf2ele.end() && 
+	 validPtr(match_pfgsf_to_ele->obj2_) ) { 
+      chain.ele_ = match_pfgsf_to_ele->obj2_; 
+      chain.ele_match_ = true;
+      chain.ele_dr_ = sqrt(deltaR2(chain.sig_,chain.ele_));
+    }
+    
+  } // for ( auto sig : signal_electrons )
+
+}
+
+////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////
+// Iterate through "fake tracks" 
+void IDNtuplizer::pfElectrons_fakes( std::vector<SigToTrkDR2>& other_trk,
+				     std::vector<TrkToGsfDR2>& trk2gsf,
+				     std::vector<TrkToGsfDR2>& trk2pfgsf,
+				     std::vector<GsfToGsfDR2>& gsf2pfgsf,
+				     std::vector<GsfToEleDR2>& pfgsf2ele ) {
+  
+  // Iterate through tracks
+  for ( auto iter : other_trk ) {
+    
+    if ( !validPtr(iter.obj2_) ) { continue; } // Shouldn't happen
+    
+    // SIG: Initialise ElectronChain object
+    chains_.push_back(ElectronChain());
+    ElectronChain& chain = chains_.back();
+    chain.is_mc_ = isMC_;
+    chain.is_aod_ = isAOD_;
+    chain.is_e_ = false;
+    chain.is_egamma_ = true;
+    
+    // TRK: Store Track info
+    chain.trk_ = iter.obj2_;
+    chain.trk_match_ = true;
+    chain.trk_dr_ = 0.; // w.r.t. trk
+    
+    // GSF: Store GSF track info if match found with KF track (either via ElectronSeed or just deltaR)
+    auto match_trk_to_gsf = std::find_if( trk2gsf.begin(), 
+					  trk2gsf.end(), 
+					  [chain](const TrkToGsfDR2& dr2) { 
+					    return dr2.obj1_ == chain.trk_;
+					  }
+					  );
+    if ( match_trk_to_gsf != trk2gsf.end() && 
+	 validPtr(match_trk_to_gsf->obj2_) ) {
+
+      // GSF: Store GSF track info
+      chain.gsf_ = match_trk_to_gsf->obj2_;
+      chain.gsf_match_ = true;
+      chain.gsf_dr_ = sqrt(deltaR2(chain.trk_,chain.gsf_));
+      
+      // SEED: Store ElectronSeed BDT discrimator outputs
+      chain.unbiased_ = (*mvaUnbiasedH_)[chain.gsf_];
+      chain.ptbiased_ = (*mvaPtbiasedH_)[chain.gsf_];
+      
+      // PFGSF: Store PF GSF track info if match found with GSF track
+      auto match_gsf_to_pfgsf = std::find_if( gsf2pfgsf.begin(),
+					      gsf2pfgsf.end(),
+					      [chain](const GsfToGsfDR2& dr2) {
+						return chain.gsf_ == dr2.obj1_;
+					      }
+					      );
+      if ( match_gsf_to_pfgsf != gsf2pfgsf.end() && 
+	   validPtr(match_gsf_to_pfgsf->obj2_) ) {
+
+	// TRK: KF track info already stored
+
+	// PFGSF: Store PF GSF track
+	chain.pfgsf_ = match_gsf_to_pfgsf->obj2_;
+	chain.pfgsf_match_ = true;
+	chain.pfgsf_dr_ = sqrt(deltaR2(chain.pfgsf_,chain.trk_));
+
+	// SEED: Store Seed information associated with PF GSF track
+	if ( isAOD_ == 0 ) {
+	  // If no TrackExtra info, then assume tracker-driven
+	  chain.seed_tracker_driven_ = true;
+	  chain.seed_ecal_driven_ = false;
+	} else if ( isAOD_ == 1 ) {
+	  reco::ElectronSeedPtr seed;
+	  if ( gsfToSeed(chain.pfgsf_,seed) ) { // Store ElectronSeed info
+	    chain.seed_ = seed;
+	    chain.seed_tracker_driven_ = seed->isTrackerDriven();
+	    chain.seed_ecal_driven_ = seed->isEcalDriven();
+	    reco::CaloClusterPtr calo;
+	    if ( seedToCalo(seed,calo) ) { chain.calo_ = calo; } // Store CaloCluster info
+	  } else {
+	    // If no TrackExtra info in AOD, then assume tracker-driven
+	    chain.seed_tracker_driven_ = true;
+	    chain.seed_ecal_driven_ = false;
+	  }
+	}
+
+	// ELE: Store GSF electron info if match found with PF GSF track
+	auto match_pfgsf_to_ele = std::find_if( pfgsf2ele.begin(), 
+						pfgsf2ele.end(), 
+						[chain](const GsfToEleDR2& dr2) { 
+						  return chain.pfgsf_ == dr2.obj1_;
+						}
+						);
+	if ( match_pfgsf_to_ele != pfgsf2ele.end() && 
+	     validPtr(match_pfgsf_to_ele->obj2_) ) { 
+	  chain.ele_ = match_pfgsf_to_ele->obj2_; 
+	  chain.ele_match_ = true;
+	  chain.ele_dr_ = sqrt(deltaR2(chain.trk_,chain.ele_));
+	}
+
+      } // if PF GSF matched to GSF then ...
+    } // if GSF matched to TRK then ...
+  } // for ( auto iter : other_trk )
+
+  // Loop through PF GSF tracks with no match to a GSF track and a surrogate KF track
+  for ( auto match_trk_to_pfgsf : trk2pfgsf ) {
+    reco::TrackPtr trk = match_trk_to_pfgsf.obj1_;
+    reco::GsfTrackPtr pfgsf = match_trk_to_pfgsf.obj2_;
+    
+    // PFGSF: Check if PF GSF track is NOT matched to GSF track
+    auto match_pfgsf_to_gsf = std::find_if( gsf2pfgsf.begin(),
+					    gsf2pfgsf.end(),
+					    [pfgsf](const GsfToGsfDR2& dr2) {
+					      return pfgsf == dr2.obj2_;
+					    }
+					    );
+    if ( match_pfgsf_to_gsf != gsf2pfgsf.end() &&
+	 validPtr(match_pfgsf_to_gsf->obj2_) &&
+	 validPtr(match_pfgsf_to_gsf->obj1_) ) { continue; }
+      
+    // Check if PF GSF match to surrogate TRK is found 
+    if ( validPtr(trk) && // Valid TRK Ptr
+	 validPtr(pfgsf) && // Valid PF GSF Ptr
+	 std::abs( match_trk_to_pfgsf.dr2_-IDNtuple::NEG_FLOATSQ) > 1.e-6 && // Implies valid match
+	 match_trk_to_pfgsf.dr2_ < 0. ) { // Implies surrogate trk
+	
+      // SIG: Initialise ElectronChain object
+      chains_.push_back(ElectronChain());
+      ElectronChain& chain = chains_.back();
+      chain.is_mc_ = isMC_;
+      chain.is_aod_ = isAOD_;
+      chain.is_e_ = false;
+      chain.is_egamma_ = true;
+      
+      // Store (surrogate) TRK info
+      chain.trk_ = trk; // Store surrogate track
+      chain.trk_match_ = true;
+      chain.trk_dr_ = 0.; // w.r.t. trk
+
+      // GSF: No match by definition, so not set
+
+      // PFGSF: Store PF GSF track
+      chain.pfgsf_ = pfgsf;
+      chain.pfgsf_match_ = true;
+      chain.pfgsf_dr_ = sqrt(deltaR2(chain.trk_,chain.pfgsf_));
+      
+      // SEED: Store Seed information associated with PF GSF track
+      if ( isAOD_ == 0 ) {
+	// If no TrackExtra info, then assume ECAL-driven
+	chain.seed_tracker_driven_ = false;
+	chain.seed_ecal_driven_ = true;
+      } else if ( isAOD_ == 1 ) {
+	reco::ElectronSeedPtr seed;
+	if ( gsfToSeed(chain.pfgsf_,seed) ) { // Store ElectronSeed info
+	  chain.seed_ = seed;
+	  chain.seed_tracker_driven_ = seed->isTrackerDriven();
+	  chain.seed_ecal_driven_ = seed->isEcalDriven();
+	  reco::CaloClusterPtr calo;
+	  if ( seedToCalo(seed,calo) ) { chain.calo_ = calo; } // Store CaloCluster info
+	} else {
+	  // If no TrackExtra info in AOD, then assume ECAL-driven!
+	  chain.seed_tracker_driven_ = false;
+	  chain.seed_ecal_driven_ = true;
+	}
+      }
+
+      // ELE: Store GSF electron info if match found with PF GSF track
+      auto match_pfgsf_to_ele = std::find_if( pfgsf2ele.begin(), 
+					      pfgsf2ele.end(), 
+					      [chain](const GsfToEleDR2& dr2) { 
+						return chain.pfgsf_ == dr2.obj1_;
+					      }
+					      );
+      if ( match_pfgsf_to_ele != pfgsf2ele.end() && 
+	   validPtr(match_pfgsf_to_ele->obj2_) ) { 
+	chain.ele_ = match_pfgsf_to_ele->obj2_; 
+	chain.ele_match_ = true;
+	chain.ele_dr_ = sqrt(deltaR2(chain.trk_,chain.ele_));
+      }
+
+    } // if PF GSF matched to (surrogate) TRK then ...
+
+  } // trk2pfgsf loop
+
+////////////////////
+////////////////////
+////////////////////
+//    } else {
+//
+//      std::cout << "!!!!! NO GSF MATCH !!!!!" << std::endl;
+//
+//      // TRK: Check if PF GSF track is matched to a surrogate PF track (closest in pT)
+//      reco::GsfTrackPtr pfgsf = match_pfgsf_to_gsf->obj2_;
+//      auto match_gsf_to_trk = std::find_if( trk2pfgsf.begin(), 
+//					    trk2pfgsf.end(), 
+//					    [pfgsf](const TrkToGsfDR2& dr2) { 
+//					      return pfgsf == dr2.obj2_; 
+//					    }
+//					    );
+//      if ( match_gsf_to_trk == trk2gsf.end() &&
+//	   validPtr(match_gsf_to_trk->obj1_) ) {
+//	chain.trk_ = match_gsf_to_trk->obj1_; // Store surrogate track
+//	chain.trk_match_ = true;
+//	chain.trk_dr_ = sqrt(deltaR2(chain.sig_,chain.trk_));
+//	PdgIds::const_iterator pos = pdgids_.find(chain.trk_.key());
+//	if ( pos != pdgids_.end() ) { chain.pdg_id_ = pos->second; }
+//      }
+//
+////      // PFGSF: Check if PFGSF track IS matched to KF track
+////      auto match_trk_to_pfgsf = std::find_if( trk2pfgsf.begin(), 
+////					      trk2pfgsf.end(), 
+////					      [chain](const TrkToGsfDR2& dr2) { 
+////						return dr2.obj1_ == chain.trk_;
+////					      }
+////					      );
+////      if ( match_trk_to_pfgsf != trk2pfgsf.end() &&
+////	   validPtr(match_trk_to_pfgsf->obj2_) ) { 
+//
+//	std::cout << "!!!!! TRK MATCHED TO PFGSF !!!!!" << std::endl;
+//      
+//	// PFGSF: Check if PFGSF track is NOT matched to GSF track
+//	auto match_pfgsf_to_gsf = std::find_if( gsf2pfgsf.begin(),
+//						gsf2pfgsf.end(),
+//						[chain](const GsfToGsfDR2& dr2) {
+//						  return chain.pfgsf_ == dr2.obj2_;
+//						}
+//						);
+//	if ( match_pfgsf_to_gsf != gsf2pfgsf.end() && // Find PFGSF entry
+//	     validPtr(match_pfgsf_to_gsf->obj2_) &&   // Ensure nonnull PFGSF
+//	     !validPtr(match_pfgsf_to_gsf->obj1_) ) { // Ensure null GSF
+//
+//	  std::cout << "!!!!! PFGSF NOT MATCHED TO GSF !!!!!" << std::endl;
+//	  
+//	  // TRK: KF track info already stored
+//	  
+//	  // PFGSF: Store PF GSF track
+//	  chain.pfgsf_ = match_pfgsf_to_gsf->obj2_;
+//	  chain.pfgsf_match_ = true;
+//	  chain.pfgsf_dr_ = sqrt(deltaR2(chain.trk_,chain.pfgsf_));
+//	  
+//	  // SEED: Store Seed information associated with PF GSF track
+//	  if ( isAOD_ == 0 ) {
+//	    // If no TrackExtra info, then assume ECAL-driven
+//	    chain.seed_tracker_driven_ = false;
+//	    chain.seed_ecal_driven_ = true;
+//	  } else if ( isAOD_ == 1 ) {
+//	    reco::ElectronSeedPtr seed;
+//	    if ( gsfToSeed(chain.pfgsf_,seed) ) { // Store ElectronSeed info
+//	      chain.seed_ = seed;
+//	      chain.seed_tracker_driven_ = seed->isTrackerDriven();
+//	      chain.seed_ecal_driven_ = seed->isEcalDriven();
+//	      reco::CaloClusterPtr calo;
+//	      if ( seedToCalo(seed,calo) ) { chain.calo_ = calo; } // Store CaloCluster info
+//	    } else {
+//	      // If no TrackExtra info in AOD, then assume ECAL-driven!
+//	      chain.seed_tracker_driven_ = false;
+//	      chain.seed_ecal_driven_ = true;
+//	    }
+//	  }
+//	  
+//	} else {
+//	  std::cout << "!!!!! PFGSF is matched to GSF !!!!!" << std::endl;
+//	}
+//      } else {
+//	std::cout << "!!!!! PFGSF is not matched to TRK !!!!!" << std::endl;
+//      }
+//      
+//    } // if GSF matched to TRK then ...
+//
+//    // PFGSF: If not matched to KF track, then move onto next "fake candidate"
+//    if ( !chain.pfgsf_match_ ) { continue; }
+//
+//    // ELE: Store GSF electron info if match found with PF GSF track
+//    auto match_pfgsf_to_ele = std::find_if( pfgsf2ele.begin(), 
+//					    pfgsf2ele.end(), 
+//					    [chain](const GsfToEleDR2& dr2) { 
+//					      return chain.pfgsf_ == dr2.obj1_;
+//					    }
+//					    );
+//    if ( match_pfgsf_to_ele != pfgsf2ele.end() && 
+//	 validPtr(match_pfgsf_to_ele->obj2_) ) { 
+//      chain.ele_ = match_pfgsf_to_ele->obj2_; 
+//      chain.ele_match_ = true;
+//      chain.ele_dr_ = sqrt(deltaR2(chain.trk_,chain.ele_));
+//    }
+//
+//  } // for ( auto iter : other_trk )
+
+}
+
+
+////@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+//////////////////////////////////////////////////////////////////////////////////
+//////////////////////////////////////////////////////////////////////////////////
+//////////////////////////////////////////////////////////////////////////////////
+//// Iterate through "signal electrons" 
+//void IDNtuplizer::signal( std::set<reco::CandidatePtr>& signal_electrons,
+//			  std::vector<SigToTrkDR2>& sig2trk,
+//			  std::vector<SigToGsfDR2>& sig2gsf,
+//			  std::vector<SigToGsfDR2>& sig2pfgsf,
+//			  std::vector<SigToTrkDR2>& other_trk,
+//			  std::vector<TrkToGsfDR2>& trk2gsf,
+//			  std::vector<TrkToGsfDR2>& trk2pfgsf,
+//			  std::vector<GsfToGsfDR2>& gsf2pfgsf,
+//			  std::vector<GsfToEleDR2>& gsf2ele,
+//			  std::vector<GsfToEleDR2>& pfgsf2ele ) {
+//
+//  // Iterate through signal electrons
+//  for ( auto sig : signal_electrons ) {
+//    
+//    // Repeat for two options: low pT and PF EGamma reconstruction
+//    for ( auto is_egamma : std::vector<bool>{ false, true } ) { 
+//      
+//      // SIG: Initialise ElectronChain object
+//      chains_.push_back(ElectronChain());
+//      ElectronChain& chain = chains_.back();
+//      chain.is_mc_ = isMC_;
+//      chain.is_aod_ = isAOD_;
+//      chain.is_e_ = true;
+//      chain.is_egamma_ = is_egamma; // Set here if low pT or EGamma!
+//      chain.sig_ = sig;
+//      
+//      // TRK: Store matches between "signal electron" and KF tracks
+//      match<reco::Track>(sig,
+//			 sig2trk,
+//			 chain.trk_, // by ref
+//			 chain.trk_dr_,
+//			 chain.trk_match_ );
+//      
+//      // GSF: Store matches between "signal electron" and GSF tracks
+//      match<reco::GsfTrack>(sig,
+//			    sig2gsf,
+//			    chain.gsf_, // by ref
+//			    chain.gsf_dr_,
+//			    chain.gsf_match_ );
+//	
+//      // PFGSF: Store matches between "signal electron" and PF GSF tracks
+//      match<reco::GsfTrack>(sig, 
+//			    sig2pfgsf,
+//			    chain.pfgsf_, // by ref 
+//			    chain.pfgsf_dr_,
+//			    chain.pfgsf_match_ );
+//      
+//      // ELE: No matching between signal electron and GSF electron
+//
+//      // GSF: Check if signal electron is matched to GsfTrack
+//      if ( chain.gsf_match_ ) { 
+//
+//	// Only for low-pT GSF tracks ...
+//	if ( is_egamma == false ) {
+//	  
+//	  // TRK: *Update* Track info
+//	  reco::TrackPtr trk; 
+//	  if ( gsfToTrk(chain.gsf_,trk) ) {
+//	    chain.trk_ = trk; 
+//	    chain.trk_match_ = true;
+//	    chain.trk_dr_ = sqrt(deltaR2(chain.sig_,chain.trk_));
+//	    PdgIds::const_iterator pos = pdgids_.find(chain.trk_.key());
+//	    if ( pos != pdgids_.end() ) { chain.pdg_id_ = pos->second; }
+//	  }
+//	  
+//	  // SEED: Store Seed information
+//	  if ( isAOD_ == 0 ) {
+//	    // If no TrackExtra info, then assume tracker-driven
+//	    chain.seed_tracker_driven_ = true;
+//	    chain.seed_ecal_driven_ = false;
+//	  } else if ( isAOD_ == 1 ) {
+//	    reco::ElectronSeedPtr seed;
+//	    if ( gsfToSeed(chain.gsf_,seed) ) { // Store ElectronSeed info
+//	      chain.seed_ = seed;
+//	      chain.seed_tracker_driven_ = seed->isTrackerDriven();
+//	      chain.seed_ecal_driven_ = seed->isEcalDriven();
+//	      reco::CaloClusterPtr calo;
+//	      if ( seedToCalo(seed,calo) ) { chain.calo_ = calo; } // Store CaloCluster info
+//	      // Store PreId info
+//	      //chain.preid_ecal_ = edm::refToPtr((*preIdRefsH_)[seed->ctfTrack()]);
+//	      //chain.preid_hcal_ = reco::PreIdPtr( preIdsHcalH_, chain.preid_ecal_.key() );
+//	    } else {
+//	      // If no TrackExtra info, then assume tracker-driven
+//	      chain.seed_tracker_driven_ = true;
+//	      chain.seed_ecal_driven_ = false;
+//	    }
+//	  }
+//
+//	} // !is_egamma
+//      
+//	// SEED: Store BDT discrimator outputs for low-pT ElectronSeeds
+//	chain.unbiased_ = (*mvaUnbiasedH_)[chain.gsf_];
+//	chain.ptbiased_ = (*mvaPtbiasedH_)[chain.gsf_];
+//
+//	// PFGSF: Store PF GSF track info if match found with GSF track
+//	auto match_gsf_to_pfgsf = std::find_if( gsf2pfgsf.begin(),
+//						gsf2pfgsf.end(),
+//						[chain](const GsfToGsfDR2& dr2) {
+//						  return chain.gsf_ == dr2.obj1_;
+//						}
+//						);
+//	if ( match_gsf_to_pfgsf != gsf2pfgsf.end() && 
+//	     validPtr(match_gsf_to_pfgsf->obj2_) ) {
+//
+//	  // PFGSF: Store PF GSF track info
+//	  chain.pfgsf_ = match_gsf_to_pfgsf->obj2_;
+//	  chain.pfgsf_match_ = true;
+//	  chain.pfgsf_dr_ = sqrt(deltaR2(chain.sig_,chain.pfgsf_));
+//
+//	  // Only for PF GSF tracks ...
+//	  if ( is_egamma == true ) {
+//
+//	    // TRK: Update Track info (with surrogate track if necessary)
+//	    auto match_pfgsf_to_trk = std::find_if( trk2pfgsf.begin(), 
+//						    trk2pfgsf.end(), 
+//						    [chain](const TrkToGsfDR2& dr2) { 
+//						      return chain.pfgsf_ == dr2.obj2_; 
+//						    }
+//						    );
+//	    if ( match_pfgsf_to_trk == trk2pfgsf.end() &&
+//		 validPtr(match_pfgsf_to_trk->obj1_) ) {
+//	      chain.trk_ = match_pfgsf_to_trk->obj1_; // Store surrogate track
+//	      chain.trk_match_ = true;
+//	      chain.trk_dr_ = sqrt(deltaR2(chain.trk_,chain.sig_));
+//	      PdgIds::const_iterator pos = pdgids_.find(chain.trk_.key());
+//	      if ( pos != pdgids_.end() ) { chain.pdg_id_ = pos->second; }
+//	    }
+//
+//	    // SEED: Store Seed information
+//	    if ( isAOD_ == 0 ) {
+//	      // If no TrackExtra info, then assume tracker-driven
+//	      chain.seed_tracker_driven_ = true;
+//	      chain.seed_ecal_driven_ = false;
+//	    } else if ( isAOD_ == 1 ) {
+//	      reco::ElectronSeedPtr seed;
+//	      if ( gsfToSeed(chain.pfgsf_,seed) ) { // Store ElectronSeed info
+//		chain.seed_ = seed;
+//		chain.seed_tracker_driven_ = seed->isTrackerDriven();
+//		chain.seed_ecal_driven_ = seed->isEcalDriven();
+//		reco::CaloClusterPtr calo;
+//		if ( seedToCalo(seed,calo) ) { chain.calo_ = calo; } // Store CaloCluster info
+//	      } else {
+//		// If no TrackExtra info in AOD, then check if surrogate track
+//		if ( chain.trk_dr_ >= 0. ) { 
+//		  chain.seed_tracker_driven_ = true; 
+//		  chain.seed_ecal_driven_ = false; 
+//		} else if ( chain.trk_dr_ > IDNtuple::NEG_FLOATSQ ) { 
+//		  chain.seed_tracker_driven_ = false; 
+//		  chain.seed_ecal_driven_ = true; 
+//		}
+//	      }
+//	    }
+//	    
+//	    // ELE: Store GSF electron info if match found with PF GSF track
+//	    auto match_pfgsf_to_ele = std::find_if( pfgsf2ele.begin(), 
+//						    pfgsf2ele.end(), 
+//						    [chain](const GsfToEleDR2& dr2) { 
+//						      return chain.pfgsf_ == dr2.obj1_;
+//						    }
+//						    );
+//	    if ( match_pfgsf_to_ele != pfgsf2ele.end() && 
+//		 validPtr(match_pfgsf_to_ele->obj2_) ) { 
+//	      chain.ele_ = match_pfgsf_to_ele->obj2_; 
+//	      chain.ele_match_ = true;
+//	      chain.ele_dr_ = sqrt(deltaR2(chain.ele_,chain.sig_));
+//	    }
+//
+//	  } // is_egamma
+//	} // If PF GSF
+//    
+//	// ELE: Store GSF electron info if match found with GSF track
+//	if ( is_egamma == false ) { 
+//	  auto match_gsf_to_ele = std::find_if( gsf2ele.begin(), 
+//						gsf2ele.end(), 
+//						[chain](const GsfToEleDR2& dr2) { 
+//						  return chain.gsf_ == dr2.obj1_;
+//						}
+//						);
+//	  if ( match_gsf_to_ele != gsf2ele.end() && 
+//	       validPtr(match_gsf_to_ele->obj2_) ) { 
+//	    chain.ele_ = match_gsf_to_ele->obj2_; 
+//	    chain.ele_match_ = true;
+//	    chain.ele_dr_ = sqrt(deltaR2(chain.ele_,chain.sig_));
+//	  }
+//	}
+//
+//      } else if  ( chain.pfgsf_match_ ) { // i.e. if chain.gsf_match_ == false
+//
+//	// Only for PF GSF tracks ...
+//	if ( is_egamma == true ) {
+//	
+//	  // PFGSF: Check if PFGSF track is NOT matched to GSF track
+//	  auto match_pfgsf_to_gsf = std::find_if( gsf2pfgsf.begin(),
+//						  gsf2pfgsf.end(),
+//						  [chain](const GsfToGsfDR2& dr2) {
+//						    return chain.pfgsf_ == dr2.obj2_;
+//						  }
+//						  );
+//	  if ( match_pfgsf_to_gsf != gsf2pfgsf.end() && // Find PFGSF entry
+//	       validPtr(match_pfgsf_to_gsf->obj2_) &&   // Ensure nonnull PFGSF
+//	       !validPtr(match_pfgsf_to_gsf->obj1_) ) { // Ensure null GSF
+//	    
+//	    // TRK: Check if PF GSF track is matched to a surrogate PF track (closest in pT)
+//	    auto match_pfgsf_to_trk = std::find_if( trk2pfgsf.begin(), 
+//						    trk2pfgsf.end(), 
+//						    [chain](const TrkToGsfDR2& dr2) { 
+//						      return chain.pfgsf_ == dr2.obj2_; 
+//						    }
+//						    );
+//	    if ( match_pfgsf_to_trk == trk2pfgsf.end() &&
+//		 validPtr(match_pfgsf_to_trk->obj1_) ) {
+//	      chain.trk_ = match_pfgsf_to_trk->obj1_; // Store surrogate track
+//	      chain.trk_match_ = true;
+//	      chain.trk_dr_ = sqrt(deltaR2(chain.trk_,chain.sig_));
+//	      PdgIds::const_iterator pos = pdgids_.find(chain.trk_.key());
+//	      if ( pos != pdgids_.end() ) { chain.pdg_id_ = pos->second; }
+//	    }
+//	    
+//	    // SEED: Store Seed information
+//	    if ( isAOD_ == 0 ) {
+//	      // If no TrackExtra info, then assume ECAL-driven
+//	      chain.seed_tracker_driven_ = false;
+//	      chain.seed_ecal_driven_ = true;
+//	    } else if ( isAOD_ == 1 ) {
+//	      reco::ElectronSeedPtr seed;
+//	      if ( gsfToSeed(chain.pfgsf_,seed) ) { // Store ElectronSeed info
+//		chain.seed_ = seed;
+//		chain.seed_tracker_driven_ = seed->isTrackerDriven();
+//		chain.seed_ecal_driven_ = seed->isEcalDriven();
+//		reco::CaloClusterPtr calo;
+//		if ( seedToCalo(seed,calo) ) { chain.calo_ = calo; } // Store CaloCluster info
+//	      } else {
+//		// If no TrackExtra info in AOD, then check if surrogate track
+//		if ( chain.trk_dr_ >= 0. ) { 
+//		  chain.seed_tracker_driven_ = true; 
+//		  chain.seed_ecal_driven_ = false; 
+//		} else if ( chain.trk_dr_ > IDNtuple::NEG_FLOATSQ ) { 
+//		  chain.seed_tracker_driven_ = false; 
+//		  chain.seed_ecal_driven_ = true; 
+//		}
+//	      }
+//	    }
+//	    
+//	    // ELE: Store GSF electron info if match found with PF GSF track
+//	    auto match_pfgsf_to_ele = std::find_if( pfgsf2ele.begin(), 
+//						    pfgsf2ele.end(), 
+//						    [chain](const GsfToEleDR2& dr2) { 
+//						      return chain.pfgsf_ == dr2.obj1_;
+//						    }
+//						    );
+//	    if ( match_pfgsf_to_ele != pfgsf2ele.end() && 
+//		 validPtr(match_pfgsf_to_ele->obj2_) ) { 
+//	      chain.ele_ = match_pfgsf_to_ele->obj2_; 
+//	      chain.ele_match_ = true;
+//	      chain.ele_dr_ = sqrt(deltaR2(chain.ele_,chain.sig_));
+//	    }
+//	    
+//	  } // PF GSF track not matched to GSF track
+//	} // is_egamma
+//      } // if ( chain.pfgsf_match_ ) ...
+//      
+//    } // for ( auto is_egamma : std::vector<bool>{ false, true } ) 
+//  } // for ( auto sig : signal_electrons )
+//
+//}
