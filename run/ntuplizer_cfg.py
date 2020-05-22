@@ -2,7 +2,7 @@ import FWCore.ParameterSet.Config as cms
 
 from FWCore.ParameterSet.VarParsing import VarParsing
 options = VarParsing('python')
-options.setDefault('maxEvents',10)
+options.setDefault('maxEvents',-1)
 options.register('skipEvents',0,VarParsing.multiplicity.singleton,VarParsing.varType.int,"")
 options.register('useAOD',False,VarParsing.multiplicity.singleton,VarParsing.varType.bool,"")
 options.register('addSkim',False,VarParsing.multiplicity.singleton,VarParsing.varType.bool,"")
