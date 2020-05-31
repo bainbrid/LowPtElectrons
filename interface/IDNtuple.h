@@ -1,3 +1,4 @@
+
 #ifndef LowPtElectrons_LowPtElectrons_IDNtuple
 #define LowPtElectrons_LowPtElectrons_IDNtuple
 
@@ -26,6 +27,8 @@ namespace reco { typedef edm::Ptr<Track> TrackPtr; }
 namespace reco { typedef edm::Ptr<GsfTrack> GsfTrackPtr; }
 namespace reco { typedef edm::Ptr<GsfElectron> GsfElectronPtr; }
 
+constexpr size_t ARRAY_SIZE = 20;
+
 // Small class to provide fillers and hide tree I/O
 class IDNtuple {
 
@@ -46,6 +49,7 @@ class IDNtuple {
   void link_tree( TTree* tree );
   
   void set_weight( float w ) { weight_ = w; }
+  void set_prescale( float p ) { prescale_ = p; }
   void set_rho( float r ) { rho_ = r; }
 
   void is_aod( int aod ) { is_aod_ = aod; }
@@ -110,12 +114,34 @@ class IDNtuple {
 		 const double rho,
 		 bool is_egamma = false );
   
+  void fill_image( const float gsf_ref_eta, const float gsf_ref_phi, const float gsf_ref_R,
+		   const float gsf_ref_p, const float gsf_ref_pt,
+		   const float gen_inner_eta, const float gen_inner_phi, const float gen_inner_R,
+		   const float gen_inner_p, const float gen_inner_pt,
+		   const float gen_proj_eta, const float gen_proj_phi, const float gen_proj_R,
+		   const float gsf_inner_eta, const float gsf_inner_phi, const float gsf_inner_R,
+		   const float gsf_inner_p, const float gsf_inner_pt, const int gsf_charge,
+		   const float gsf_proj_eta, const float gsf_proj_phi, const float gsf_proj_R,
+		   const float gsf_proj_p,
+		   const float gsf_atcalo_eta, const float gsf_atcalo_phi, const float gsf_atcalo_R,
+		   const float gsf_atcalo_p,
+		   const std::vector<float>& clu_eta,
+		   const std::vector<float>& clu_phi,
+		   const std::vector<float>& clu_e,
+		   const std::vector<float>& pf_eta,
+		   const std::vector<float>& pf_phi,
+		   const std::vector<float>& pf_p,
+		   const std::vector<int>& pf_pdgid,
+		   const std::vector<int>& pf_matched,
+		   const std::vector<int>& pf_lost );
+  
  public:
 
   // Event
   unsigned int run_ = 0;
   unsigned int lumi_ = 0;
   unsigned long long evt_ = 0;
+  float prescale_ = 0.;
   float weight_ = 1.;
   float rho_ = IDNtuple::NEG_FLOAT;
 
@@ -299,7 +325,56 @@ class IDNtuple {
   float eid_shape_full5x5_circularity_ = -666; //@@ IDNtuple::NEG_FLOAT;
 
   float eid_brem_frac_ = -666; //@@ IDNtuple::NEG_FLOAT;
-  
+
+  float image_gsf_ref_eta_ = IDNtuple::NEG_FLOAT;
+  float image_gsf_ref_phi_ = IDNtuple::NEG_FLOAT;
+  float image_gsf_ref_R_ = IDNtuple::NEG_FLOAT;
+  float image_gsf_ref_p_ = IDNtuple::NEG_FLOAT;
+  float image_gsf_ref_pt_ = IDNtuple::NEG_FLOAT;
+
+  float image_gen_inner_eta_ = IDNtuple::NEG_FLOAT;
+  float image_gen_inner_phi_ = IDNtuple::NEG_FLOAT;
+  float image_gen_inner_R_ = IDNtuple::NEG_FLOAT;
+  float image_gen_inner_p_ = IDNtuple::NEG_FLOAT;
+  float image_gen_inner_pt_ = IDNtuple::NEG_FLOAT;
+
+  float image_gsf_inner_eta_ = IDNtuple::NEG_FLOAT;
+  float image_gsf_inner_phi_ = IDNtuple::NEG_FLOAT;
+  float image_gsf_inner_R_ = IDNtuple::NEG_FLOAT;
+  float image_gsf_inner_p_ = IDNtuple::NEG_FLOAT;
+  float image_gsf_inner_pt_ = IDNtuple::NEG_FLOAT;
+  int image_gsf_charge_ = IDNtuple::NEG_INT*10;
+
+  float image_gsf_proj_eta_ = IDNtuple::NEG_FLOAT;
+  float image_gsf_proj_phi_ = IDNtuple::NEG_FLOAT;
+  float image_gsf_proj_R_ = IDNtuple::NEG_FLOAT;
+  float image_gsf_proj_p_ = IDNtuple::NEG_FLOAT;
+
+  float image_gsf_atcalo_eta_ = IDNtuple::NEG_FLOAT;
+  float image_gsf_atcalo_phi_ = IDNtuple::NEG_FLOAT;
+  float image_gsf_atcalo_R_ = IDNtuple::NEG_FLOAT;
+  float image_gsf_atcalo_p_ = IDNtuple::NEG_FLOAT;
+
+  unsigned int image_clu_n_ = 0;
+  //std::vector<float> image_clu_eta_ = {};
+  //std::vector<float> image_clu_phi_ = {};
+  //std::vector<float> image_clu_e_ = {};
+  float image_clu_eta_[ARRAY_SIZE] = {};
+  float image_clu_phi_[ARRAY_SIZE] = {};
+  float image_clu_e_[ARRAY_SIZE] = {};
+
+  unsigned int image_pf_n_ = 0;
+  //std::vector<float> image_pf_eta_ = {};
+  //std::vector<float> image_pf_phi_ = {};
+  //std::vector<float> image_pf_p_ = {};
+  //std::vector<int> image_pf_pdgid_ = {};
+  float image_pf_eta_[ARRAY_SIZE] = {};
+  float image_pf_phi_[ARRAY_SIZE] = {};
+  float image_pf_p_[ARRAY_SIZE] = {};
+  int image_pf_pdgid_[ARRAY_SIZE] = {};
+  int image_pf_matched_[ARRAY_SIZE] = {};
+  int image_pf_lost_[ARRAY_SIZE] = {};
+
 };
 
 #endif // LowPtElectrons_LowPtElectrons_IDNtuple
