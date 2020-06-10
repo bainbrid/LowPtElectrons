@@ -185,8 +185,8 @@ void IDNtuple::link_tree( TTree *tree ) {
   tree->Branch("image_gsf_ref_pt", &image_gsf_ref_pt_, "image_gsf_ref_pt/f");
   
   tree->Branch("image_gen_inner_eta", &image_gen_inner_eta_, "image_gen_inner_eta/f");
-  tree->Branch("image_gen_phi", &image_gen_inner_phi_, "image_gen_inner_phi/f");
-  tree->Branch("image_gen_R", &image_gen_inner_R_, "image_gen_inner_R/f");
+  tree->Branch("image_gen_inner_phi", &image_gen_inner_phi_, "image_gen_inner_phi/f");
+  tree->Branch("image_gen_inner_R", &image_gen_inner_R_, "image_gen_inner_R/f");
   tree->Branch("image_gen_inner_p", &image_gen_inner_p_, "image_gen_inner_p/f");
   tree->Branch("image_gen_inner_pt", &image_gen_inner_pt_, "image_gen_inner_pt/f");
 
