@@ -1,4 +1,3 @@
-
 #ifndef LowPtElectrons_LowPtElectrons_IDNtuple
 #define LowPtElectrons_LowPtElectrons_IDNtuple
 
@@ -109,7 +108,9 @@ class IDNtuple {
 
   void fill_ele( const reco::GsfElectronPtr ele,
 		 float mva_value,
-		 int mva_id,
+		 float mva_value_retrained,
+		 float mva_value_depth10,
+		 float mva_value_depth15,
 		 float ele_conv_vtx_fit_prob,
 		 const double rho,
 		 bool is_egamma = false );
@@ -293,8 +294,10 @@ class IDNtuple {
 
   // Electrons: IDs
   float ele_mva_value_ = -999.; //@ IDNtuple::NEG_FLOAT;
-  int ele_mva_id_ = IDNtuple::NEG_INT;
+  float ele_mva_value_retrained_ = -999.;
   float ele_conv_vtx_fit_prob_ = IDNtuple::NEG_FLOAT;
+  float ele_mva_value_depth10_ = -999.; //@ IDNtuple::NEG_FLOAT;
+  float ele_mva_value_depth15_ = -999.; //@ IDNtuple::NEG_FLOAT;
 
   // Electrons: MVA variables
   float eid_rho_ = -666; //@@ IDNtuple::NEG_FLOAT;

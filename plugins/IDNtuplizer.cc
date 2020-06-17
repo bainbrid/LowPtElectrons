@@ -455,13 +455,13 @@ public:
   void build_image( const edm::Event& event, const edm::EventSetup& setup );
 
   inline float adj_eta( float eta, float ref_eta, int charge = 0 ) { 
-    //return eta-ref_eta; 
-    return eta; //@@ DON'T MODIFY ETA !!!
+    return eta-ref_eta; 
+    //return eta; //@@ DON'T MODIFY ETA !!!
   }
   inline float adj_phi( float phi, float ref_phi, int charge = 0 ) { 
-    //return charge == 0 ? reco::deltaPhi(phi,ref_phi) : float(charge)*reco::deltaPhi(phi,ref_phi); 
-    //return charge == 0 ? phi : -1.*float(charge)*phi; //@@ DON'T SUBTRACT REF_PHI !!!
-    return phi; //@@ DON'T MODIFY PHI !!!
+    return charge == 0 ? reco::deltaPhi(phi,ref_phi) : float(charge)*reco::deltaPhi(phi,ref_phi); 
+    //return charge == 0 ? phi : float(charge)*phi; //@@ DON'T SUBTRACT REF_PHI !!!
+    //return phi; //@@ DON'T MODIFY PHI !!!
   }
   
 private:
@@ -557,6 +557,12 @@ private:
   const edm::EDGetTokenT< edm::ValueMap<float> > mvaValueLowPt_; // on the fly?
   edm::Handle< edm::ValueMap<float> > mvaValueLowPtH_;
 
+  const edm::EDGetTokenT< edm::ValueMap<float> > mvaValueLowPtDepth10_; // on the fly?
+  edm::Handle< edm::ValueMap<float> > mvaValueLowPtDepth10H_;
+
+  const edm::EDGetTokenT< edm::ValueMap<float> > mvaValueLowPtDepth15_; // on the fly?
+  edm::Handle< edm::ValueMap<float> > mvaValueLowPtDepth15H_;
+
   // EGamma collections
 
   const edm::EDGetTokenT< std::vector<reco::ElectronSeed> > eleSeedsEGamma_; // AOD
@@ -573,8 +579,8 @@ private:
   const edm::EDGetTokenT< edm::ValueMap<float> > mvaValueEGamma_; // on the fly?
   edm::Handle< edm::ValueMap<float> > mvaValueEGammaH_;
 
-  const edm::EDGetTokenT< edm::ValueMap<bool> > mvaIdEGamma_; // on the fly?
-  edm::Handle< edm::ValueMap<bool> > mvaIdEGammaH_;
+  const edm::EDGetTokenT< edm::ValueMap<float> > mvaValueEGammaRetrained_; // on the fly?
+  edm::Handle< edm::ValueMap<float> > mvaValueEGammaRetrainedH_;
 
   // Conversions
 
@@ -715,6 +721,10 @@ IDNtuplizer::IDNtuplizer( const edm::ParameterSet& cfg )
     mvaPtbiasedH_(),
     mvaValueLowPt_(consumes< edm::ValueMap<float> >(cfg.getParameter<edm::InputTag>("mvaValueLowPt"))),
     mvaValueLowPtH_(),
+    mvaValueLowPtDepth10_(consumes< edm::ValueMap<float> >(cfg.getParameter<edm::InputTag>("mvaValueLowPtDepth10"))),
+    mvaValueLowPtDepth10H_(),
+    mvaValueLowPtDepth15_(consumes< edm::ValueMap<float> >(cfg.getParameter<edm::InputTag>("mvaValueLowPtDepth15"))),
+    mvaValueLowPtDepth15H_(),
     // EGamma collections
     eleSeedsEGamma_(consumes< std::vector<reco::ElectronSeed> >(cfg.getParameter<edm::InputTag>("eleSeedsEGamma"))),
     eleSeedsEGammaH_(),
@@ -726,8 +736,8 @@ IDNtuplizer::IDNtuplizer( const edm::ParameterSet& cfg )
     gsfElectronsEGammaH_(),
     mvaValueEGamma_(consumes< edm::ValueMap<float> >(cfg.getParameter<edm::InputTag>("mvaValueEGamma"))),
     mvaValueEGammaH_(),
-    mvaIdEGamma_(consumes<edm::ValueMap<bool> >(cfg.getParameter<edm::InputTag>("mvaIdEGamma"))),
-    mvaIdEGammaH_(),
+    mvaValueEGammaRetrained_(consumes<edm::ValueMap<float> >(cfg.getParameter<edm::InputTag>("mvaValueEGammaRetrained"))),
+    mvaValueEGammaRetrainedH_(),
     // Conversions
     //convVtxFitProb_(consumes<edm::ValueMap<float> >(cfg.getParameter<edm::InputTag>("convVtxFitProb")))
     chains_(),
@@ -905,8 +915,10 @@ void IDNtuplizer::readCollections( const edm::Event& event, const edm::EventSetu
   event.getByToken(mvaUnbiased_, mvaUnbiasedH_);
   event.getByToken(mvaPtbiased_, mvaPtbiasedH_);
   event.getByToken(mvaValueLowPt_, mvaValueLowPtH_);
+  event.getByToken(mvaValueLowPtDepth10_, mvaValueLowPtDepth10H_);
+  event.getByToken(mvaValueLowPtDepth15_, mvaValueLowPtDepth15H_);
   event.getByToken(mvaValueEGamma_, mvaValueEGammaH_);
-  event.getByToken(mvaIdEGamma_, mvaIdEGammaH_);
+  event.getByToken(mvaValueEGammaRetrained_, mvaValueEGammaRetrainedH_);
 
   // Conversions
   //event.getByToken(convVtxFitProb_, convVtxFitProbH_);
@@ -1383,7 +1395,16 @@ void IDNtuplizer::signal( std::set<reco::CandidatePtr>& signal_electrons,
 	    chain.seed_ecal_driven_ = false;
 	  }
 	}
-	
+
+	// SEED: Store BDT discrimator outputs for low-pT ElectronSeeds
+	if ( chain.gsf_match_ ) { 
+	  chain.unbiased_ = (*mvaUnbiasedH_)[chain.gsf_];
+	  chain.ptbiased_ = (*mvaPtbiasedH_)[chain.gsf_];
+//	} else {
+//	  chain.unbiased_ = 10.;
+//	  chain.ptbiased_ = 10.;
+	}
+
 	// GSF: Info is stored if match made above
 	
 	// PFGSF: Info is stored if match made above
@@ -1579,6 +1600,15 @@ void IDNtuplizer::bkgd( std::set<reco::CandidatePtr>& signal_electrons,
 	  }
 	}
 	
+	// SEED: Store BDT discrimator outputs for low-pT ElectronSeeds
+	if ( chain.gsf_match_ ) { 
+	  chain.unbiased_ = (*mvaUnbiasedH_)[chain.gsf_];
+	  chain.ptbiased_ = (*mvaPtbiasedH_)[chain.gsf_];
+//	} else {
+//	  chain.unbiased_ = 10.;
+//	  chain.ptbiased_ = 10.;
+	}
+
 	// GSF: Info is stored already
 	
 	// PFGSF: Info is stored already
@@ -1763,14 +1793,28 @@ void IDNtuplizer::fill( const edm::Event& event,
 
       //@@ dirty hack as ID is not in Event nor embedded in pat::Electron
       float mva_value = -999.;
-      int mva_id = -999;
+      float mva_value_retrained = -999;
+      float mva_value_depth10 = -999.;
+      float mva_value_depth15 = -999.;
       if ( !chain.is_egamma_ ) {
 	if ( mvaValueLowPtH_.isValid() && 
 	     mvaValueLowPtH_->size() == gsfElectronsH_->size() ) {
 	  mva_value = mvaValueLowPtH_->get( chain.ele_.key() );
 	  chain.id_ = mva_value; 
 	} else {
-	  std::cout << "[IDNtuplizer::fill] ERROR! Issue matching MVA output to GsfElectrons!" << std::endl;
+	  std::cout << "[IDNtuplizer::fill] ERROR! Issue matching MVA output to low-pT GsfElectrons!" << std::endl;
+	}
+	if ( mvaValueLowPtDepth10H_.isValid() && 
+	     mvaValueLowPtDepth10H_->size() == gsfElectronsH_->size() ) {
+	  mva_value_depth10 = mvaValueLowPtDepth10H_->get( chain.ele_.key() );
+	  //} else {
+	  //std::cout << "[IDNtuplizer::fill] ERROR! Issue matching MVA DEPTH10 output to GsfElectrons!" << std::endl;
+	}
+	if ( mvaValueLowPtDepth15H_.isValid() && 
+	     mvaValueLowPtDepth15H_->size() == gsfElectronsH_->size() ) {
+	  mva_value_depth15 = mvaValueLowPtDepth15H_->get( chain.ele_.key() );
+	  //} else {
+	  //std::cout << "[IDNtuplizer::fill] ERROR! Issue matching MVA DEPTH15 output to GsfElectrons!" << std::endl;
 	}
       } else {
 	if ( mvaValueEGammaH_.isValid() && 
@@ -1778,13 +1822,13 @@ void IDNtuplizer::fill( const edm::Event& event,
 	  mva_value = mvaValueEGammaH_->get( chain.ele_.key() );
 	  chain.id_ = mva_value; 
 	} else {
-	  std::cout << "[IDNtuplizer::fill] ERROR! Issue matching MVA output to GsfElectrons!" << std::endl;
+	  std::cout << "[IDNtuplizer::fill] ERROR! Issue matching MVA output to PF GsfElectrons!" << std::endl;
 	}
-	if ( mvaIdEGammaH_.isValid() && 
-	     mvaIdEGammaH_->size() == gsfElectronsEGammaH_->size() ) {
-	  mva_id = mvaIdEGammaH_->get( chain.ele_.key() ) ? 1 : 0;
+	if ( mvaValueEGammaRetrainedH_.isValid() && 
+	     mvaValueEGammaRetrainedH_->size() == gsfElectronsEGammaH_->size() ) {
+	  mva_value_retrained = mvaValueEGammaRetrainedH_->get( chain.ele_.key() );
 	} else {
-	  std::cout << "[IDNtuplizer::fill] ERROR! Issue matching MVA ID to GsfElectrons!" << std::endl;
+	  std::cout << "[IDNtuplizer::fill] ERROR! Issue matching retrained MVA to PF GsfElectrons!" << std::endl;
 	}
       }
       
@@ -1794,7 +1838,9 @@ void IDNtuplizer::fill( const edm::Event& event,
       //  conv_vtx_fit_prob = convVtxFitProb->get( chain.ele_.key() );
       //}
       
-      ntuple_.fill_ele( chain.ele_, mva_value, mva_id, conv_vtx_fit_prob, *rhoH_, chain.is_egamma_ );
+      ntuple_.fill_ele( chain.ele_, 
+			mva_value, mva_value_retrained, mva_value_depth10, mva_value_depth15,
+			conv_vtx_fit_prob, *rhoH_, chain.is_egamma_ );
       
       //ntuple_.fill_supercluster(chain.ele_);
       
@@ -2877,7 +2923,7 @@ void IDNtuplizer::build_image( const edm::Event& event,
       // Print out image details
       if ( chain.is_e_ || first_fake ) { 
 	if ( !chain.is_e_ ) { first_fake = false; } // Only print first fake candidate
-	std::cout << ss.str() << std::endl; 
+	//std::cout << ss.str() << std::endl; 
       }
       
     } // if ( isAOD_ == 0 )
