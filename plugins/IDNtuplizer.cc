@@ -223,6 +223,7 @@ public:
   std::vector<float> clu_eta_;
   std::vector<float> clu_phi_;
   std::vector<float> clu_e_;
+  std::vector<int> clu_nhit_;
 
   // PF candidates
   std::vector<float> pf_eta_;
@@ -1858,7 +1859,7 @@ void IDNtuplizer::fill( const edm::Event& event,
 			  chain.gsf_proj_p_,
 			  chain.gsf_atcalo_eta_, chain.gsf_atcalo_phi_, chain.gsf_atcalo_R_, 
 			  chain.gsf_atcalo_p_,
-			  chain.clu_eta_, chain.clu_phi_, chain.clu_e_, // Cluster
+			  chain.clu_eta_, chain.clu_phi_, chain.clu_e_, chain.clu_nhit_, // Cluster
 			  chain.pf_eta_, chain.pf_phi_, chain.pf_p_, // PFCands
 			  chain.pf_pdgid_, chain.pf_matched_, chain.pf_lost_ // PFCands
 			  );
@@ -2861,12 +2862,15 @@ void IDNtuplizer::build_image( const edm::Event& event,
 	    chain.clu_eta_.push_back(adj_eta(cluster->eta(),chain.gsf_ref_eta_,charge));
 	    chain.clu_phi_.push_back(adj_phi(cluster->phi(),chain.gsf_ref_phi_,charge));
 	    chain.clu_e_.push_back(cluster->correctedEnergy());
+	    chain.clu_nhit_.push_back(cluster->hitsAndFractions().size());
 	    ss << std::endl
 	       << " CLUSTER:   "
 	       << std::fixed << std::setprecision(2) 
 	       << " eta: " << std::setw(5) << adj_eta(cluster->eta(),chain.gsf_ref_eta_,charge)
 	       << " phi: " << std::setw(5) << adj_phi(cluster->phi(),chain.gsf_ref_phi_,charge)
-	       << "   e: " << std::setw(5) << cluster->correctedEnergy();
+	       << "   e: " << std::setw(5) << cluster->correctedEnergy()
+	       << std::fixed << std::setprecision(0) 
+	       << " nhit: " << std::setw(2) << cluster->hitsAndFractions().size();
 	  }
 	}
       }

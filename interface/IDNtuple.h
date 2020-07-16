@@ -129,6 +129,7 @@ class IDNtuple {
 		   const std::vector<float>& clu_eta,
 		   const std::vector<float>& clu_phi,
 		   const std::vector<float>& clu_e,
+		   const std::vector<int>& clu_nhit,
 		   const std::vector<float>& pf_eta,
 		   const std::vector<float>& pf_phi,
 		   const std::vector<float>& pf_p,
@@ -365,6 +366,7 @@ class IDNtuple {
   float image_clu_eta_[ARRAY_SIZE] = {};
   float image_clu_phi_[ARRAY_SIZE] = {};
   float image_clu_e_[ARRAY_SIZE] = {};
+  int image_clu_nhit_[ARRAY_SIZE] = {};
 
   unsigned int image_pf_n_ = 0;
   //std::vector<float> image_pf_eta_ = {};

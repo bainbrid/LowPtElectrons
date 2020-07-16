@@ -213,6 +213,7 @@ void IDNtuple::link_tree( TTree *tree ) {
   tree->Branch("image_clu_eta", &image_clu_eta_, "image_clu_eta[image_clu_n]/f");
   tree->Branch("image_clu_phi", &image_clu_phi_, "image_clu_phi[image_clu_n]/f");
   tree->Branch("image_clu_e", &image_clu_e_, "image_clu_e[image_clu_n]/f");
+  tree->Branch("image_clu_nhit", &image_clu_nhit_, "image_clu_nhit[image_clu_n]/I");
 
   tree->Branch("image_pf_n", &image_pf_n_, "image_pf_n/I");
   tree->Branch("image_pf_eta", &image_pf_eta_, "image_pf_eta[image_pf_n]/f");
@@ -570,6 +571,7 @@ void IDNtuple::fill_image( const float gsf_ref_eta, const float gsf_ref_phi, con
 			   const std::vector<float>& clu_eta,
 			   const std::vector<float>& clu_phi,
 			   const std::vector<float>& clu_e,
+			   const std::vector<int>& clu_nhit,
 			   const std::vector<float>& pf_eta,
 			   const std::vector<float>& pf_phi,
 			   const std::vector<float>& pf_p,
@@ -578,6 +580,7 @@ void IDNtuple::fill_image( const float gsf_ref_eta, const float gsf_ref_phi, con
 			   const std::vector<int>& pf_lost ) {
   if ( clu_eta.size() != clu_phi.size() ||
        clu_eta.size() != clu_e.size() ||
+       clu_eta.size() != clu_nhit.size() ||
        pf_eta.size() != pf_phi.size() ||
        pf_eta.size() != pf_p.size() ||
        pf_eta.size() != pf_pdgid.size() ||
@@ -620,6 +623,7 @@ void IDNtuple::fill_image( const float gsf_ref_eta, const float gsf_ref_phi, con
     image_clu_eta_[i] = clu_eta[i];
     image_clu_phi_[i] = clu_phi[i];
     image_clu_e_[i] = clu_e[i];
+    image_clu_nhit_[i] = clu_nhit[i];
   }
 
   image_pf_n_ = pf_eta.size() > ARRAY_SIZE ? ARRAY_SIZE : pf_eta.size();
