@@ -2,8 +2,7 @@
 #include "DataFormats/GsfTrackReco/interface/GsfTrackExtraFwd.h"
 #include "DataFormats/GsfTrackReco/interface/GsfTrackExtra.h"
 #include "LowPtElectrons/LowPtElectrons/interface/IDNtuple.h"
-#include "RecoEgamma/EgammaElectronProducers/interface/LowPtGsfElectronIDHeavyObjectCache.h"
-#include "RecoEgamma/EgammaElectronProducers/interface/LowPtGsfElectronSeedHeavyObjectCache.h"
+#include "RecoEgamma/EgammaElectronProducers/interface/LowPtGsfElectronFeatures.h"
 #include "TTree.h"
 
 /////////////////////////////////////////////////////////////////////////////////
@@ -348,10 +347,8 @@ void IDNtuple::fill_preid( const reco::PreId& preid_ecal,
 //  preid_ptbiased_pass_ = preid_ecal.mvaSelected(1);
 
   // Set seed variables
-  lowptgsfeleseed::Features features;
-  features.set( preid_ecal, preid_hcal, rho, spot, ecal_tools );
-  auto vfeatures = features.get();
-
+  auto vfeatures = lowptgsfeleseed::features( preid_ecal, preid_hcal, rho, spot, ecal_tools );
+  
   //@@ ADD THESE PREID VARS TO THE NTUPLE???
 
 //  //@@ ORDER IS IMPORTANT!
@@ -495,7 +492,9 @@ void IDNtuple::fill_ele( const reco::GsfElectronPtr ele,
 			 float mva_value_depth15,
 			 float ele_conv_vtx_fit_prob,
 			 const double rho,
-			 bool is_egamma ) {
+			 bool is_egamma,
+			 float unbiased // Rome ...
+			 ) {
 
   // Kinematics
   if ( is_egamma ) {
@@ -523,18 +522,43 @@ void IDNtuple::fill_ele( const reco::GsfElectronPtr ele,
   if ( mva_value_depth15 > -666. ) { ele_mva_value_depth15_ = mva_value_depth15; }
 
   // Set Electron variables
-  lowptgsfeleid::Features features;
-  features.set(ele,rho);
-  auto vfeatures = features.get();
+
+  //lowptgsfeleid::Features features;
+  //features.set(ele,rho);
+  //auto vfeatures = features.get();
+  std::vector<float> vfeatures; // = getFeatures(ele,rho,unbiased); // new interface ...
 
   //@@ ORDER IS IMPORTANT!
+
+  // My variables ...
+//  size_t idx = 0;
+//  eid_rho_ = vfeatures[idx++];
+//  eid_ele_pt_ = vfeatures[idx++];
+//  eid_sc_eta_ = vfeatures[idx++];
+//  eid_shape_full5x5_sigmaIetaIeta_ = vfeatures[idx++];
+//  eid_shape_full5x5_sigmaIphiIphi_ = vfeatures[idx++];
+//  eid_shape_full5x5_circularity_ = vfeatures[idx++];
+//  eid_shape_full5x5_r9_ = vfeatures[idx++];
+//  eid_sc_etaWidth_ = vfeatures[idx++];
+//  eid_sc_phiWidth_ = vfeatures[idx++];
+//  eid_shape_full5x5_HoverE_ = vfeatures[idx++];
+//  eid_trk_nhits_ = vfeatures[idx++];
+//  eid_trk_chi2red_ = vfeatures[idx++];
+//  eid_gsf_chi2red_ = vfeatures[idx++];
+//  eid_brem_frac_ = vfeatures[idx++];
+//  eid_gsf_nhits_ = vfeatures[idx++];
+//  eid_match_SC_EoverP_ = vfeatures[idx++];
+//  eid_match_eclu_EoverP_ = vfeatures[idx++];
+//  eid_match_SC_dEta_ = vfeatures[idx++];
+//  eid_match_SC_dPhi_ = vfeatures[idx++];
+//  eid_match_seed_dEta_ = vfeatures[idx++];
+//  eid_sc_E_ = vfeatures[idx++];
+//  eid_trk_p_ = vfeatures[idx++];
+
+  // Rome variables ...
   size_t idx = 0;
   eid_rho_ = vfeatures[idx++];
-  eid_ele_pt_ = vfeatures[idx++];
   eid_sc_eta_ = vfeatures[idx++];
-  eid_shape_full5x5_sigmaIetaIeta_ = vfeatures[idx++];
-  eid_shape_full5x5_sigmaIphiIphi_ = vfeatures[idx++];
-  eid_shape_full5x5_circularity_ = vfeatures[idx++];
   eid_shape_full5x5_r9_ = vfeatures[idx++];
   eid_sc_etaWidth_ = vfeatures[idx++];
   eid_sc_phiWidth_ = vfeatures[idx++];
@@ -551,9 +575,17 @@ void IDNtuple::fill_ele( const reco::GsfElectronPtr ele,
   eid_match_seed_dEta_ = vfeatures[idx++];
   eid_sc_E_ = vfeatures[idx++];
   eid_trk_p_ = vfeatures[idx++];
+  // following not set ...
+  //eid_ele_pt_ = vfeatures[idx++];
+  //eid_shape_full5x5_sigmaIetaIeta_ = vfeatures[idx++];
+  //eid_shape_full5x5_sigmaIphiIphi_ = vfeatures[idx++];
+  //eid_shape_full5x5_circularity_ = vfeatures[idx++];
+  // following are new, not used ...
+  //gsf_mode_p,core_shFracHits,gsf_bdtout1,gsf_dr,trk_dr,sc_Nclus,
+  //sc_clus1_nxtal,sc_clus1_dphi,sc_clus2_dphi,sc_clus1_deta,
+  //sc_clus2_deta,sc_clus1_E,sc_clus2_E,sc_clus1_E_ov_p,sc_clus2_E_ov_p  
 
 }
-
 
 /////////////////////////////////////////////////////////////////////////////////
 //

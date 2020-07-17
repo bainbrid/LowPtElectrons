@@ -36,7 +36,8 @@
 #include "DataFormats/TrackReco/interface/Track.h"
 #include "DataFormats/TrackReco/interface/TrackFwd.h"
 #include "FWCore/Framework/interface/EDFilter.h" // EDAnalyzer.h
-#include "FastSimulation/BaseParticlePropagator/interface/BaseParticlePropagator.h"
+#include "CommonTools/BaseParticlePropagator/interface/BaseParticlePropagator.h"
+#include "CommonTools/BaseParticlePropagator/interface/RawParticle.h"
 #include "FWCore/Framework/interface/ESHandle.h"
 #include "FWCore/Framework/interface/Frameworkfwd.h"
 #include "FWCore/Framework/interface/Event.h"
@@ -1841,7 +1842,9 @@ void IDNtuplizer::fill( const edm::Event& event,
       
       ntuple_.fill_ele( chain.ele_, 
 			mva_value, mva_value_retrained, mva_value_depth10, mva_value_depth15,
-			conv_vtx_fit_prob, *rhoH_, chain.is_egamma_ );
+			conv_vtx_fit_prob, *rhoH_, chain.is_egamma_, 
+			chain.unbiased_ // Rome ...
+			);
       
       //ntuple_.fill_supercluster(chain.ele_);
       
@@ -2577,27 +2580,27 @@ BaseParticlePropagator IDNtuplizer::extrapolate_track( const Vector& mom, const 
   
   // Propagate 'electron' to ECAL surface
   double energy = mom.R() + 0.000511*0.000511; // electron mass
-  BaseParticlePropagator particle( RawParticle(XYZTLorentzVector( mom.x(), mom.y(), mom.z(), energy ),
-					       XYZTLorentzVector( pos.x(), pos.y(), pos.z(), 0. )),
-				   0., 0., 3.8 ); // fixed Z value for B-field
+  RawParticle particle( XYZTLorentzVector( mom.x(), mom.y(), mom.z(), energy ),
+			XYZTLorentzVector( pos.x(), pos.y(), pos.z(), 0. ) );
+  BaseParticlePropagator propagator( particle, 0., 0., 3.8 ); // fixed Z value for B-field
   particle.setCharge(charge);
-
+  
   // ECAL: true = first half loop; 0 = does not reach ECAL; 1 = yes, barrel; 2 = yes, endcaps
-  particle.propagateToEcalEntrance(true);
-  reach_ECAL = particle.getSuccess();
+  propagator.propagateToEcalEntrance(true);
+  reach_ECAL = propagator.getSuccess();
   pos_ECAL = GlobalPoint( particle.x(),  particle.y(), particle.z() );
 
   // ECAL: true = first half loop; 0 = does not reach ECAL; 1 = yes, barrel; 2 = yes, endcaps 
-  particle.propagateToHcalEntrance(true);
-  reach_HCAL = particle.getSuccess(); 
+  propagator.propagateToHcalEntrance(true);
+  reach_HCAL = propagator.getSuccess(); 
   pos_HCAL = GlobalPoint( particle.x(),  particle.y(), particle.z() );
 
   // ECAL: true = first half loop; 0 = does not reach ECAL; 1 = yes, barrel; 2 = yes, endcaps 
-  particle.propagateToHcalExit(true);
-  reach_EXIT = particle.getSuccess(); 
+  propagator.propagateToHcalExit(true);
+  reach_EXIT = propagator.getSuccess(); 
   pos_EXIT = GlobalPoint( particle.x(),  particle.y(), particle.z() );
 
-  return particle;
+  return propagator;
 
 }
 
@@ -2682,12 +2685,12 @@ void IDNtuplizer::build_image( const edm::Event& event,
       int reach_ECAL = 0; GlobalPoint pos_ECAL;
       int reach_HCAL = 0; GlobalPoint pos_HCAL;
       int reach_EXIT = 0; GlobalPoint pos_EXIT;
-      BaseParticlePropagator particle = extrapolate_track( chain.gsf_->momentumMode(),
-							   chain.gsf_->referencePoint(), // same as deprecated vertex()
-							   chain.gsf_->charge(),
-							   reach_ECAL, pos_ECAL,
-							   reach_HCAL, pos_HCAL,
-							   reach_EXIT, pos_EXIT );
+      BaseParticlePropagator propagator = extrapolate_track( chain.gsf_->momentumMode(),
+							     chain.gsf_->referencePoint(), // same as deprecated vertex()
+							     chain.gsf_->charge(),
+							     reach_ECAL, pos_ECAL,
+							     reach_HCAL, pos_HCAL,
+							     reach_EXIT, pos_EXIT );
       
       // Min/max eta/phi values (w.r.t. ref) based on inner P4
       window_eta_min = adj_eta(chain.gsf_->momentumMode().eta(),chain.gsf_ref_eta_,charge);
@@ -2823,13 +2826,13 @@ void IDNtuplizer::build_image( const edm::Event& event,
 	   << ", fbrem(SC): "
 	   << std::setw(5) << chain.ele_->superClusterFbrem()
 	   << ", IPxy: "
-	   << std::setw(5) << particle.xyImpactParameter()
+	   << std::setw(5) << propagator.xyImpactParameter()
 	   << ", helixRadius: "
-	   << std::setw(5) << particle.helixRadius()
+	   << std::setw(5) << propagator.helixRadius()
 	   << ", onBarrel: "
-	   << std::setw(5) << particle.onBarrel()
+	   << std::setw(5) << propagator.onBarrel()
 	   << ", onEndcap: "
-	   << std::setw(5) << particle.onEndcap();
+	   << std::setw(5) << propagator.onEndcap();
       }
 
       // Print eta-phi window

@@ -113,7 +113,8 @@ class IDNtuple {
 		 float mva_value_depth15,
 		 float ele_conv_vtx_fit_prob,
 		 const double rho,
-		 bool is_egamma = false );
+		 bool is_egamma = false,
+		 float unbiased = 0. );
   
   void fill_image( const float gsf_ref_eta, const float gsf_ref_phi, const float gsf_ref_R,
 		   const float gsf_ref_p, const float gsf_ref_pt,

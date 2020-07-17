@@ -11,8 +11,8 @@
 #include "DataFormats/Math/interface/deltaPhi.h"
 #include <sstream>
 #include <cmath>
-#include "RecoEgamma/EgammaElectronProducers/interface/LowPtGsfElectronSeedHeavyObjectCache.h"
-#include "RecoEgamma/EgammaElectronProducers/interface/LowPtGsfElectronIDHeavyObjectCache.h"
+//#include "RecoEgamma/EgammaElectronProducers/plugins/LowPtGsfElectronIDProducer.cc"
+//#include "RecoEgamma/EgammaElectronProducers/plugins/LowPtGsfElectronSeedHeavyObjectCache.h"
 
 //#define EMATRIX // uncomment and apply energy_matrix patch
 
@@ -435,37 +435,37 @@ void ElectronNtuple::fill_preid( const reco::PreId &preid_ecal, const reco::PreI
   // Extract KF track parameters
   fill_ktf_trk( preid_ecal.trackRef(), spot, pass_preid);
 	
-	lowptgsfeleseed::Features preid_features;
-	preid_features.set(preid_ecal, preid_hcal,
-										 rho, spot, ecalTools);
-	std::vector<float> feature_vector = preid_features.get();
-	// Fill preId on
-	size_t idx=0;
-	preid_trk_pt_  = feature_vector.at(idx++);
-	preid_trk_eta_ = feature_vector.at(idx++);
-	preid_trk_phi_ = feature_vector.at(idx++);
-  preid_trk_p_   = feature_vector.at(idx++);
-  preid_trk_nhits_ = feature_vector.at(idx++);
-  preid_trk_high_quality_ = feature_vector.at(idx++);
-  preid_trk_chi2red_ = feature_vector.at(idx++);
-  preid_rho_ = feature_vector.at(idx++);
-  preid_ktf_ecal_cluster_e_ = feature_vector.at(idx++);
-  preid_ktf_ecal_cluster_deta_ = feature_vector.at(idx++);
-  preid_ktf_ecal_cluster_dphi_ = feature_vector.at(idx++);
-  preid_ktf_ecal_cluster_e3x3_ = feature_vector.at(idx++);
-  preid_ktf_ecal_cluster_e5x5_ = feature_vector.at(idx++);
-  preid_ktf_ecal_cluster_covEtaEta_ = feature_vector.at(idx++);
-  preid_ktf_ecal_cluster_covEtaPhi_ = feature_vector.at(idx++);
-  preid_ktf_ecal_cluster_covPhiPhi_ = feature_vector.at(idx++);
-  preid_ktf_ecal_cluster_r9_ = feature_vector.at(idx++);
-  preid_ktf_ecal_cluster_circularity_ = feature_vector.at(idx++);
-  preid_ktf_hcal_cluster_e_ = feature_vector.at(idx++);
-  preid_ktf_hcal_cluster_deta_ = feature_vector.at(idx++);
-  preid_ktf_hcal_cluster_dphi_ = feature_vector.at(idx++);
-  preid_gsf_dpt_ = feature_vector.at(idx++);
-  preid_trk_gsf_chiratio_ = feature_vector.at(idx++);
-  preid_gsf_chi2red_ = feature_vector.at(idx++);
-  preid_trk_dxy_sig_ = feature_vector.at(idx++); // must be last (not used by unbiased model)
+//	lowptgsfeleseed::Features preid_features;
+//	preid_features.set(preid_ecal, preid_hcal,
+//										 rho, spot, ecalTools);
+//	std::vector<float> feature_vector = preid_features.get();
+//	// Fill preId on
+//	size_t idx=0;
+//	preid_trk_pt_  = feature_vector.at(idx++);
+//	preid_trk_eta_ = feature_vector.at(idx++);
+//	preid_trk_phi_ = feature_vector.at(idx++);
+//  preid_trk_p_   = feature_vector.at(idx++);
+//  preid_trk_nhits_ = feature_vector.at(idx++);
+//  preid_trk_high_quality_ = feature_vector.at(idx++);
+//  preid_trk_chi2red_ = feature_vector.at(idx++);
+//  preid_rho_ = feature_vector.at(idx++);
+//  preid_ktf_ecal_cluster_e_ = feature_vector.at(idx++);
+//  preid_ktf_ecal_cluster_deta_ = feature_vector.at(idx++);
+//  preid_ktf_ecal_cluster_dphi_ = feature_vector.at(idx++);
+//  preid_ktf_ecal_cluster_e3x3_ = feature_vector.at(idx++);
+//  preid_ktf_ecal_cluster_e5x5_ = feature_vector.at(idx++);
+//  preid_ktf_ecal_cluster_covEtaEta_ = feature_vector.at(idx++);
+//  preid_ktf_ecal_cluster_covEtaPhi_ = feature_vector.at(idx++);
+//  preid_ktf_ecal_cluster_covPhiPhi_ = feature_vector.at(idx++);
+//  preid_ktf_ecal_cluster_r9_ = feature_vector.at(idx++);
+//  preid_ktf_ecal_cluster_circularity_ = feature_vector.at(idx++);
+//  preid_ktf_hcal_cluster_e_ = feature_vector.at(idx++);
+//  preid_ktf_hcal_cluster_deta_ = feature_vector.at(idx++);
+//  preid_ktf_hcal_cluster_dphi_ = feature_vector.at(idx++);
+//  preid_gsf_dpt_ = feature_vector.at(idx++);
+//  preid_trk_gsf_chiratio_ = feature_vector.at(idx++);
+//  preid_gsf_chi2red_ = feature_vector.at(idx++);
+//  preid_trk_dxy_sig_ = feature_vector.at(idx++); // must be last (not used by unbiased model)
 	
   // MVA output
   preid_bdtout1_ = preid_ecal.mva(0);
@@ -479,7 +479,8 @@ void ElectronNtuple::fill_preid( const reco::PreId &preid_ecal, const reco::PreI
 void ElectronNtuple::fill_ele(
 	const reco::GsfElectronRef ele, float mvaid_v1, 
 	float mvaid_v2, float ele_conv_vtx_fit_prob, 
-	const std::vector<float>& iso_rings, const double rho) {
+	const std::vector<float>& iso_rings, const double rho,
+	const float unbiased ) {
 
 	ele_p_			 = ele->p();
 	ele_pt_			 = ele->pt();
@@ -494,33 +495,66 @@ void ElectronNtuple::fill_ele(
 	ele_iso04_ = iso_rings.at(3);
 	fill_supercluster(ele);
 
-	lowptgsfeleid::Features feats;
-	feats.set(reco::GsfElectronPtr(ele.id(),ele.get(),ele.key()),rho); //@@ Ref->Ptr
-	auto feat_v = feats.get();
-	size_t idx=0;
+	//lowptgsfeleid::Features feats;
+	//feats.set(reco::GsfElectronPtr(ele.id(),ele.get(),ele.key()),rho); //@@ Ref->Ptr
+	//auto feat_v = feats.get();
+	std::vector<float> vfeatures;// = getFeatures(ele,rho,unbiased); // new interface ...
 
-	eid_rho_ = feat_v[idx++];
-	eid_ele_pt_ = feat_v[idx++];
-	eid_sc_eta_ = feat_v[idx++];
-	eid_shape_full5x5_sigmaIetaIeta_ = feat_v[idx++];
-	eid_shape_full5x5_sigmaIphiIphi_ = feat_v[idx++];
-	eid_shape_full5x5_circularity_ = feat_v[idx++];
-	eid_shape_full5x5_r9_ = feat_v[idx++];
-	eid_sc_etaWidth_ = feat_v[idx++];
-	eid_sc_phiWidth_ = feat_v[idx++];
-	eid_shape_full5x5_HoverE_ = feat_v[idx++];
-	eid_trk_nhits_ = feat_v[idx++];
-	eid_trk_chi2red_ = feat_v[idx++];
-	eid_gsf_chi2red_ = feat_v[idx++];
-	eid_brem_frac_ = feat_v[idx++];
-	eid_gsf_nhits_ = feat_v[idx++];
-	eid_match_SC_EoverP_ = feat_v[idx++];
-	eid_match_eclu_EoverP_ = feat_v[idx++];
-	eid_match_SC_dEta_ = feat_v[idx++];
-	eid_match_SC_dPhi_ = feat_v[idx++];
-	eid_match_seed_dEta_ = feat_v[idx++];
-	eid_sc_E_ = feat_v[idx++];
-	eid_trk_p_ = feat_v[idx++];
+	// Mauro's variables ...
+	//size_t idx=0;
+	//eid_rho_ = feat_v[idx++];
+	//eid_ele_pt_ = feat_v[idx++];
+	//eid_sc_eta_ = feat_v[idx++];
+	//eid_shape_full5x5_sigmaIetaIeta_ = feat_v[idx++];
+	//eid_shape_full5x5_sigmaIphiIphi_ = feat_v[idx++];
+	//eid_shape_full5x5_circularity_ = feat_v[idx++];
+	//eid_shape_full5x5_r9_ = feat_v[idx++];
+	//eid_sc_etaWidth_ = feat_v[idx++];
+	//eid_sc_phiWidth_ = feat_v[idx++];
+	//eid_shape_full5x5_HoverE_ = feat_v[idx++];
+	//eid_trk_nhits_ = feat_v[idx++];
+	//eid_trk_chi2red_ = feat_v[idx++];
+	//eid_gsf_chi2red_ = feat_v[idx++];
+	//eid_brem_frac_ = feat_v[idx++];
+	//eid_gsf_nhits_ = feat_v[idx++];
+	//eid_match_SC_EoverP_ = feat_v[idx++];
+	//eid_match_eclu_EoverP_ = feat_v[idx++];
+	//eid_match_SC_dEta_ = feat_v[idx++];
+	//eid_match_SC_dPhi_ = feat_v[idx++];
+	//eid_match_seed_dEta_ = feat_v[idx++];
+	//eid_sc_E_ = feat_v[idx++];
+	//eid_trk_p_ = feat_v[idx++];
+
+  // Rome variables ...
+  size_t idx = 0;
+  eid_rho_ = vfeatures[idx++];
+  eid_sc_eta_ = vfeatures[idx++];
+  eid_shape_full5x5_r9_ = vfeatures[idx++];
+  eid_sc_etaWidth_ = vfeatures[idx++];
+  eid_sc_phiWidth_ = vfeatures[idx++];
+  eid_shape_full5x5_HoverE_ = vfeatures[idx++];
+  eid_trk_nhits_ = vfeatures[idx++];
+  eid_trk_chi2red_ = vfeatures[idx++];
+  eid_gsf_chi2red_ = vfeatures[idx++];
+  eid_brem_frac_ = vfeatures[idx++];
+  eid_gsf_nhits_ = vfeatures[idx++];
+  eid_match_SC_EoverP_ = vfeatures[idx++];
+  eid_match_eclu_EoverP_ = vfeatures[idx++];
+  eid_match_SC_dEta_ = vfeatures[idx++];
+  eid_match_SC_dPhi_ = vfeatures[idx++];
+  eid_match_seed_dEta_ = vfeatures[idx++];
+  eid_sc_E_ = vfeatures[idx++];
+  eid_trk_p_ = vfeatures[idx++];
+  // following not set ...
+  //eid_ele_pt_ = vfeatures[idx++];
+  //eid_shape_full5x5_sigmaIetaIeta_ = vfeatures[idx++];
+  //eid_shape_full5x5_sigmaIphiIphi_ = vfeatures[idx++];
+  //eid_shape_full5x5_circularity_ = vfeatures[idx++];
+  // following are new, not used ...
+  //gsf_mode_p,core_shFracHits,gsf_bdtout1,gsf_dr,trk_dr,sc_Nclus,
+  //sc_clus1_nxtal,sc_clus1_dphi,sc_clus2_dphi,sc_clus1_deta,
+  //sc_clus2_deta,sc_clus1_E,sc_clus2_E,sc_clus1_E_ov_p,sc_clus2_E_ov_p  
+
 }
 
 void ElectronNtuple::fill_supercluster(const reco::GsfElectronRef ele) {

@@ -45,6 +45,7 @@ constexpr size_t NECAL_PFCLUSTERS = 30;
 constexpr size_t NHCAL_PFCLUSTERS = 30;
 constexpr size_t ECAL_CLUSTER_SIZE = 7;
 
+namespace reco { typedef edm::Ptr<GsfElectron> GsfElectronPtr; }
 
 class ElectronNtuple {
 	/*Small class to provide fillers and hide tree I/O*/
@@ -68,7 +69,8 @@ public:
 									noZS::EcalClusterLazyTools& ecalTools, bool pass_preid);
 	void fill_ele(const reco::GsfElectronRef ele, float mvaid_v1=-2, float mvaid_v2=-2, 
 								float ele_conv_vtx_fit_prob = -1., const std::vector<float>& iso_rings={0., 0., 0., 0.},
-								const double rho=0);
+								const double rho=0,
+		      const float unbiased=0.);
 	void fill_supercluster(const reco::GsfElectronRef ele);
 	void fill_ktf_trk(const reco::TrackRef trk, const reco::BeamSpot &spot, bool pass_preid);
 	void fill_GSF_ECAL_cluster_info(

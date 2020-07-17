@@ -15,7 +15,7 @@
 <use name="DataFormats/TrajectorySeed"/>
 <use name="DataFormats/TrackCandidate"/>
 <use name="DataFormats/TrackReco"/>
-<use name="FastSimulation/BaseParticlePropagator"/>
+<use name="CommonTools/BaseParticlePropagator"/>
 <use name="FWCore/Common"/>
 <use name="FWCore/Framework"/>
 <use name="FWCore/MessageLogger"/>
