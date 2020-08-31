@@ -336,8 +336,8 @@ public:
   // GEN-based method to provide a sample of "signal" electrons
   void genElectronsFromB( std::set<reco::GenParticlePtr>& electrons_from_B, 
 			  std::set<reco::GenParticlePtr>& gen_muons, 
-			  float tag_muon_pt_threshold = 5.,
-			  float tag_muon_eta_threshold = 2.5 );
+			  float tag_muon_pt_threshold = 7.,
+			  float tag_muon_eta_threshold = 1.5 );
   
   // 
   void createChains( std::set<reco::CandidatePtr>& signal_electrons,
@@ -1701,6 +1701,9 @@ void IDNtuplizer::fill( const edm::Event& event,
   // Fill ntuple
   for ( size_t idx = 0; idx < chains_.size(); ++idx ) {
     ElectronChain chain = chains_[idx];
+    
+    //@@ FILTER NTUPLE CONTENT !!!
+    if ( chain.is_egamma_ || !validPtr(chain.ele_) || !chain.ele_match_ ) { continue; }
     
     // Init tree here
     ntuple_.reset();
