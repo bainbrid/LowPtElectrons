@@ -6,7 +6,7 @@ ntuplizer = cms.EDFilter( # cms.EDAnalyzer
     checkFromB = cms.bool(True),
     drMax = cms.double(0.1),
     drThreshold = cms.double(0.02),
-    prescale = cms.double(-2.94), # zero: no prescale, +ve: use 1/prescale, -ve: (poisson) mean number of fakes/event
+    prescale = cms.double(40.), # zero: no prescale, +ve: use 1/prescale, -ve: (poisson) mean number of fakes/event #-2.94
     minTrackPt = cms.double(0.5),
     # Generic collections
     rho = cms.InputTag('fixedGridRhoFastjetAll'),
