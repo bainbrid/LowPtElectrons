@@ -110,6 +110,8 @@ class IDNtuple {
 		 float mva_value,
 		 float mva_value_retrained,
 		 float mva_value_depth10,
+		 float mva_value_depth11,
+		 float mva_value_depth13,
 		 float mva_value_depth15,
 		 float ele_conv_vtx_fit_prob,
 		 const double rho,
@@ -295,9 +297,11 @@ class IDNtuple {
 
   // Electrons: IDs
   float ele_mva_value_ = -999.; //@ IDNtuple::NEG_FLOAT;
-  float ele_mva_value_retrained_ = -999.;
+  float ele_mva_value_retrained_ = -999.; //@ IDNtuple::NEG_FLOAT;
   float ele_conv_vtx_fit_prob_ = IDNtuple::NEG_FLOAT;
   float ele_mva_value_depth10_ = -999.; //@ IDNtuple::NEG_FLOAT;
+  float ele_mva_value_depth11_ = -999.; //@ IDNtuple::NEG_FLOAT;
+  float ele_mva_value_depth13_ = -999.; //@ IDNtuple::NEG_FLOAT;
   float ele_mva_value_depth15_ = -999.; //@ IDNtuple::NEG_FLOAT;
 
   // Electrons: MVA variables

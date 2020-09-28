@@ -149,6 +149,8 @@ void IDNtuple::link_tree( TTree *tree ) {
   tree->Branch("ele_mva_value_retrained", &ele_mva_value_retrained_, "ele_mva_value_retrained/f");
   tree->Branch("ele_conv_vtx_fit_prob", &ele_conv_vtx_fit_prob_, "ele_conv_vtx_fit_prob/f");
   tree->Branch("ele_mva_value_depth10", &ele_mva_value_depth10_, "ele_mva_value_depth10/f");
+  tree->Branch("ele_mva_value_depth11", &ele_mva_value_depth11_, "ele_mva_value_depth11/f");
+  tree->Branch("ele_mva_value_depth13", &ele_mva_value_depth13_, "ele_mva_value_depth13/f");
   tree->Branch("ele_mva_value_depth15", &ele_mva_value_depth15_, "ele_mva_value_depth15/f");
 
   tree->Branch("eid_rho", &eid_rho_, "eid_rho/f");
@@ -492,6 +494,8 @@ void IDNtuple::fill_ele( const reco::GsfElectronPtr ele,
 			 float mva_value,
 			 float mva_value_retrained,
 			 float mva_value_depth10,
+			 float mva_value_depth11,
+			 float mva_value_depth13,
 			 float mva_value_depth15,
 			 float ele_conv_vtx_fit_prob,
 			 const double rho,
@@ -517,9 +521,11 @@ void IDNtuple::fill_ele( const reco::GsfElectronPtr ele,
   
   // MVA IDs: only filled if 'ValueMap->size() == electrons->size()' in IDFeatures::analyze()
   if ( mva_value > -666. ) { ele_mva_value_ = mva_value; }
-  if ( mva_value_retrained > -666 ) { ele_mva_value_retrained_ = mva_value_retrained; }
+  if ( mva_value_retrained > -666. ) { ele_mva_value_retrained_ = mva_value_retrained; }
   if ( ele_conv_vtx_fit_prob > -666. ) { ele_conv_vtx_fit_prob_ = ele_conv_vtx_fit_prob; }
   if ( mva_value_depth10 > -666. ) { ele_mva_value_depth10_ = mva_value_depth10; }
+  if ( mva_value_depth11 > -666. ) { ele_mva_value_depth11_ = mva_value_depth11; }
+  if ( mva_value_depth13 > -666. ) { ele_mva_value_depth13_ = mva_value_depth13; }
   if ( mva_value_depth15 > -666. ) { ele_mva_value_depth15_ = mva_value_depth15; }
 
   // Set Electron variables

@@ -1207,7 +1207,7 @@ void IDFeatures::fill( bool is_signal_ele,
       //}
       
       ntuple_.fill_ele( matched_ele->second, mva_value, mva_id, 
-			-999., -999., // mva_value_depth10/15 not needed here
+			-999., -999., -999., -999., 
 			conv_vtx_fit_prob, *rhoH_ );
       
       //@@ Add SuperCluster vars?

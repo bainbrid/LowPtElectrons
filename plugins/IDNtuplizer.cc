@@ -561,6 +561,12 @@ private:
   const edm::EDGetTokenT< edm::ValueMap<float> > mvaValueLowPtDepth10_; // on the fly?
   edm::Handle< edm::ValueMap<float> > mvaValueLowPtDepth10H_;
 
+  const edm::EDGetTokenT< edm::ValueMap<float> > mvaValueLowPtDepth11_; // on the fly?
+  edm::Handle< edm::ValueMap<float> > mvaValueLowPtDepth11H_;
+
+  const edm::EDGetTokenT< edm::ValueMap<float> > mvaValueLowPtDepth13_; // on the fly?
+  edm::Handle< edm::ValueMap<float> > mvaValueLowPtDepth13H_;
+
   const edm::EDGetTokenT< edm::ValueMap<float> > mvaValueLowPtDepth15_; // on the fly?
   edm::Handle< edm::ValueMap<float> > mvaValueLowPtDepth15H_;
 
@@ -724,6 +730,10 @@ IDNtuplizer::IDNtuplizer( const edm::ParameterSet& cfg )
     mvaValueLowPtH_(),
     mvaValueLowPtDepth10_(consumes< edm::ValueMap<float> >(cfg.getParameter<edm::InputTag>("mvaValueLowPtDepth10"))),
     mvaValueLowPtDepth10H_(),
+    mvaValueLowPtDepth11_(consumes< edm::ValueMap<float> >(cfg.getParameter<edm::InputTag>("mvaValueLowPtDepth11"))),
+    mvaValueLowPtDepth11H_(),
+    mvaValueLowPtDepth13_(consumes< edm::ValueMap<float> >(cfg.getParameter<edm::InputTag>("mvaValueLowPtDepth13"))),
+    mvaValueLowPtDepth13H_(),
     mvaValueLowPtDepth15_(consumes< edm::ValueMap<float> >(cfg.getParameter<edm::InputTag>("mvaValueLowPtDepth15"))),
     mvaValueLowPtDepth15H_(),
     // EGamma collections
@@ -917,6 +927,8 @@ void IDNtuplizer::readCollections( const edm::Event& event, const edm::EventSetu
   event.getByToken(mvaPtbiased_, mvaPtbiasedH_);
   event.getByToken(mvaValueLowPt_, mvaValueLowPtH_);
   event.getByToken(mvaValueLowPtDepth10_, mvaValueLowPtDepth10H_);
+  event.getByToken(mvaValueLowPtDepth11_, mvaValueLowPtDepth11H_);
+  event.getByToken(mvaValueLowPtDepth13_, mvaValueLowPtDepth13H_);
   event.getByToken(mvaValueLowPtDepth15_, mvaValueLowPtDepth15H_);
   event.getByToken(mvaValueEGamma_, mvaValueEGammaH_);
   event.getByToken(mvaValueEGammaRetrained_, mvaValueEGammaRetrainedH_);
@@ -1794,8 +1806,10 @@ void IDNtuplizer::fill( const edm::Event& event,
 
       //@@ dirty hack as ID is not in Event nor embedded in pat::Electron
       float mva_value = -999.;
-      float mva_value_retrained = -999;
+      float mva_value_retrained = -999.;
       float mva_value_depth10 = -999.;
+      float mva_value_depth11 = -999.;
+      float mva_value_depth13 = -999.;
       float mva_value_depth15 = -999.;
       if ( !chain.is_egamma_ ) {
 	if ( mvaValueLowPtH_.isValid() && 
@@ -1810,6 +1824,18 @@ void IDNtuplizer::fill( const edm::Event& event,
 	  mva_value_depth10 = mvaValueLowPtDepth10H_->get( chain.ele_.key() );
 	  //} else {
 	  //std::cout << "[IDNtuplizer::fill] ERROR! Issue matching MVA DEPTH10 output to GsfElectrons!" << std::endl;
+	}
+	if ( mvaValueLowPtDepth11H_.isValid() && 
+	     mvaValueLowPtDepth11H_->size() == gsfElectronsH_->size() ) {
+	  mva_value_depth11 = mvaValueLowPtDepth11H_->get( chain.ele_.key() );
+	  //} else {
+	  //std::cout << "[IDNtuplizer::fill] ERROR! Issue matching MVA DEPTH11 output to GsfElectrons!" << std::endl;
+	}
+	if ( mvaValueLowPtDepth13H_.isValid() && 
+	     mvaValueLowPtDepth13H_->size() == gsfElectronsH_->size() ) {
+	  mva_value_depth13 = mvaValueLowPtDepth13H_->get( chain.ele_.key() );
+	  //} else {
+	  //std::cout << "[IDNtuplizer::fill] ERROR! Issue matching MVA DEPTH13 output to GsfElectrons!" << std::endl;
 	}
 	if ( mvaValueLowPtDepth15H_.isValid() && 
 	     mvaValueLowPtDepth15H_->size() == gsfElectronsH_->size() ) {
@@ -1840,7 +1866,8 @@ void IDNtuplizer::fill( const edm::Event& event,
       //}
       
       ntuple_.fill_ele( chain.ele_, 
-			mva_value, mva_value_retrained, mva_value_depth10, mva_value_depth15,
+			mva_value, mva_value_retrained, 
+			mva_value_depth10, mva_value_depth11, mva_value_depth13, mva_value_depth15,
 			conv_vtx_fit_prob, *rhoH_, chain.is_egamma_ );
       
       //ntuple_.fill_supercluster(chain.ele_);
