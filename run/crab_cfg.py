@@ -57,7 +57,7 @@ config.General.transferOutputs = True
 config.General.transferLogs = True
 
 config.JobType.pluginName = 'Analysis'
-config.JobType.psetName = 'ntuplizer_cfg.py'
+config.JobType.psetName = 'ntuplizer_test_cfg.py'
 #config.JobType.psetName = 'MINIAOD_from_AOD_cfg.py'
 #config.JobType.maxMemoryMB=3000
 config.JobType.numCores = 1
