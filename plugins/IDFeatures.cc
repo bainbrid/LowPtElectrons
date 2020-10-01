@@ -1206,7 +1206,9 @@ void IDFeatures::fill( bool is_signal_ele,
       //  conv_vtx_fit_prob = convVtxFitProb->get( matched_ele->second.key() );
       //}
       
-      ntuple_.fill_ele( matched_ele->second, mva_value, mva_id, conv_vtx_fit_prob, *rhoH_ );
+      ntuple_.fill_ele( matched_ele->second, mva_value, mva_id, 
+			-999., -999., -999., -999., 
+			conv_vtx_fit_prob, *rhoH_ );
       
       //@@ Add SuperCluster vars?
       //ntuple_.fill_supercluster(matched_ele->second);
