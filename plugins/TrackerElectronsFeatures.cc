@@ -35,7 +35,6 @@ Ntuplizer for everything you need to know about tracker-driven electrons
 #include "TrackingTools/PatternTools/interface/TrajTrackAssociation.h"
 #include "TrackingTools/Records/interface/TransientRecHitRecord.h"  
 //#include "TrackingTools/TrajectoryState/interface/TrajectoryStateTransform.h"
-#include "FastSimulation/BaseParticlePropagator/interface/BaseParticlePropagator.h"
 #include "MagneticField/Engine/interface/MagneticField.h"
 #include "MagneticField/Records/interface/IdealMagneticFieldRecord.h"
 
