@@ -11,8 +11,7 @@
 #include "DataFormats/Math/interface/deltaPhi.h"
 #include <sstream>
 #include <cmath>
-#include "RecoEgamma/EgammaElectronProducers/interface/LowPtGsfElectronSeedHeavyObjectCache.h"
-#include "RecoEgamma/EgammaElectronProducers/interface/LowPtGsfElectronIDHeavyObjectCache.h"
+#include "RecoEgamma/EgammaElectronProducers/interface/LowPtGsfElectronFeatures.h"
 
 //#define EMATRIX // uncomment and apply energy_matrix patch
 
@@ -435,15 +434,13 @@ void ElectronNtuple::fill_preid( const reco::PreId &preid_ecal, const reco::PreI
   // Extract KF track parameters
   fill_ktf_trk( preid_ecal.trackRef(), spot, pass_preid);
 	
-	lowptgsfeleseed::Features preid_features;
-	preid_features.set(preid_ecal, preid_hcal,
-										 rho, spot, ecalTools);
-	std::vector<float> feature_vector = preid_features.get();
-	// Fill preId on
-	size_t idx=0;
-	preid_trk_pt_  = feature_vector.at(idx++);
-	preid_trk_eta_ = feature_vector.at(idx++);
-	preid_trk_phi_ = feature_vector.at(idx++);
+  std::vector<float> feature_vector = lowptgsfeleseed::features(preid_ecal,preid_hcal,rho,spot,ecalTools);
+
+  // Fill preId on
+  size_t idx=0;
+  preid_trk_pt_  = feature_vector.at(idx++);
+  preid_trk_eta_ = feature_vector.at(idx++);
+  preid_trk_phi_ = feature_vector.at(idx++);
   preid_trk_p_   = feature_vector.at(idx++);
   preid_trk_nhits_ = feature_vector.at(idx++);
   preid_trk_high_quality_ = feature_vector.at(idx++);
@@ -494,11 +491,10 @@ void ElectronNtuple::fill_ele(
 	ele_iso04_ = iso_rings.at(3);
 	fill_supercluster(ele);
 
-	lowptgsfeleid::Features feats;
-	feats.set(reco::GsfElectronPtr(ele.id(),ele.get(),ele.key()),rho); //@@ Ref->Ptr
-	auto feat_v = feats.get();
-	size_t idx=0;
+	// Set Electron variables
+	auto feat_v = lowptgsfeleid::features(ele, rho, 0./*unbiased*/);
 
+	size_t idx=0;
 	eid_rho_ = feat_v[idx++];
 	eid_ele_pt_ = feat_v[idx++];
 	eid_sc_eta_ = feat_v[idx++];

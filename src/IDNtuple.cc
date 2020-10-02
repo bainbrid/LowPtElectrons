@@ -1,9 +1,7 @@
-
 #include "DataFormats/GsfTrackReco/interface/GsfTrackExtraFwd.h"
 #include "DataFormats/GsfTrackReco/interface/GsfTrackExtra.h"
 #include "LowPtElectrons/LowPtElectrons/interface/IDNtuple.h"
-#include "RecoEgamma/EgammaElectronProducers/interface/LowPtGsfElectronIDHeavyObjectCache.h"
-#include "RecoEgamma/EgammaElectronProducers/interface/LowPtGsfElectronSeedHeavyObjectCache.h"
+#include "RecoEgamma/EgammaElectronProducers/interface/LowPtGsfElectronFeatures.h"
 #include "TTree.h"
 
 /////////////////////////////////////////////////////////////////////////////////
@@ -349,13 +347,11 @@ void IDNtuple::fill_preid( const reco::PreId& preid_ecal,
 //  preid_unbiased_pass_ = preid_ecal.mvaSelected(0);
 //  preid_ptbiased_pass_ = preid_ecal.mvaSelected(1);
 
-  // Set seed variables
-  lowptgsfeleseed::Features features;
-  features.set( preid_ecal, preid_hcal, rho, spot, ecal_tools );
-  auto vfeatures = features.get();
-
   //@@ ADD THESE PREID VARS TO THE NTUPLE???
 
+//  // Set seed variables
+//  auto vfeatures = lowptgsfeleseed::features(preid_ecal,preid_hcal,rho,spot,ecal_tools);
+//
 //  //@@ ORDER IS IMPORTANT!
 //  size_t idx = 0;
 //  preid_trk_pt_ = vfeatures[idx++];
@@ -529,9 +525,7 @@ void IDNtuple::fill_ele( const reco::GsfElectronPtr ele,
   if ( mva_value_depth15 > -666. ) { ele_mva_value_depth15_ = mva_value_depth15; }
 
   // Set Electron variables
-  lowptgsfeleid::Features features;
-  features.set(ele,rho);
-  auto vfeatures = features.get();
+  auto vfeatures = lowptgsfeleid::features(ele, rho, 0./*unbiased*/);
 
   //@@ ORDER IS IMPORTANT!
   size_t idx = 0;
