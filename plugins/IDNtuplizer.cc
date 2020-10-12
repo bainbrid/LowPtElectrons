@@ -336,8 +336,8 @@ public:
   // GEN-based method to provide a sample of "signal" electrons
   void genElectronsFromB( std::set<reco::GenParticlePtr>& electrons_from_B, 
 			  std::set<reco::GenParticlePtr>& gen_muons, 
-			  float tag_muon_pt_threshold = 5.,
-			  float tag_muon_eta_threshold = 2.5 );
+			  float tag_muon_pt_threshold,
+			  float tag_muon_eta_threshold );
   
   // 
   void createChains( std::set<reco::CandidatePtr>& signal_electrons,
@@ -480,7 +480,10 @@ private:
   int isAOD_;
   bool isMC_;
   double minTrackPt_;
-  
+  float tagMuonPtThreshold_;
+  float tagMuonEtaThreshold_;
+  bool filterNtupleContent_;
+
   // Generic collections
 
   const edm::EDGetTokenT<double> rho_;
@@ -677,6 +680,9 @@ IDNtuplizer::IDNtuplizer( const edm::ParameterSet& cfg )
     isAOD_(-1),
     isMC_(true),
     minTrackPt_(cfg.getParameter<double>("minTrackPt")),
+    tagMuonPtThreshold_(cfg.getParameter<double>("tagMuonPtThreshold")),
+    tagMuonEtaThreshold_(cfg.getParameter<double>("tagMuonEtaThreshold")),
+    filterNtupleContent_(cfg.getParameter<bool>("filterNtupleContent")),
     // Generic collections
     rho_(consumes<double>(cfg.getParameter<edm::InputTag>("rho"))),
     rhoH_(),
@@ -951,14 +957,14 @@ void IDNtuplizer::signalElectrons( std::set<reco::CandidatePtr>& signal_electron
   if ( isMC_ ) { // Identify "signal" (GEN) electrons from B decays
     std::set<reco::GenParticlePtr> electrons_from_B;
     std::set<reco::GenParticlePtr> gen_muons;
-    genElectronsFromB(electrons_from_B,gen_muons);
+    genElectronsFromB(electrons_from_B,gen_muons,tagMuonPtThreshold_,tagMuonEtaThreshold_);
     for ( auto gen : electrons_from_B ) { signal_electrons.insert(gen); }
     for ( auto gen : gen_muons ) { tag_side_muons.insert(gen); }
   } else { // Identify "signal" electrons from data control regions
     //@@ FOR NOW, A HACK ...
     std::set<reco::GenParticlePtr> electrons_from_B;
     std::set<reco::GenParticlePtr> gen_muons;
-    genElectronsFromB(electrons_from_B,gen_muons);
+    genElectronsFromB(electrons_from_B,gen_muons,tagMuonPtThreshold_,tagMuonEtaThreshold_);
     for ( auto gen : electrons_from_B ) { signal_electrons.insert(gen); }
     for ( auto gen : gen_muons ) { tag_side_muons.insert(gen); }
   }
@@ -1002,23 +1008,21 @@ void IDNtuplizer::genElectronsFromB( std::set<reco::GenParticlePtr>& electrons_f
       std::abs(gen->mother()->mother()->pdgId()) < 546;                   // grandmother is B
     
     //  Check for tag side muon
-    bool tag_muon = ( std::abs(gen->pdgId()) == 13 && gen->isLastCopy() 
-		      && 
-		      ( ( gen->numberOfMothers() >= 1 &&
-			  gen->mother() &&
-			  std::abs(gen->mother()->pdgId()) > 510 &&
-			  std::abs(gen->mother()->pdgId()) < 546 && 
-			  gen->mother()->pt() > tag_muon_pt_threshold && 
-			  std::abs(gen->mother()->eta()) < tag_muon_eta_threshold ) 
-			||
-			( gen->numberOfMothers() >= 1 && 
-			  gen->mother() &&
-			  gen->mother()->numberOfMothers() >= 1 && 
-			  gen->mother()->mother() &&
-			  std::abs(gen->mother()->mother()->pdgId()) > 510 &&
-			  std::abs(gen->mother()->mother()->pdgId()) < 546 && 
-			  gen->mother()->mother()->pt() > tag_muon_pt_threshold &&
-			  std::abs(gen->mother()->mother()->eta()) < tag_muon_eta_threshold ) ) );
+    bool is_muon = std::abs(gen->pdgId()) == 13 && gen->isLastCopy() && 
+      gen->pt() > tag_muon_pt_threshold && 
+      std::abs(gen->eta()) < tag_muon_eta_threshold;
+    
+    // Does GEN ele comes from B decay?
+    bool non_res_to_muons = gen->numberOfMothers() >= 1 && gen->mother() && // has mother
+      std::abs(gen->mother()->pdgId()) > 510 &&                             // mother is B
+      std::abs(gen->mother()->pdgId()) < 546;                               // mother is B
+    bool res_to_muons = gen->numberOfMothers() >= 1 && gen->mother() &&     // has mother
+      std::abs(gen->mother()->pdgId()) == 443 &&                            // mother is J/psi
+      gen->mother()->numberOfMothers() >= 1 && gen->mother()->mother() &&   // has grandmother
+      std::abs(gen->mother()->mother()->pdgId()) > 510 &&                   // grandmother is B
+      std::abs(gen->mother()->mother()->pdgId()) < 546;                     // grandmother is B
+    
+    bool tag_muon = is_muon && ( non_res_to_muons || res_to_muons );
     if ( tag_muon ) { gen_muons.insert(gen); }
     
     // is coming from a B
@@ -1713,6 +1717,13 @@ void IDNtuplizer::fill( const edm::Event& event,
   // Fill ntuple
   for ( size_t idx = 0; idx < chains_.size(); ++idx ) {
     ElectronChain chain = chains_[idx];
+
+    // FILTER NTUPLE CONTENT FOR GNN TRAINING !!!
+    if ( filterNtupleContent_ && ( chain.is_egamma_ || 
+				   !validPtr(chain.ele_) || 
+				   !chain.ele_match_ ) ) { 
+      continue;
+    }
     
     // Init tree here
     ntuple_.reset();
@@ -2650,7 +2661,7 @@ void IDNtuplizer::build_image( const edm::Event& event,
       if ( !validPtr(chain.gsf_) ) { continue; }
 
       //@@ BARREL ONLY!!! (FOR NOW ...)
-      if ( fabs( chain.gsf_->momentumMode().eta() ) > 1.48 ) { continue; } 
+      //if ( fabs( chain.gsf_->momentumMode().eta() ) > 1.48 ) { continue; } 
 
       // Print RECO chain 
       std::stringstream ss;
@@ -2701,10 +2712,10 @@ void IDNtuplizer::build_image( const edm::Event& event,
       int charge = chain.gsf_->charge();
       float window_eta_min = -5.;
       float window_eta_max = -5.;
-      float window_eta_ext =  0.;//05;
+      float window_eta_ext =  0.05;
       float window_phi_min = -5.;
       float window_phi_max = -5.;
-      float window_phi_ext =  0.;//05;
+      float window_phi_ext =  0.05;
 
       int reach_ECAL = 0; GlobalPoint pos_ECAL;
       int reach_HCAL = 0; GlobalPoint pos_HCAL;
@@ -2742,11 +2753,11 @@ void IDNtuplizer::build_image( const edm::Event& event,
 	if ( tmp_phi < window_phi_min ) { window_phi_min = tmp_phi; }
       } 
       
-      // // Open up window further by the "_ext" values (0.1?)
-      // window_eta_min -= window_eta_ext;
-      // window_eta_max += window_eta_ext;
-      // window_phi_min -= window_phi_ext;
-      // window_phi_max += window_phi_ext;
+      // Open up window further by the "_ext" values (0.1?)
+      window_eta_min -= window_eta_ext;
+      window_eta_max += window_eta_ext;
+      window_phi_min -= window_phi_ext;
+      window_phi_max += window_phi_ext;
     
       ////////////////////////////////////////
       // GSF channel
