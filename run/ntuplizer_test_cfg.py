@@ -16,70 +16,53 @@ DERIVED = False
 
 process = cms.Process('TEST') 
 
-#from files import files
-base1='file:/afs/cern.ch/user/b/bainbrid/work/public/6-ntuplizer/CMSSW_10_2_14/src/1-miniaod-from-crab/step3_inAODSIM_{:.0f}_numEvent200.root'
-base2='file:/afs/cern.ch/user/b/bainbrid/work/public/6-ntuplizer/CMSSW_10_2_14/src/1-miniaod-from-crab/lowpteleid/190502_224210/crab_lowpteleid/results/step3_inAODSIM_{:.0f}.root'
+################################################################################
+# Various sets of input files:
+################################################################################
+
+# Command line 
+fileNames_cli = cms.untracked.vstring(options.inputFiles)
+
+# MINIAOD:
+fileNames_miniaod_BuToKee_MufilterPt6 = cms.untracked.vstring('/store/mc/RunIIAutumn18MiniAOD/BuToKee_MufilterPt6_SoftQCDnonD_TuneCP5_13TeV-pythia8-evtgen/MINIAODSIM/PUPoissonAve20_BParking_102X_upgrade2018_realistic_v15-v1/00000/01501E26-9276-7149-A74D-5E4B2E028DC8.root')
+fileNames_miniaod_BuToKJpsi_Toee_Mufilter = cms.untracked.vstring('/store/mc/RunIIAutumn18MiniAOD/BuToKJpsi_Toee_Mufilter_SoftQCDnonD_TuneCP5_13TeV-pythia8-evtgen/MINIAODSIM/PUPoissonAve20_BParking_102X_upgrade2018_realistic_v15_ext1-v2/280000/C842E5BC-A265-424C-921B-8BF1913D73C4.root')
+fileNames_miniaod_BuToKJpsi_Toee_Mufilter_local = cms.untracked.vstring('file:./C842E5BC-A265-424C-921B-8BF1913D73C4.root')
+fileNames_miniaod_BuToKee_Mufilter = cms.untracked.vstring([ # 17449 events
+    '/store/mc/RunIIAutumn18MiniAOD/BuToKee_Mufilter_SoftQCDnonD_TuneCP5_13TeV-pythia8-evtgen/MINIAODSIM/PUPoissonAve20_BParking_102X_upgrade2018_realistic_v15-v2/60000/5EA6D799-A04A-1D42-A76B-6A564B28B7AF.root',
+    '/store/mc/RunIIAutumn18MiniAOD/BuToKee_Mufilter_SoftQCDnonD_TuneCP5_13TeV-pythia8-evtgen/MINIAODSIM/PUPoissonAve20_BParking_102X_upgrade2018_realistic_v15-v2/60000/5A729845-ECB4-8E47-AF73-52C79F53B0B2.root',
+    '/store/mc/RunIIAutumn18MiniAOD/BuToKee_Mufilter_SoftQCDnonD_TuneCP5_13TeV-pythia8-evtgen/MINIAODSIM/PUPoissonAve20_BParking_102X_upgrade2018_realistic_v15-v2/60000/5270FDD3-DA34-C444-B7DD-B8A84A257BCE.root',
+    '/store/mc/RunIIAutumn18MiniAOD/BuToKee_Mufilter_SoftQCDnonD_TuneCP5_13TeV-pythia8-evtgen/MINIAODSIM/PUPoissonAve20_BParking_102X_upgrade2018_realistic_v15-v2/60000/4D1D7852-44FB-0E4F-882D-1F42B6B81722.root',
+    '/store/mc/RunIIAutumn18MiniAOD/BuToKee_Mufilter_SoftQCDnonD_TuneCP5_13TeV-pythia8-evtgen/MINIAODSIM/PUPoissonAve20_BParking_102X_upgrade2018_realistic_v15-v2/60000/3200A640-1F5C-B44E-89C1-F6CFD4FC3BD9.root',
+    '/store/mc/RunIIAutumn18MiniAOD/BuToKee_Mufilter_SoftQCDnonD_TuneCP5_13TeV-pythia8-evtgen/MINIAODSIM/PUPoissonAve20_BParking_102X_upgrade2018_realistic_v15-v2/60000/26FF8646-13A8-6648-9717-340AE968A408.root',
+    '/store/mc/RunIIAutumn18MiniAOD/BuToKee_Mufilter_SoftQCDnonD_TuneCP5_13TeV-pythia8-evtgen/MINIAODSIM/PUPoissonAve20_BParking_102X_upgrade2018_realistic_v15-v2/60000/0E7ECF47-95EE-6449-9CB2-E06BAF618B3C.root',])
+fileNames_miniaod_BuToKJpsi_Toee_Mufilter_derived = cms.untracked.vstring('/store/mc/RunIIAutumn18MiniAOD/BuToKJpsi_Toee_Mufilter_SoftQCDnonD_TuneCP5_13TeV-pythia8-evtgen/MINIAODSIM/PUPoissonAve20_BParking_102X_upgrade2018_realistic_v15-v2/70000/5955A84F-6A21-9C49-9948-0697A60262A0.root')
+
+# AOD:
+fileNames_aod_BuToKee_Mufilter = cms.untracked.vstring([ # 17449 events = 9558 + 6230 + 1661
+    '/store/mc/RunIIAutumn18RECOBParking/BuToKee_Mufilter_SoftQCDnonD_TuneCP5_13TeV-pythia8-evtgen/AODSIM/PUPoissonAve20_BParking_102X_upgrade2018_realistic_v15-v2/60000/792E843F-F82F-4642-97D7-A7625ABA83D2.root',
+    '/store/mc/RunIIAutumn18RECOBParking/BuToKee_Mufilter_SoftQCDnonD_TuneCP5_13TeV-pythia8-evtgen/AODSIM/PUPoissonAve20_BParking_102X_upgrade2018_realistic_v15-v2/60000/DB36F8A5-E77B-4547-9320-6DD1FA5BA58F.root',
+    '/store/mc/RunIIAutumn18RECOBParking/BuToKee_Mufilter_SoftQCDnonD_TuneCP5_13TeV-pythia8-evtgen/AODSIM/PUPoissonAve20_BParking_102X_upgrade2018_realistic_v15-v2/60000/F617C5AF-E3AB-754D-BFFC-C004AAB2887E.root',])
+
+################################################################################
+# Input source, number of events, GT, ...
+################################################################################
+
+fileNames_to_use = None
+if   TEST :    fileNames_to_use = fileNames_miniaod_BuToKee_MufilterPt6 
+elif AOD :     fileNames_to_use = fileNames_aod_BuToKee_Mufilter
+elif DERIVED : fileNames_to_use = ['file:./local_file.root',]
+else :         fileNames_to_use = None
+
 process.source = cms.Source(
     "PoolSource",
-    #fileNames = cms.untracked.vstring(options.inputFiles), # Command line
-    #fileNames = cms.untracked.vstring(files[:1]), # Test of recent production
-    fileNames = cms.untracked.vstring(
-        [
-            #'file:./5955A84F-6A21-9C49-9948-0697A60262A0.root' # earlier MINIAOD test file
-            #'file:./MINIAOD_from_AOD_TEST.root' # 9558 events
-            #'file:./output_filtered_MINIAOD.root'
-
-            '/store/mc/RunIIAutumn18MiniAOD/BuToKJpsi_Toee_Mufilter_SoftQCDnonD_TuneCP5_13TeV-pythia8-evtgen/MINIAODSIM/PUPoissonAve20_BParking_102X_upgrade2018_realistic_v15_ext1-v2/280000/C842E5BC-A265-424C-921B-8BF1913D73C4.root'
-
-#            '/store/mc/RunIIAutumn18MiniAOD/BuToKee_Mufilter_SoftQCDnonD_TuneCP5_13TeV-pythia8-evtgen/MINIAODSIM/PUPoissonAve20_BParking_102X_upgrade2018_realistic_v15-v2/60000/5A729845-ECB4-8E47-AF73-52C79F53B0B2.root' # 17449 events
-
-#            '/store/mc/RunIIAutumn18MiniAOD/BuToKee_Mufilter_SoftQCDnonD_TuneCP5_13TeV-pythia8-evtgen/MINIAODSIM/PUPoissonAve20_BParking_102X_upgrade2018_realistic_v15-v2/60000/5EA6D799-A04A-1D42-A76B-6A564B28B7AF.root',
-#            '/store/mc/RunIIAutumn18MiniAOD/BuToKee_Mufilter_SoftQCDnonD_TuneCP5_13TeV-pythia8-evtgen/MINIAODSIM/PUPoissonAve20_BParking_102X_upgrade2018_realistic_v15-v2/60000/5A729845-ECB4-8E47-AF73-52C79F53B0B2.root',
-#            '/store/mc/RunIIAutumn18MiniAOD/BuToKee_Mufilter_SoftQCDnonD_TuneCP5_13TeV-pythia8-evtgen/MINIAODSIM/PUPoissonAve20_BParking_102X_upgrade2018_realistic_v15-v2/60000/5270FDD3-DA34-C444-B7DD-B8A84A257BCE.root',
-#            '/store/mc/RunIIAutumn18MiniAOD/BuToKee_Mufilter_SoftQCDnonD_TuneCP5_13TeV-pythia8-evtgen/MINIAODSIM/PUPoissonAve20_BParking_102X_upgrade2018_realistic_v15-v2/60000/4D1D7852-44FB-0E4F-882D-1F42B6B81722.root',
-#            '/store/mc/RunIIAutumn18MiniAOD/BuToKee_Mufilter_SoftQCDnonD_TuneCP5_13TeV-pythia8-evtgen/MINIAODSIM/PUPoissonAve20_BParking_102X_upgrade2018_realistic_v15-v2/60000/3200A640-1F5C-B44E-89C1-F6CFD4FC3BD9.root',
-#            '/store/mc/RunIIAutumn18MiniAOD/BuToKee_Mufilter_SoftQCDnonD_TuneCP5_13TeV-pythia8-evtgen/MINIAODSIM/PUPoissonAve20_BParking_102X_upgrade2018_realistic_v15-v2/60000/26FF8646-13A8-6648-9717-340AE968A408.root',
-#            '/store/mc/RunIIAutumn18MiniAOD/BuToKee_Mufilter_SoftQCDnonD_TuneCP5_13TeV-pythia8-evtgen/MINIAODSIM/PUPoissonAve20_BParking_102X_upgrade2018_realistic_v15-v2/60000/0E7ECF47-95EE-6449-9CB2-E06BAF618B3C.root',
-            
-        ]
-        if TEST else \
-        [
-            #'file:./output_filtered_AOD.root',
-            #'/store/mc/RunIIAutumn18RECOBParking/BuToKee_Mufilter_SoftQCDnonD_TuneCP5_13TeV-pythia8-evtgen/AODSIM/PUPoissonAve20_BParking_102X_upgrade2018_realistic_v15-v2/60000/4EFA4099-1C34-EB45-ABFF-39AA91656DB3.root' # 9558 events
-
-            # 17449 events from AOD:
-            '/store/mc/RunIIAutumn18RECOBParking/BuToKee_Mufilter_SoftQCDnonD_TuneCP5_13TeV-pythia8-evtgen/AODSIM/PUPoissonAve20_BParking_102X_upgrade2018_realistic_v15-v2/60000/792E843F-F82F-4642-97D7-A7625ABA83D2.root', # 9558 +
-            '/store/mc/RunIIAutumn18RECOBParking/BuToKee_Mufilter_SoftQCDnonD_TuneCP5_13TeV-pythia8-evtgen/AODSIM/PUPoissonAve20_BParking_102X_upgrade2018_realistic_v15-v2/60000/DB36F8A5-E77B-4547-9320-6DD1FA5BA58F.root', # 6230 +
-            '/store/mc/RunIIAutumn18RECOBParking/BuToKee_Mufilter_SoftQCDnonD_TuneCP5_13TeV-pythia8-evtgen/AODSIM/PUPoissonAve20_BParking_102X_upgrade2018_realistic_v15-v2/60000/F617C5AF-E3AB-754D-BFFC-C004AAB2887E.root', #1661 = 17449 events
-
-#            '/store/mc/RunIIAutumn18RECOBParking/BuToKee_Mufilter_SoftQCDnonD_TuneCP5_13TeV-pythia8-evtgen/AODSIM/PUPoissonAve20_BParking_102X_upgrade2018_realistic_v15-v2/60000/F52F5093-2728-B040-89B2-14D17E748D33.root',
-#            '/store/mc/RunIIAutumn18RECOBParking/BuToKee_Mufilter_SoftQCDnonD_TuneCP5_13TeV-pythia8-evtgen/AODSIM/PUPoissonAve20_BParking_102X_upgrade2018_realistic_v15-v2/60000/CB392D4D-FCE6-7A4A-8FE2-A7F4703A6F30.root',
-#            '/store/mc/RunIIAutumn18RECOBParking/BuToKee_Mufilter_SoftQCDnonD_TuneCP5_13TeV-pythia8-evtgen/AODSIM/PUPoissonAve20_BParking_102X_upgrade2018_realistic_v15-v2/60000/41DEF1B3-643F-164B-9AEE-8E8AB320297F.root',
-#            '/store/mc/RunIIAutumn18RECOBParking/BuToKee_Mufilter_SoftQCDnonD_TuneCP5_13TeV-pythia8-evtgen/AODSIM/PUPoissonAve20_BParking_102X_upgrade2018_realistic_v15-v2/60000/0D29D10E-3D38-BF4C-9CDA-98F19271C810.root',
-#            '/store/mc/RunIIAutumn18RECOBParking/BuToKee_Mufilter_SoftQCDnonD_TuneCP5_13TeV-pythia8-evtgen/AODSIM/PUPoissonAve20_BParking_102X_upgrade2018_realistic_v15-v2/60000/405295DF-F22D-D24B-8A89-0400F0CAA195.root',
-#            '/store/mc/RunIIAutumn18RECOBParking/BuToKee_Mufilter_SoftQCDnonD_TuneCP5_13TeV-pythia8-evtgen/AODSIM/PUPoissonAve20_BParking_102X_upgrade2018_realistic_v15-v2/60000/4EFA4099-1C34-EB45-ABFF-39AA91656DB3.root',
-#            '/store/mc/RunIIAutumn18RECOBParking/BuToKee_Mufilter_SoftQCDnonD_TuneCP5_13TeV-pythia8-evtgen/AODSIM/PUPoissonAve20_BParking_102X_upgrade2018_realistic_v15-v2/60000/098E956C-DF60-CD47-9A46-D61FC51A09ED.root',
-#            '/store/mc/RunIIAutumn18RECOBParking/BuToKee_Mufilter_SoftQCDnonD_TuneCP5_13TeV-pythia8-evtgen/AODSIM/PUPoissonAve20_BParking_102X_upgrade2018_realistic_v15-v2/60000/47AA1872-4C04-DE47-9B34-4B9A5E17A4E7.root',
-#            '/store/mc/RunIIAutumn18RECOBParking/BuToKee_Mufilter_SoftQCDnonD_TuneCP5_13TeV-pythia8-evtgen/AODSIM/PUPoissonAve20_BParking_102X_upgrade2018_realistic_v15-v2/60000/DB36F8A5-E77B-4547-9320-6DD1FA5BA58F.root',
-#            '/store/mc/RunIIAutumn18RECOBParking/BuToKee_Mufilter_SoftQCDnonD_TuneCP5_13TeV-pythia8-evtgen/AODSIM/PUPoissonAve20_BParking_102X_upgrade2018_realistic_v15-v2/60000/AAD087E2-399E-414A-A223-55227DF09B16.root',
-#            '/store/mc/RunIIAutumn18RECOBParking/BuToKee_Mufilter_SoftQCDnonD_TuneCP5_13TeV-pythia8-evtgen/AODSIM/PUPoissonAve20_BParking_102X_upgrade2018_realistic_v15-v2/60000/792E843F-F82F-4642-97D7-A7625ABA83D2.root',
-#            '/store/mc/RunIIAutumn18RECOBParking/BuToKee_Mufilter_SoftQCDnonD_TuneCP5_13TeV-pythia8-evtgen/AODSIM/PUPoissonAve20_BParking_102X_upgrade2018_realistic_v15-v2/60000/F617C5AF-E3AB-754D-BFFC-C004AAB2887E.root',
-#           '/store/mc/RunIIAutumn18RECOBParking/BuToKee_Mufilter_SoftQCDnonD_TuneCP5_13TeV-pythia8-evtgen/AODSIM/PUPoissonAve20_BParking_102X_upgrade2018_realistic_v15-v2/60000/E08C5049-036B-D34C-8F90-E71EA84C4D47.root',
-
-        ]
-        if AOD else \
-        ['file:/afs/cern.ch/user/b/bainbrid/work/public/7-slc7/CMSSW_10_2_15/src/2-ntuples-from-crab/MINIAOD_from_AOD_test.root',] \
-        if DERIVED else \
-        ['/store/mc/RunIIAutumn18MiniAOD/BuToKJpsi_Toee_Mufilter_SoftQCDnonD_TuneCP5_13TeV-pythia8-evtgen/MINIAODSIM/PUPoissonAve20_BParking_102X_upgrade2018_realistic_v15-v2/70000/5955A84F-6A21-9C49-9948-0697A60262A0.root']
-    ),
-
+    fileNames = fileNames_to_use,
     secondaryFileNames = cms.untracked.vstring(),
     skipEvents = cms.untracked.uint32(options.skipEvents),
-    )
+)
 
 process.maxEvents = cms.untracked.PSet(
     input = cms.untracked.int32(options.maxEvents)
-    )
+)
 
 process.options = cms.untracked.PSet(
     numberOfThreads=cms.untracked.uint32(1),
@@ -96,71 +79,18 @@ process.GlobalTag = GlobalTag(process.GlobalTag, '102X_upgrade2018_realistic_v15
 process.TFileService = cms.Service(
     "TFileService",
     fileName = cms.string(options.outputFile)
-    )
+)
 
 process.output = cms.OutputModule(
     "PoolOutputModule",
     fileName = cms.untracked.string('output_filtered.root'),
-    SelectEvents = cms.untracked.PSet(SelectEvents = cms.vstring('ntuplizer_path'))
+    outputCommands = cms.untracked.vstring('keep *','drop recoTransientTracks_*_*_*'),
+    #SelectEvents = cms.untracked.PSet(SelectEvents = cms.vstring('ntuplizer_path')),
 )
 
-#####################################
-# PF MVA ID (incl. Otto's retraining)
-#####################################
-
-mvaConfigsForEleProducer = cms.VPSet( )
-from RecoEgamma.ElectronIdentification.Identification.mvaElectronID_BParkRetrain_cff \
-    import mvaEleID_BParkRetrain_producer_config
-mvaConfigsForEleProducer.append( mvaEleID_BParkRetrain_producer_config )
-from RecoEgamma.ElectronIdentification.Identification.mvaElectronID_Fall17_noIso_V2_cff \
-    import mvaEleID_Fall17_noIso_V2_producer_config
-mvaConfigsForEleProducer.append( mvaEleID_Fall17_noIso_V2_producer_config )
-
-process.electronMVAVariableHelper = cms.EDProducer(
-    'GsfElectronMVAVariableHelper',
-    src = cms.InputTag('gedGsfElectrons'),
-    vertexCollection = cms.InputTag("offlinePrimaryVertices"),
-    beamSpot         = cms.InputTag("offlineBeamSpot"),
-    conversions      = cms.InputTag("allConversions"),
-    srcMiniAOD              = cms.InputTag('slimmedElectrons',processName=cms.InputTag.skipCurrentProcess()),
-    vertexCollectionMiniAOD = cms.InputTag("offlineSlimmedPrimaryVertices"),
-    beamSpotMiniAOD         = cms.InputTag("offlineBeamSpot"),
-    conversionsMiniAOD      = cms.InputTag("reducedEgamma:reducedConversions"),
-)
-
-process.electronMVAValueMapProducer = cms.EDProducer(
-    'ElectronMVAValueMapProducer',
-    src = cms.InputTag('gedGsfElectrons'),
-    srcMiniAOD = cms.InputTag('slimmedElectrons',processName=cms.InputTag.skipCurrentProcess()),
-    mvaConfigurations = mvaConfigsForEleProducer
-)
-
-process.egmGsfElectronIDs = cms.EDProducer(
-    "VersionedGsfElectronIdProducer",
-    physicsObjectSrc = cms.InputTag('gedGsfElectrons'),
-    physicsObjectIDs = cms.VPSet( )
-)
-
-process.egmGsfElectronIDTask = cms.Task(
-    process.electronMVAVariableHelper,
-    process.electronMVAValueMapProducer,
-    process.egmGsfElectronIDs,
-)
-
-process.egmGsfElectronIDSequence = cms.Sequence(process.egmGsfElectronIDTask)
-
-#################
-# 2019Aug07 model
-#################
-
-process.load('RecoEgamma.EgammaElectronProducers.lowPtGsfElectronID_cff')
-if AOD is False : 
-    process.lowPtGsfElectronID.electrons = 'slimmedLowPtElectrons'
-    process.lowPtGsfElectronID.rho = 'fixedGridRhoFastjetAll'
-
-#################
-# 2019Aug07 model
-#################
+################################################################################
+# Energy regression
+################################################################################
 
 # !!! Requires soft link to local DB file, e.g.
 # lowPtEleReg_2018_02062020_nv.db -> $CMSSW_BASE/src/PhysicsTools/BParkingNano/test/lowPtEleReg_2018_02062020_nv.db
@@ -401,13 +331,104 @@ process.regressionForEle = cms.EDProducer(
     )
 )
 
-#############
-# ROME models
-#############
+################################################################################
+# PF MVA ID (incl. Otto's retraining)
+################################################################################
+
+# Otto's retraining:
+# https://indico.cern.ch/event/732971/contributions/3022864/attachments/1658765/2656595/180530_egamma.pdf
+
+# vvv BEGIN: (was in: RecoEgamma/ElectronIdentification/python/Identification/mvaElectronID_BParkRetrain_cff.py)
+from RecoEgamma.ElectronIdentification.Identification.mvaElectronID_tools import *
+from os import path
+mvaTag = "BParkRetrain"
+weightFileDir = "RecoEgamma/ElectronIdentification/data/LowPtElectrons"
+mvaWeightFiles = cms.vstring(
+    path.join(weightFileDir, "BParkRetrain_LowPt_unbiased.xml.gz"),
+    path.join(weightFileDir, "BParkRetrain_HighPt_unbiased.xml.gz"),
+)
+categoryCuts = cms.vstring(
+    "pt < 5.",
+    "pt >= 5.",
+)
+mvaEleID_BParkRetrain_producer_config = cms.PSet(
+    mvaName             = cms.string(mvaClassName),
+    mvaTag              = cms.string(mvaTag),
+    nCategories         = cms.int32(2),
+    categoryCuts        = categoryCuts,
+    weightFileNames     = mvaWeightFiles,
+    variableDefinition  = cms.string(mvaVariablesFile)
+)
+# ^^^ END
+
+mvaConfigsForEleProducer = cms.VPSet( )
+
+#from RecoEgamma.ElectronIdentification.Identification.mvaElectronID_BParkRetrain_cff \
+#    import mvaEleID_BParkRetrain_producer_config
+mvaConfigsForEleProducer.append( mvaEleID_BParkRetrain_producer_config )
+
+from RecoEgamma.ElectronIdentification.Identification.mvaElectronID_Fall17_noIso_V2_cff \
+    import mvaEleID_Fall17_noIso_V2_producer_config
+mvaConfigsForEleProducer.append( mvaEleID_Fall17_noIso_V2_producer_config )
+
+process.electronMVAVariableHelper = cms.EDProducer(
+    'GsfElectronMVAVariableHelper',
+    src = cms.InputTag('gedGsfElectrons'),
+    vertexCollection = cms.InputTag("offlinePrimaryVertices"),
+    beamSpot         = cms.InputTag("offlineBeamSpot"),
+    conversions      = cms.InputTag("allConversions"),
+    srcMiniAOD              = cms.InputTag('slimmedElectrons',processName=cms.InputTag.skipCurrentProcess()),
+    vertexCollectionMiniAOD = cms.InputTag("offlineSlimmedPrimaryVertices"),
+    beamSpotMiniAOD         = cms.InputTag("offlineBeamSpot"),
+    conversionsMiniAOD      = cms.InputTag("reducedEgamma:reducedConversions"),
+)
+
+process.electronMVAValueMapProducer = cms.EDProducer(
+    'ElectronMVAValueMapProducer',
+    src = cms.InputTag('gedGsfElectrons'),
+    srcMiniAOD = cms.InputTag('slimmedElectrons',processName=cms.InputTag.skipCurrentProcess()),
+    mvaConfigurations = mvaConfigsForEleProducer
+)
+
+process.egmGsfElectronIDs = cms.EDProducer(
+    "VersionedGsfElectronIdProducer",
+    physicsObjectSrc = cms.InputTag('gedGsfElectrons'),
+    physicsObjectIDs = cms.VPSet( )
+)
+
+process.egmGsfElectronIDTask = cms.Task(
+    process.electronMVAVariableHelper,
+    process.electronMVAValueMapProducer,
+    process.egmGsfElectronIDs,
+)
+
+################################################################################
+# Default model, 2019Aug07 (and previous model, 2019Jul22)
+################################################################################
+
+process.load('RecoEgamma.EgammaElectronProducers.lowPtGsfElectronID_cff')
+if AOD is False : 
+    process.lowPtGsfElectronID.electrons = 'slimmedLowPtElectrons'
+    process.lowPtGsfElectronID.rho = 'fixedGridRhoFastjetAll'
+    process.lowPtGsfElectronID.ModelNames = [
+        '2019Jul22',
+        '2019Aug07',
+    ]
+    process.lowPtGsfElectronID.ModelWeights = [
+        'RecoEgamma/ElectronIdentification/data/LowPtElectrons/RunII_Autumn18_LowPtElectrons_mva_id_2019Jul22.root',
+        'RecoEgamma/ElectronIdentification/data/LowPtElectrons/RunII_Autumn18_LowPtElectrons_mva_id.root',
+    ]
+    process.lowPtGsfElectronID.ModelThresholds = cms.vdouble([
+        -99.,
+        -99.
+    ])
+
+################################################################################
+# ROME models, 2020Sep15: depth13 and depth15 (default)
+################################################################################
 
 process.load('RecoEgamma.EgammaElectronProducers.lowPtGsfElectronIDExtra_cff')
 if AOD is False : 
-    #process.lowPtGsfElectronIDExtra.electrons = 'slimmedLowPtElectrons'
     process.lowPtGsfElectronIDExtra.electrons = 'regressionForEle:regressedLowPtElectrons'
     process.lowPtGsfElectronIDExtra.rho = 'fixedGridRhoFastjetAll'
     process.lowPtGsfElectronIDExtra.ModelNames = [
@@ -423,35 +444,73 @@ if AOD is False :
         -99.
     ])
 
-########################
-# .xml.gz or .root files
-########################
-
-use_root_files = True
-if AOD is False and use_root_files :
-    process.lowPtGsfElectronID.ModelWeights = [x.replace(".xml.gz",".root") 
-                                               for x in process.lowPtGsfElectronID.ModelWeights]
-    process.lowPtGsfElectronIDExtra.ModelWeights = [x.replace(".xml.gz",".root") 
-                                                    for x in process.lowPtGsfElectronIDExtra.ModelWeights]
-print(process.lowPtGsfElectronID.ModelWeights) 
-print(process.lowPtGsfElectronIDExtra.ModelWeights) 
-
-################
+################################################################################
 # Ntuplizer code
-################
+################################################################################
 
 process.load('LowPtElectrons.LowPtElectrons.IDNtuplizer_cfi')
 
-################
-# Sequences, etc
-################
+from_tracks = False
+if from_tracks : # Evaluating models for BParking studies
+    process.ntuplizer.tagMuonPtThreshold  = 5.
+    process.ntuplizer.tagMuonEtaThreshold = 2.5
+    process.ntuplizer.filterNtupleContent = False
+    process.ntuplizer.prescale = -2.94 # Poisson mean number of fakes/event
+else : # Skim to keep just electrons for Max Hart training
+    process.ntuplizer.tagMuonPtThreshold  = 7.
+    process.ntuplizer.tagMuonEtaThreshold = 2.5
+    process.ntuplizer.filterNtupleContent = True
+    process.ntuplizer.prescale = -6. # Poisson mean number of fakes/event
 
-process.ntuplizer_seq = cms.Sequence(process.lowPtGsfElectronID *
-                                     process.regressionForEle *
-                                     process.lowPtGsfElectronIDExtra *
-                                     process.ntuplizer)
-process.ntuplizer_path = cms.Path(process.egmGsfElectronIDSequence*
-                                  process.ntuplizer_seq)
+################################################################################
+# BParking Analysis sequences to define data control regions
+################################################################################
+
+process.load("TrackingTools/TransientTrack/TransientTrackBuilder_cfi")
+
+from PhysicsTools.BParkingNano.muonsBPark_cff import muonTrgSelector
+process.muonTrgSelector = muonTrgSelector.clone()
+
+from PhysicsTools.BParkingNano.electronsBPark_cff import electronsForAnalysis
+process.electronsForAnalysis = electronsForAnalysis.clone(
+    lowptSrc = cms.InputTag('regressionForEle:regressedLowPtElectrons'),
+    pfSrc = cms.InputTag('slimmedElectrons'), #@@ NOT regressionForEle:regressedElectrons for PF!
+    mvaId = cms.InputTag("lowPtGsfElectronIDExtra:depth15"),
+    pfmvaId = cms.InputTag("electronMVAValueMapProducer:ElectronMVAEstimatorRun2BParkRetrainRawValues"),
+    drForCleaning_wrtTrgMuon = cms.double(-1.),
+    dzForCleaning_wrtTrgMuon = cms.double(-1.),
+    pf_ptMin = cms.double(0.5),
+    bdtMin = cms.double(-99.),
+    )
+
+from PhysicsTools.BParkingNano.BToKLL_cff import electronPairsForKee
+process.electronPairsForKee = electronPairsForKee.clone(
+    lep1Selection = cms.string('pt > 0.5'),
+    lep2Selection = cms.string('pt > 0.5'),
+    preVtxSelection = cms.string('abs(userCand("l1").vz - userCand("l2").vz) <= 1.'\
+                                 ' && mass() > 0.'\
+                                 ' && mass() < 5.'\
+                                 ' && charge() == 0'\
+                                 ' && userFloat("lep_deltaR") > 0.03'\
+                                 ' && userInt("nlowpt")<3'
+                             ),
+    postVtxSelection = cms.string('userFloat("sv_chi2") < 998 && userFloat("sv_prob") > 1.e-5'),
+)
+
+################################################################################
+# Paths, Sequences, etc
+################################################################################
+
+process.egamma_path = cms.Path(process.egmGsfElectronIDTask)
+process.path = cms.Path(process.lowPtGsfElectronID
+                        +process.regressionForEle
+                        +process.lowPtGsfElectronIDExtra
+                        +process.muonTrgSelector
+                        +process.electronsForAnalysis
+                        +process.electronPairsForKee
+                    )
+process.ntuplizer_path = cms.Path(process.ntuplizer)
 process.output_path = cms.EndPath(process.output)
-if options.addSkim is False : process.schedule = cms.Schedule(process.ntuplizer_path)
-else : process.schedule = cms.Schedule(process.ntuplizer_path,process.output_path)
+
+if options.addSkim is False : process.schedule = cms.Schedule(process.egamma_path,process.path,process.ntuplizer_path)
+else : process.schedule = cms.Schedule(process.egamma_path,process.path,process.ntuplizer_path,process.output_path)
