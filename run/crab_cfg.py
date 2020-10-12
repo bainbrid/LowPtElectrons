@@ -31,7 +31,7 @@ data_sets = {
 
 data_tier = ['aod','miniaod','derived'][1]
 data_set = {'aod':    data_sets.get(data_tier,'').get('',''), # usuall 'res_small'
-            'miniaod':data_sets.get(data_tier,'').get('res_med',''), # res_small
+            'miniaod':data_sets.get(data_tier,'').get('nonres_large',''),
             'derived':data_sets.get(data_tier,''),
 }.get(data_tier,'')
 
@@ -59,7 +59,7 @@ config.General.transferLogs = True
 config.JobType.pluginName = 'Analysis'
 config.JobType.psetName = 'ntuplizer_test_cfg.py'
 #config.JobType.psetName = 'MINIAOD_from_AOD_cfg.py'
-#config.JobType.maxMemoryMB=3000
+config.JobType.maxMemoryMB=3000
 config.JobType.numCores = 1
 
 config.Data.inputDBS = {'aod':'global','miniaod':'global','derived':'phys03'}.get(data_tier,'')
@@ -69,7 +69,7 @@ config.Data.inputDataset = data_set
 #config.Data.userInputFiles=files
 
 config.Data.splitting = 'FileBased'
-config.Data.unitsPerJob = 1
+config.Data.unitsPerJob = 3
 config.Data.totalUnits = -1
 config.Data.outLFNDirBase = '/store/user/bainbrid/'+folder
 config.Data.publication = False
