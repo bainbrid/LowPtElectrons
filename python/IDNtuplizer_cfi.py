@@ -8,6 +8,9 @@ ntuplizer = cms.EDFilter( # cms.EDAnalyzer
     drThreshold = cms.double(0.02),
     prescale = cms.double(-2.94), # zero: no prescale, +ve: use 1/prescale, -ve: (poisson) mean number of fakes/event
     minTrackPt = cms.double(0.5),
+    tagMuonPtThreshold = cms.double(5.),
+    tagMuonEtaThreshold = cms.double(2.5),
+    filterNtupleContent = cms.bool(False),
     # Generic collections
     rho = cms.InputTag('fixedGridRhoFastjetAll'),
     beamspot = cms.InputTag("offlineBeamSpot"),
