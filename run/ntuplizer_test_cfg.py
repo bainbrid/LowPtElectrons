@@ -162,6 +162,9 @@ if AOD is False :
 # 2019Aug07 model
 #################
 
+# !!! Requires soft link to local DB file, e.g.
+# lowPtEleReg_2018_02062020_nv.db -> $CMSSW_BASE/src/PhysicsTools/BParkingNano/test/lowPtEleReg_2018_02062020_nv.db
+
 ## Edit the GlobalTag for the low-pT energy regression
 process.GlobalTag.toGet = cms.VPSet(
 cms.PSet(record = cms.string("GBRDWrapperRcd"),
@@ -412,8 +415,8 @@ if AOD is False :
         'depth15',
     ]
     process.lowPtGsfElectronIDExtra.ModelWeights = [
+        'RecoEgamma/ElectronIdentification/data/LowPtElectrons/LowPtElectrons_ID_2020Sept15_depth13.root',
         'RecoEgamma/ElectronIdentification/data/LowPtElectrons/LowPtElectrons_ID_2020Sept15.root',
-        'RecoEgamma/ElectronIdentification/data/LowPtElectrons/LowPtElectrons_ID_2020Sept15_medium.root',
     ]
     process.lowPtGsfElectronIDExtra.ModelThresholds = cms.vdouble([
         -99.,
