@@ -34,5 +34,6 @@ from Configuration.AlCa.GlobalTag import GlobalTag
 process.GlobalTag = GlobalTag(process.GlobalTag, '106X_mc2017_realistic_v6', '')
 
 process.load('LowPtElectrons.LowPtElectrons.PATLowPtElectrons_UnitTest_cfi')
+process.testPATLowPtElectrons.verbose = True
 process.testPATLowPtElectrons_step = cms.Path(process.testPATLowPtElectrons)
 process.schedule = cms.Schedule(process.testPATLowPtElectrons_step)
