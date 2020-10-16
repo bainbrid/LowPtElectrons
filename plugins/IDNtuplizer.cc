@@ -791,6 +791,9 @@ bool IDNtuplizer::filter( edm::Event& event, const edm::EventSetup& setup ) { //
   std::set<reco::CandidatePtr> tag_side_muons;
   signalElectrons(signal_electrons,tag_side_muons);
 
+  // Generator-level trigger requirement
+  if ( tag_side_muons.empty() ) { return false; }
+
   // Populate std::vector<reco::TrackPtr> tracks_ (from reco::Tracks, PF candidates, lost tracks)
   // Populate std::map<unsigned long,int> pdgids_ (typedef'ed to PdgIds)
   extractTrackPtrs();
@@ -1012,7 +1015,7 @@ void IDNtuplizer::genElectronsFromB( std::set<reco::GenParticlePtr>& electrons_f
       gen->pt() > tag_muon_pt_threshold && 
       std::abs(gen->eta()) < tag_muon_eta_threshold;
     
-    // Does GEN ele comes from B decay?
+    // Does GEN muon comes from B decay?
     bool non_res_to_muons = gen->numberOfMothers() >= 1 && gen->mother() && // has mother
       std::abs(gen->mother()->pdgId()) > 510 &&                             // mother is B
       std::abs(gen->mother()->pdgId()) < 546;                               // mother is B
