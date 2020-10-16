@@ -74,7 +74,7 @@ config.Data.totalUnits = -1
 config.Data.outLFNDirBase = '/store/user/bainbrid/'+folder
 config.Data.publication = False
 config.JobType.allowUndistributedCMSSW = True # e.g. use CMSSW_10_2_15_patch2 on SLC7
-config.JobType.inputFiles = ["../PhysicsTools/BParkingNano/test/lowPtEleReg_2018_02062020_nv.db"]
+config.JobType.inputFiles = ["../../../PhysicsTools/BParkingNano/test/lowPtEleReg_2018_02062020_nv.db"]
 
 #config.Site.whitelist =['T2_UK_London_IC']
 config.Site.storageSite = 'T2_CH_CERNBOX'
