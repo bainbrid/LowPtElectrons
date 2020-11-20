@@ -36,6 +36,7 @@
 #include "FWCore/ServiceRegistry/interface/Service.h"
 #include "FWCore/Utilities/interface/EDGetToken.h"
 #include "LowPtElectrons/LowPtElectrons/interface/IDNtuple.h"
+#include "RecoEcal/EgammaCoreTools/interface/EcalClusterLazyTools.h"
 #include "TRandom3.h"
 #include "TTree.h"
 #include <set>
@@ -310,6 +311,8 @@ private:
   // Conversions
 
   //@@ const edm::EDGetTokenT< edm::ValueMap<float> > convVtxFitProb_;
+
+  const noZS::EcalClusterLazyTools::ESGetTokens ecalClusterToolsESGetTokens_;
   
 };
 
@@ -395,9 +398,10 @@ IDFeatures::IDFeatures( const edm::ParameterSet& cfg ) :
   mvaValueEGamma_(consumes< edm::ValueMap<float> >(cfg.getParameter<edm::InputTag>("mvaValueEGamma"))),
   mvaValueEGammaH_(),
   mvaIdEGamma_(consumes<edm::ValueMap<bool> >(cfg.getParameter<edm::InputTag>("mvaIdEGamma"))),
-  mvaIdEGammaH_()
+  mvaIdEGammaH_(),
   // Conversions
   //convVtxFitProb_(consumes<edm::ValueMap<float> >(cfg.getParameter<edm::InputTag>("convVtxFitProb")))
+  ecalClusterToolsESGetTokens_{consumesCollector()}
   {
     tree_ = fs_->make<TTree>("tree","tree");
     ntuple_.link_tree(tree_);
@@ -1025,7 +1029,7 @@ void IDFeatures::fill( bool is_signal_ele,
 	const reco::PreIdRef preid_ecal = (*preIdRefsH_)[matched_seed->second->ctfTrack()];
 	const reco::PreIdRef preid_hcal(preIdsHcalH_,preid_ecal.index());
 	if ( preid_ecal.isNonnull() && preid_hcal.isNonnull() ) {
-	  noZS::EcalClusterLazyTools ecal_tools(event, setup, ebRecHits_, eeRecHits_);
+	  noZS::EcalClusterLazyTools ecal_tools(event, ecalClusterToolsESGetTokens_.get(setup), ebRecHits_, eeRecHits_);
 	  ntuple_.fill_preid( *preid_ecal,
 			      *preid_hcal,
 			      *beamspotH_,

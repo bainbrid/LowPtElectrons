@@ -68,6 +68,7 @@ Ntuplizer for everything you need to know about tracker-driven electrons
 #include "DataFormats/EcalRecHit/interface/EcalRecHitCollections.h"
 #include "DataFormats/ParticleFlowReco/interface/PFBlockElementTrack.h"
 #include "DataFormats/ParticleFlowReco/interface/PFBlockElementCluster.h"
+#include "RecoEcal/EgammaCoreTools/interface/EcalClusterLazyTools.h"
 
 #include <algorithm>
 #include <numeric>
@@ -167,6 +168,7 @@ private:
 	const edm::EDGetTokenT< edm::View<TrajectorySeed> > ele_seeds_;
 	const edm::EDGetTokenT< reco::TrackToTrackingParticleAssociator > associator_;
 	const edm::EDGetTokenT< TrackingParticleCollection > tracking_particles_;
+        const noZS::EcalClusterLazyTools::ESGetTokens ecalClusterToolsESGetTokens_;
 };
 
 TrackerElectronsFeatures::TrackerElectronsFeatures(const ParameterSet& cfg):
@@ -204,7 +206,8 @@ TrackerElectronsFeatures::TrackerElectronsFeatures(const ParameterSet& cfg):
   trk_candidates_{consumes< vector<TrackCandidate> >(cfg.getParameter<edm::InputTag>("trkCandidates"))},
   ele_seeds_{consumes< edm::View<TrajectorySeed> >(cfg.getParameter<edm::InputTag>("eleSeeds"))},
   associator_{mayConsume< reco::TrackToTrackingParticleAssociator >(cfg.getParameter<edm::InputTag>("associator"))},
-  tracking_particles_{consumes< TrackingParticleCollection >(cfg.getParameter<edm::InputTag>("trackingParticles"))}
+  tracking_particles_{consumes< TrackingParticleCollection >(cfg.getParameter<edm::InputTag>("trackingParticles"))},
+  ecalClusterToolsESGetTokens_{consumesCollector()}
 {
 	tree_ = fs_->make<TTree>("tree", "test");
 	ntuple_.link_tree(tree_);
@@ -292,7 +295,7 @@ TrackerElectronsFeatures::analyze(const Event& iEvent, const EventSetup& iSetup)
 	edm::Handle<reco::PFClusterCollection> hcal_clusters;
 	iEvent.getByToken(hcal_clusters_, hcal_clusters);
 
-	noZS::EcalClusterLazyTools ecal_tools(iEvent, iSetup, eb_rechits_, ee_rechits_);
+	noZS::EcalClusterLazyTools ecal_tools(iEvent, ecalClusterToolsESGetTokens_.get(iSetup), eb_rechits_, ee_rechits_);
 
 	edm::Handle<vector<reco::GenParticle> > gen_particles;
 	iEvent.getByToken(gen_particles_, gen_particles);
