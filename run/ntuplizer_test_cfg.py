@@ -458,9 +458,9 @@ if from_tracks : # Evaluating models for BParking studies
     process.ntuplizer.prescale = -2.94 # Poisson mean number of fakes/event
 else : # Skim to keep just electrons for Max Hart training
     process.ntuplizer.tagMuonPtThreshold  = 7.
-    process.ntuplizer.tagMuonEtaThreshold = 2.5
+    process.ntuplizer.tagMuonEtaThreshold = 1.5
     process.ntuplizer.filterNtupleContent = True
-    process.ntuplizer.prescale = -10.8 # Poisson mean number of fakes/event
+    process.ntuplizer.prescale = -11.5 # Poisson mean number of fakes/event
 
 ################################################################################
 # BParking Analysis sequences to define data control regions
