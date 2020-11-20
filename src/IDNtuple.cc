@@ -525,7 +525,7 @@ void IDNtuple::fill_ele( const reco::GsfElectronPtr ele,
   if ( mva_value_depth15 > -666. ) { ele_mva_value_depth15_ = mva_value_depth15; }
 
   // Set Electron variables
-  auto vfeatures = lowptgsfeleid::features(ele, rho, 0./*unbiased*/);
+  auto vfeatures = lowptgsfeleid::features_V0(*ele, rho, 0./*unbiased*/);
 
   //@@ ORDER IS IMPORTANT!
   size_t idx = 0;

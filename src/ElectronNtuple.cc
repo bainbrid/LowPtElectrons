@@ -492,7 +492,7 @@ void ElectronNtuple::fill_ele(
 	fill_supercluster(ele);
 
 	// Set Electron variables
-	auto feat_v = lowptgsfeleid::features(ele, rho, 0./*unbiased*/);
+	auto feat_v = lowptgsfeleid::features_V0(*ele, rho, 0./*unbiased*/);
 
 	size_t idx=0;
 	eid_rho_ = feat_v[idx++];
