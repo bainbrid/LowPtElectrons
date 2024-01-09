@@ -36,15 +36,16 @@
 #include "FWCore/ServiceRegistry/interface/Service.h"
 #include "FWCore/Utilities/interface/EDGetToken.h"
 #include "LowPtElectrons/LowPtElectrons/interface/IDNtuple.h"
+#include "LowPtElectrons/LowPtElectrons/interface/Common.h"
 #include "TRandom3.h"
 #include "TTree.h"
 #include <set>
 #include <vector>
 #include <math.h>
 
-namespace reco { typedef edm::RefToBase<CaloCluster> CaloClusterRef; }
-namespace reco { typedef edm::Ptr<GenParticle> GenParticlePtr; }
-namespace reco { typedef edm::Ptr<GsfElectron> GsfElectronPtr; }
+namespace reco { typedef edm::RefToBase<CaloCluster> CaloClusterRefToBase; }
+//namespace reco { typedef edm::Ptr<GenParticle> GenParticlePtr; }
+//namespace reco { typedef edm::Ptr<GsfElectron> GsfElectronPtr; }
 
 ////////////////////////////////////////////////////////////////////////////////
 //
@@ -1541,9 +1542,9 @@ void IDFeatures::matchTrkToSeed( const edm::Handle< std::vector<reco::Track> >& 
       std::cout << "INFO: ECAL-driven seed: " << ele_seed->isEcalDriven() << std::endl
 		<< "       TRK-driven seed: " << ele_seed->isTrackerDriven() << std::endl;
     }
-    reco::CaloClusterRef calo = ele_seed->caloCluster();
+    reco::CaloClusterRefToBase calo = ele_seed->caloCluster();
     if ( calo.isNull() ) { 
-      if ( verbose_ > 2 ) { std::cout << "INFO: Null CaloClusterRef!" << std::endl; }
+      if ( verbose_ > 2 ) { std::cout << "INFO: Null CaloClusterRefToBase!" << std::endl; }
     }
     reco::TrackRef trk = ele_seed->ctfTrack();
     if ( trk.isNull() ) { 
@@ -1698,9 +1699,9 @@ void IDFeatures::matchSeedToGsf( const edm::Handle< std::vector<reco::ElectronSe
     if ( trk.isNull() ) { 
       if ( verbose_ > 2 ) { std::cout << "INFO: Null TrackRef!" << std::endl; }
     }
-    reco::CaloClusterRef calo = ele_seed->caloCluster();
+    reco::CaloClusterRefToBase calo = ele_seed->caloCluster();
     if ( calo.isNull() ) { 
-      if ( verbose_ > 2 ) { std::cout << "INFO: Null CaloClusterRef!" << std::endl; }
+      if ( verbose_ > 2 ) { std::cout << "INFO: Null CaloClusterRefToBase!" << std::endl; }
     }
     Iter iter = seed2gsf.find(ele_seed);
     if ( iter == seed2gsf.end() ) { 
