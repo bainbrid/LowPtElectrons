@@ -1,4 +1,3 @@
-
 #include "DataFormats/GsfTrackReco/interface/GsfTrackExtraFwd.h"
 #include "DataFormats/GsfTrackReco/interface/GsfTrackExtra.h"
 #include "LowPtElectrons/LowPtElectrons/interface/IDNtuple.h"
@@ -148,8 +147,8 @@ void IDNtuple::link_tree( TTree *tree ) {
   tree->Branch("ele_mva_value", &ele_mva_value_, "ele_mva_value/f");
   tree->Branch("ele_mva_value_retrained", &ele_mva_value_retrained_, "ele_mva_value_retrained/f");
   tree->Branch("ele_conv_vtx_fit_prob", &ele_conv_vtx_fit_prob_, "ele_conv_vtx_fit_prob/f");
-  //tree->Branch("ele_mva_value_depth10", &ele_mva_value_depth10_, "ele_mva_value_depth10/f");
-  //tree->Branch("ele_mva_value_depth11", &ele_mva_value_depth11_, "ele_mva_value_depth11/f");
+  tree->Branch("ele_mva_value_depth10", &ele_mva_value_depth10_, "ele_mva_value_depth10/f");
+  tree->Branch("ele_mva_value_depth11", &ele_mva_value_depth11_, "ele_mva_value_depth11/f");
   tree->Branch("ele_mva_value_depth13", &ele_mva_value_depth13_, "ele_mva_value_depth13/f");
   tree->Branch("ele_mva_value_depth15", &ele_mva_value_depth15_, "ele_mva_value_depth15/f");
 

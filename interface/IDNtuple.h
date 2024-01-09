@@ -17,14 +17,10 @@
 #include "DataFormats/TrackReco/interface/TrackFwd.h"
 #include "FWCore/Framework/interface/Event.h"
 #include "RecoEcal/EgammaCoreTools/interface/EcalClusterLazyTools.h"
+#include "LowPtElectrons/LowPtElectrons/interface/Common.h"
 #include <vector>
 
 class TTree;
-
-namespace reco { typedef edm::Ptr<GenParticle> GenParticlePtr; }
-namespace reco { typedef edm::Ptr<Track> TrackPtr; }
-namespace reco { typedef edm::Ptr<GsfTrack> GsfTrackPtr; }
-namespace reco { typedef edm::Ptr<GsfElectron> GsfElectronPtr; }
 
 constexpr size_t ARRAY_SIZE = 20;
 
@@ -32,11 +28,6 @@ constexpr size_t ARRAY_SIZE = 20;
 class IDNtuple {
 
  public:
-
-  static constexpr size_t NHITS_MAX = 30;
-  static constexpr int NEG_INT = -10;
-  static constexpr float NEG_FLOAT = -10.;
-  static constexpr float NEG_FLOATSQ = -1.*NEG_FLOAT*NEG_FLOAT;
   
   IDNtuple() {}
 
@@ -147,15 +138,15 @@ class IDNtuple {
   unsigned long long evt_ = 0;
   float prescale_ = 0.;
   float weight_ = 1.;
-  float rho_ = IDNtuple::NEG_FLOAT;
+  float rho_ = id::NEG_FLOAT;
 
   // Data sample
   int is_aod_ = -1;
   int is_mc_ = -1;
 
   // Tag-side muon
-  float tag_pt_ = IDNtuple::NEG_FLOAT;
-  float tag_eta_ = IDNtuple::NEG_FLOAT;
+  float tag_pt_ = id::NEG_FLOAT;
+  float tag_eta_ = id::NEG_FLOAT;
 
   // Labels
   bool is_e_ = false;
@@ -170,198 +161,224 @@ class IDNtuple {
   bool has_pfgsf_ = false;
   bool has_ele_ = false;
 
-  float trk_dr_ = IDNtuple::NEG_FLOAT;
-  float gsf_dr_ = IDNtuple::NEG_FLOAT;
-  float pfgsf_dr_ = IDNtuple::NEG_FLOAT;
-  float ele_dr_ = IDNtuple::NEG_FLOAT;
+  float trk_dr_ = id::NEG_FLOAT;
+  float gsf_dr_ = id::NEG_FLOAT;
+  float pfgsf_dr_ = id::NEG_FLOAT;
+  float ele_dr_ = id::NEG_FLOAT;
 
   // GEN electrons
-  float gen_pt_ = IDNtuple::NEG_FLOAT;
-  float gen_eta_ = IDNtuple::NEG_FLOAT;
-  float gen_phi_ = IDNtuple::NEG_FLOAT;
-  float gen_e_ = IDNtuple::NEG_FLOAT;
-  float gen_p_ = IDNtuple::NEG_FLOAT;
-  int gen_charge_ = IDNtuple::NEG_INT;
+  float gen_pt_ = id::NEG_FLOAT;
+  float gen_eta_ = id::NEG_FLOAT;
+  float gen_phi_ = id::NEG_FLOAT;
+  float gen_e_ = id::NEG_FLOAT;
+  float gen_p_ = id::NEG_FLOAT;
+  int gen_charge_ = id::NEG_INT;
   int gen_pdgid_ = 0;
   int gen_mom_pdgid_ = 0;
   int gen_gran_pdgid_ = 0;
 
   // KF tracks: kine
-  float trk_pt_ = IDNtuple::NEG_FLOAT;
-  float trk_eta_ = IDNtuple::NEG_FLOAT;
-  float trk_phi_ = IDNtuple::NEG_FLOAT;
-  float trk_p_ = IDNtuple::NEG_INT;
-  int trk_charge_ = 0; //@@ IDNtuple::NEG_INT;
-  float trk_inp_ = IDNtuple::NEG_FLOAT;
-  float trk_outp_ = IDNtuple::NEG_FLOAT;
-  float trk_dpt_ = IDNtuple::NEG_FLOAT;
+  float trk_pt_ = id::NEG_FLOAT;
+  float trk_eta_ = id::NEG_FLOAT;
+  float trk_phi_ = id::NEG_FLOAT;
+  float trk_p_ = id::NEG_INT;
+  int trk_charge_ = 0; //@@ id::NEG_INT;
+  float trk_inp_ = id::NEG_FLOAT;
+  float trk_outp_ = id::NEG_FLOAT;
+  float trk_dpt_ = id::NEG_FLOAT;
 
   int pdg_id_ = 0;
 
   // KF tracks: quality
-  int trk_nhits_ = IDNtuple::NEG_INT;
-  int trk_missing_inner_hits_ = IDNtuple::NEG_INT;
-  int trk_high_purity_ = 0; //@@ IDNtuple::NEG_INT;
-  float trk_chi2red_ = IDNtuple::NEG_FLOAT;
+  int trk_nhits_ = id::NEG_INT;
+  int trk_missing_inner_hits_ = id::NEG_INT;
+  int trk_high_purity_ = 0; //@@ id::NEG_INT;
+  float trk_chi2red_ = id::NEG_FLOAT;
 
   // KF tracks: displ
-  float trk_dxy_ = IDNtuple::NEG_FLOAT;
-  float trk_dxy_err_ = IDNtuple::NEG_FLOAT;
-  float trk_dz_ = IDNtuple::NEG_FLOAT;
-  float trk_dz_err_ = IDNtuple::NEG_FLOAT;
+  float trk_dxy_ = id::NEG_FLOAT;
+  float trk_dxy_err_ = id::NEG_FLOAT;
+  float trk_dz_ = id::NEG_FLOAT;
+  float trk_dz_err_ = id::NEG_FLOAT;
   
   // Seed BDT discriminator values
-  float preid_unbiased_ = IDNtuple::NEG_FLOAT;
-  float preid_ptbiased_ = IDNtuple::NEG_FLOAT;
+  float preid_unbiased_ = id::NEG_FLOAT;
+  float preid_ptbiased_ = id::NEG_FLOAT;
+
+  float preid_trk_pt_ = id::NEG_FLOAT;
+  float preid_trk_eta_ = id::NEG_FLOAT;
+  float preid_trk_phi_ = id::NEG_FLOAT;
+  float preid_trk_p_ = id::NEG_FLOAT;
+  float preid_trk_nhits_ = id::NEG_FLOAT;
+  float preid_trk_high_quality_ = id::NEG_FLOAT;
+  float preid_trk_chi2red_ = id::NEG_FLOAT;
+  float preid_rho_ = id::NEG_FLOAT;
+  float preid_ktf_ecal_cluster_e_ = id::NEG_FLOAT;
+  float preid_ktf_ecal_cluster_deta_ = id::NEG_FLOAT;
+  float preid_ktf_ecal_cluster_dphi_ = id::NEG_FLOAT;
+  float preid_ktf_ecal_cluster_e3x3_ = id::NEG_FLOAT;
+  float preid_ktf_ecal_cluster_e5x5_ = id::NEG_FLOAT;
+  float preid_ktf_ecal_cluster_covEtaEta_ = id::NEG_FLOAT;
+  float preid_ktf_ecal_cluster_covEtaPhi_ = id::NEG_FLOAT;
+  float preid_ktf_ecal_cluster_covPhiPhi_ = id::NEG_FLOAT;
+  float preid_ktf_ecal_cluster_r9_ = id::NEG_FLOAT;
+  float preid_ktf_ecal_cluster_circularity_ = id::NEG_FLOAT;
+  float preid_ktf_hcal_cluster_e_ = id::NEG_FLOAT;
+  float preid_ktf_hcal_cluster_deta_ = id::NEG_FLOAT;
+  float preid_ktf_hcal_cluster_dphi_ = id::NEG_FLOAT;
+  float preid_gsf_dpt_ = id::NEG_FLOAT;
+  float preid_trk_gsf_chiratio_ = id::NEG_FLOAT;
+  float preid_gsf_chi2red_ = id::NEG_FLOAT;
+  float preid_trk_dxy_sig_ = id::NEG_FLOAT;
 
   // Seed BDT discriminator values at GsfTrack level
-  float seed_unbiased_ = IDNtuple::NEG_FLOAT;
-  float seed_ptbiased_ = IDNtuple::NEG_FLOAT;
+  float seed_unbiased_ = id::NEG_FLOAT;
+  float seed_ptbiased_ = id::NEG_FLOAT;
 
   bool seed_trk_driven_ = false;
   bool seed_ecal_driven_ = false;
 
   // GSF tracks: kine
-  float gsf_pt_ = IDNtuple::NEG_FLOAT;
-  float gsf_eta_ = IDNtuple::NEG_FLOAT;
-  float gsf_phi_ = IDNtuple::NEG_FLOAT;
-  float gsf_p_ = IDNtuple::NEG_FLOAT;
-  int gsf_charge_ = 0; //@@ IDNtuple::NEG_INT;
-  float gsf_inp_ = IDNtuple::NEG_FLOAT;
-  float gsf_outp_ = IDNtuple::NEG_FLOAT;
-  float gsf_dpt_ = IDNtuple::NEG_FLOAT;
+  float gsf_pt_ = id::NEG_FLOAT;
+  float gsf_eta_ = id::NEG_FLOAT;
+  float gsf_phi_ = id::NEG_FLOAT;
+  float gsf_p_ = id::NEG_FLOAT;
+  int gsf_charge_ = 0; //@@ id::NEG_INT;
+  float gsf_inp_ = id::NEG_FLOAT;
+  float gsf_outp_ = id::NEG_FLOAT;
+  float gsf_dpt_ = id::NEG_FLOAT;
 
   // GSF tracks: kine (mode)
-  float gsf_mode_pt_ = IDNtuple::NEG_FLOAT;
-  float gsf_mode_eta_ = IDNtuple::NEG_FLOAT;
-  float gsf_mode_phi_ = IDNtuple::NEG_FLOAT;
-  float gsf_mode_p_ = IDNtuple::NEG_FLOAT;
+  float gsf_mode_pt_ = id::NEG_FLOAT;
+  float gsf_mode_eta_ = id::NEG_FLOAT;
+  float gsf_mode_phi_ = id::NEG_FLOAT;
+  float gsf_mode_p_ = id::NEG_FLOAT;
 
   // GSF tracks: quality
-  int gsf_nhits_ = IDNtuple::NEG_INT;
-  int gsf_missing_inner_hits_ = IDNtuple::NEG_INT;
-  float gsf_chi2red_ = IDNtuple::NEG_FLOAT;
+  int gsf_nhits_ = id::NEG_INT;
+  int gsf_missing_inner_hits_ = id::NEG_INT;
+  float gsf_chi2red_ = id::NEG_FLOAT;
 
   // GSF tracks: displacement
-  float gsf_dxy_ = IDNtuple::NEG_FLOAT;
-  float gsf_dxy_err_ = IDNtuple::NEG_FLOAT;
-  float gsf_dz_ = IDNtuple::NEG_FLOAT;
-  float gsf_dz_err_ = IDNtuple::NEG_FLOAT;
+  float gsf_dxy_ = id::NEG_FLOAT;
+  float gsf_dxy_err_ = id::NEG_FLOAT;
+  float gsf_dz_ = id::NEG_FLOAT;
+  float gsf_dz_err_ = id::NEG_FLOAT;
 
   // GSF tracks: tangents
-  int gsf_ntangents_ = 0; //@@ IDNtuple::NEG_INT;
-  float gsf_hit_dpt_[NHITS_MAX] = {0}; //@@ {IDNtuple::NEG_FLOAT};
-  float gsf_hit_dpt_unc_[NHITS_MAX] = {0}; //@@ {IDNtuple::NEG_FLOAT};
+  int gsf_ntangents_ = 0; //@@ id::NEG_INT;
+  float gsf_hit_dpt_[id::NHITS_MAX] = {0}; //@@ {id::NEG_FLOAT};
+  float gsf_hit_dpt_unc_[id::NHITS_MAX] = {0}; //@@ {id::NEG_FLOAT};
   //std::vector<float> gsf_extapolated_eta_;
   //std::vector<float> gsf_extapolated_phi_;
 
   // PF GSF tracks: kine
-  float pfgsf_pt_ = IDNtuple::NEG_FLOAT;
-  float pfgsf_eta_ = IDNtuple::NEG_FLOAT;
-  float pfgsf_phi_ = IDNtuple::NEG_FLOAT;
-  float pfgsf_p_ = IDNtuple::NEG_FLOAT;
-  int pfgsf_charge_ = 0; //@@ IDNtuple::NEG_INT;
-  float pfgsf_inp_ = IDNtuple::NEG_FLOAT;
-  float pfgsf_outp_ = IDNtuple::NEG_FLOAT;
-  float pfgsf_dpt_ = IDNtuple::NEG_FLOAT;
+  float pfgsf_pt_ = id::NEG_FLOAT;
+  float pfgsf_eta_ = id::NEG_FLOAT;
+  float pfgsf_phi_ = id::NEG_FLOAT;
+  float pfgsf_p_ = id::NEG_FLOAT;
+  int pfgsf_charge_ = 0; //@@ id::NEG_INT;
+  float pfgsf_inp_ = id::NEG_FLOAT;
+  float pfgsf_outp_ = id::NEG_FLOAT;
+  float pfgsf_dpt_ = id::NEG_FLOAT;
 
   // PF GSF tracks: kine (mode)
-  float pfgsf_mode_pt_ = IDNtuple::NEG_FLOAT;
-  float pfgsf_mode_eta_ = IDNtuple::NEG_FLOAT;
-  float pfgsf_mode_phi_ = IDNtuple::NEG_FLOAT;
-  float pfgsf_mode_p_ = IDNtuple::NEG_FLOAT;
+  float pfgsf_mode_pt_ = id::NEG_FLOAT;
+  float pfgsf_mode_eta_ = id::NEG_FLOAT;
+  float pfgsf_mode_phi_ = id::NEG_FLOAT;
+  float pfgsf_mode_p_ = id::NEG_FLOAT;
 
   // PF GSF tracks: quality
-  int pfgsf_nhits_ = IDNtuple::NEG_INT;
-  int pfgsf_missing_inner_hits_ = IDNtuple::NEG_INT;
-  float pfgsf_chi2red_ = IDNtuple::NEG_FLOAT;
+  int pfgsf_nhits_ = id::NEG_INT;
+  int pfgsf_missing_inner_hits_ = id::NEG_INT;
+  float pfgsf_chi2red_ = id::NEG_FLOAT;
 
   // PF GSF tracks: displacement
-  float pfgsf_dxy_ = IDNtuple::NEG_FLOAT;
-  float pfgsf_dxy_err_ = IDNtuple::NEG_FLOAT;
-  float pfgsf_dz_ = IDNtuple::NEG_FLOAT;
-  float pfgsf_dz_err_ = IDNtuple::NEG_FLOAT;
+  float pfgsf_dxy_ = id::NEG_FLOAT;
+  float pfgsf_dxy_err_ = id::NEG_FLOAT;
+  float pfgsf_dz_ = id::NEG_FLOAT;
+  float pfgsf_dz_err_ = id::NEG_FLOAT;
 
   // PF GSF tracks: tangents
-  int pfgsf_ntangents_ = 0; //@@ IDNtuple::NEG_INT;
-  float pfgsf_hit_dpt_[NHITS_MAX] = {0}; //@@ {IDNtuple::NEG_FLOAT};
-  float pfgsf_hit_dpt_unc_[NHITS_MAX] = {0}; //@@ {IDNtuple::NEG_FLOAT};
+  int pfgsf_ntangents_ = 0; //@@ id::NEG_INT;
+  float pfgsf_hit_dpt_[id::NHITS_MAX] = {0}; //@@ {id::NEG_FLOAT};
+  float pfgsf_hit_dpt_unc_[id::NHITS_MAX] = {0}; //@@ {id::NEG_FLOAT};
   //std::vector<float> pfgsf_extapolated_eta_;
   //std::vector<float> pfgsf_extapolated_phi_;
 
   // GSF electrons: kinematics
-  float ele_pt_ = IDNtuple::NEG_FLOAT;
-  float ele_eta_ = IDNtuple::NEG_FLOAT;
-  float ele_phi_ = IDNtuple::NEG_FLOAT;
-  float ele_p_ = IDNtuple::NEG_FLOAT;
+  float ele_pt_ = id::NEG_FLOAT;
+  float ele_eta_ = id::NEG_FLOAT;
+  float ele_phi_ = id::NEG_FLOAT;
+  float ele_p_ = id::NEG_FLOAT;
 
   // Electrons: IDs
-  float ele_mva_value_ = -999.; //@ IDNtuple::NEG_FLOAT;
-  float ele_mva_value_retrained_ = -999.; //@ IDNtuple::NEG_FLOAT;
-  float ele_conv_vtx_fit_prob_ = IDNtuple::NEG_FLOAT;
-  float ele_mva_value_depth10_ = -999.; //@ IDNtuple::NEG_FLOAT;
-  float ele_mva_value_depth11_ = -999.; //@ IDNtuple::NEG_FLOAT;
-  float ele_mva_value_depth13_ = -999.; //@ IDNtuple::NEG_FLOAT;
-  float ele_mva_value_depth15_ = -999.; //@ IDNtuple::NEG_FLOAT;
+  float ele_mva_value_ = -999.; //@ id::NEG_FLOAT;
+  float ele_mva_value_retrained_ = -999.; //@ id::NEG_FLOAT;
+  float ele_conv_vtx_fit_prob_ = id::NEG_FLOAT;
+  float ele_mva_value_depth10_ = -999.; //@ id::NEG_FLOAT;
+  float ele_mva_value_depth11_ = -999.; //@ id::NEG_FLOAT;
+  float ele_mva_value_depth13_ = -999.; //@ id::NEG_FLOAT;
+  float ele_mva_value_depth15_ = -999.; //@ id::NEG_FLOAT;
 
   // Electrons: MVA variables
-  float eid_rho_ = -666; //@@ IDNtuple::NEG_FLOAT;
-  float eid_ele_pt_ = -666; //@@ IDNtuple::NEG_FLOAT;
+  float eid_rho_ = -666; //@@ id::NEG_FLOAT;
+  float eid_ele_pt_ = -666; //@@ id::NEG_FLOAT;
 
-  float eid_trk_p_ = -666; //@@ IDNtuple::NEG_FLOAT;
-  float eid_trk_nhits_ = -666; //@@ IDNtuple::NEG_FLOAT;
-  float eid_trk_chi2red_ = -666; //@@ IDNtuple::NEG_FLOAT;
+  float eid_trk_p_ = -666; //@@ id::NEG_FLOAT;
+  float eid_trk_nhits_ = -666; //@@ id::NEG_FLOAT;
+  float eid_trk_chi2red_ = -666; //@@ id::NEG_FLOAT;
 
-  float eid_gsf_nhits_ = -666; //@@ IDNtuple::NEG_FLOAT;
-  float eid_gsf_chi2red_ = -666; //@@ IDNtuple::NEG_FLOAT;
+  float eid_gsf_nhits_ = -666; //@@ id::NEG_FLOAT;
+  float eid_gsf_chi2red_ = -666; //@@ id::NEG_FLOAT;
 
-  float eid_sc_E_ = -666; //@@ IDNtuple::NEG_FLOAT;
-  float eid_sc_eta_ = -666; //@@ IDNtuple::NEG_FLOAT;
-  float eid_sc_etaWidth_ = -666; //@@ IDNtuple::NEG_FLOAT;
-  float eid_sc_phiWidth_ = -666; //@@ IDNtuple::NEG_FLOAT;
+  float eid_sc_E_ = -666; //@@ id::NEG_FLOAT;
+  float eid_sc_eta_ = -666; //@@ id::NEG_FLOAT;
+  float eid_sc_etaWidth_ = -666; //@@ id::NEG_FLOAT;
+  float eid_sc_phiWidth_ = -666; //@@ id::NEG_FLOAT;
 
-  float eid_match_seed_dEta_ = -666; //@@ IDNtuple::NEG_FLOAT;
-  float eid_match_eclu_EoverP_ = -666; //@@ IDNtuple::NEG_FLOAT;
-  float eid_match_SC_EoverP_ = -666; //@@ IDNtuple::NEG_FLOAT;
-  float eid_match_SC_dEta_ = -666; //@@ IDNtuple::NEG_FLOAT;
-  float eid_match_SC_dPhi_ = -666; //@@ IDNtuple::NEG_FLOAT;
+  float eid_match_seed_dEta_ = -666; //@@ id::NEG_FLOAT;
+  float eid_match_eclu_EoverP_ = -666; //@@ id::NEG_FLOAT;
+  float eid_match_SC_EoverP_ = -666; //@@ id::NEG_FLOAT;
+  float eid_match_SC_dEta_ = -666; //@@ id::NEG_FLOAT;
+  float eid_match_SC_dPhi_ = -666; //@@ id::NEG_FLOAT;
 
-  float eid_shape_full5x5_sigmaIetaIeta_ = -666; //@@ IDNtuple::NEG_FLOAT;
-  float eid_shape_full5x5_sigmaIphiIphi_ = -666; //@@ IDNtuple::NEG_FLOAT;
-  float eid_shape_full5x5_HoverE_ = -666; //@@ IDNtuple::NEG_FLOAT;
-  float eid_shape_full5x5_r9_ = -666; //@@ IDNtuple::NEG_FLOAT;
-  float eid_shape_full5x5_circularity_ = -666; //@@ IDNtuple::NEG_FLOAT;
+  float eid_shape_full5x5_sigmaIetaIeta_ = -666; //@@ id::NEG_FLOAT;
+  float eid_shape_full5x5_sigmaIphiIphi_ = -666; //@@ id::NEG_FLOAT;
+  float eid_shape_full5x5_HoverE_ = -666; //@@ id::NEG_FLOAT;
+  float eid_shape_full5x5_r9_ = -666; //@@ id::NEG_FLOAT;
+  float eid_shape_full5x5_circularity_ = -666; //@@ id::NEG_FLOAT;
 
-  float eid_brem_frac_ = -666; //@@ IDNtuple::NEG_FLOAT;
+  float eid_brem_frac_ = -666; //@@ id::NEG_FLOAT;
 
-  float image_gsf_ref_eta_ = IDNtuple::NEG_FLOAT;
-  float image_gsf_ref_phi_ = IDNtuple::NEG_FLOAT;
-  float image_gsf_ref_R_ = IDNtuple::NEG_FLOAT;
-  float image_gsf_ref_p_ = IDNtuple::NEG_FLOAT;
-  float image_gsf_ref_pt_ = IDNtuple::NEG_FLOAT;
+  float image_gsf_ref_eta_ = id::NEG_FLOAT;
+  float image_gsf_ref_phi_ = id::NEG_FLOAT;
+  float image_gsf_ref_R_ = id::NEG_FLOAT;
+  float image_gsf_ref_p_ = id::NEG_FLOAT;
+  float image_gsf_ref_pt_ = id::NEG_FLOAT;
 
-  float image_gen_inner_eta_ = IDNtuple::NEG_FLOAT;
-  float image_gen_inner_phi_ = IDNtuple::NEG_FLOAT;
-  float image_gen_inner_R_ = IDNtuple::NEG_FLOAT;
-  float image_gen_inner_p_ = IDNtuple::NEG_FLOAT;
-  float image_gen_inner_pt_ = IDNtuple::NEG_FLOAT;
+  float image_gen_inner_eta_ = id::NEG_FLOAT;
+  float image_gen_inner_phi_ = id::NEG_FLOAT;
+  float image_gen_inner_R_ = id::NEG_FLOAT;
+  float image_gen_inner_p_ = id::NEG_FLOAT;
+  float image_gen_inner_pt_ = id::NEG_FLOAT;
 
-  float image_gsf_inner_eta_ = IDNtuple::NEG_FLOAT;
-  float image_gsf_inner_phi_ = IDNtuple::NEG_FLOAT;
-  float image_gsf_inner_R_ = IDNtuple::NEG_FLOAT;
-  float image_gsf_inner_p_ = IDNtuple::NEG_FLOAT;
-  float image_gsf_inner_pt_ = IDNtuple::NEG_FLOAT;
-  int image_gsf_charge_ = IDNtuple::NEG_INT*10;
+  float image_gsf_inner_eta_ = id::NEG_FLOAT;
+  float image_gsf_inner_phi_ = id::NEG_FLOAT;
+  float image_gsf_inner_R_ = id::NEG_FLOAT;
+  float image_gsf_inner_p_ = id::NEG_FLOAT;
+  float image_gsf_inner_pt_ = id::NEG_FLOAT;
+  int image_gsf_charge_ = id::NEG_INT*10;
 
-  float image_gsf_proj_eta_ = IDNtuple::NEG_FLOAT;
-  float image_gsf_proj_phi_ = IDNtuple::NEG_FLOAT;
-  float image_gsf_proj_R_ = IDNtuple::NEG_FLOAT;
-  float image_gsf_proj_p_ = IDNtuple::NEG_FLOAT;
+  float image_gsf_proj_eta_ = id::NEG_FLOAT;
+  float image_gsf_proj_phi_ = id::NEG_FLOAT;
+  float image_gsf_proj_R_ = id::NEG_FLOAT;
+  float image_gsf_proj_p_ = id::NEG_FLOAT;
 
-  float image_gsf_atcalo_eta_ = IDNtuple::NEG_FLOAT;
-  float image_gsf_atcalo_phi_ = IDNtuple::NEG_FLOAT;
-  float image_gsf_atcalo_R_ = IDNtuple::NEG_FLOAT;
-  float image_gsf_atcalo_p_ = IDNtuple::NEG_FLOAT;
+  float image_gsf_atcalo_eta_ = id::NEG_FLOAT;
+  float image_gsf_atcalo_phi_ = id::NEG_FLOAT;
+  float image_gsf_atcalo_R_ = id::NEG_FLOAT;
+  float image_gsf_atcalo_p_ = id::NEG_FLOAT;
 
   unsigned int image_clu_n_ = 0;
   //std::vector<float> image_clu_eta_ = {};
