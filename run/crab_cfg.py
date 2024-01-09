@@ -1,3 +1,4 @@
+import CRABClient
 from CRABClient.UserUtilities import config#, getUsernameFromSiteDB
 
 #import CRABClient
@@ -38,7 +39,7 @@ data_set = {'aod':    data_sets.get(data_tier,'').get('',''), # usuall 'res_smal
 print('data_tier:',data_tier)
 print('data_set:',data_set)
 if data_set == '' : 
-    print "DATASET NOT KNOWN!"
+    print("DATASET NOT KNOWN!")
     quit()
 
 # END
@@ -59,7 +60,7 @@ config.General.transferLogs = True
 config.JobType.pluginName = 'Analysis'
 config.JobType.psetName = 'ntuplizer_test_cfg.py'
 #config.JobType.psetName = 'MINIAOD_from_AOD_cfg.py'
-config.JobType.maxMemoryMB=3000
+config.JobType.maxMemoryMB=2500
 config.JobType.numCores = 1
 
 config.Data.inputDBS = {'aod':'global','miniaod':'global','derived':'phys03'}.get(data_tier,'')
@@ -71,11 +72,11 @@ config.Data.inputDataset = data_set
 config.Data.splitting = 'FileBased'
 config.Data.unitsPerJob = 3
 config.Data.totalUnits = -1
-config.Data.outLFNDirBase = '/store/user/bainbrid/'+folder
+config.Data.outLFNDirBase = '/store/user/bainbrid/'+folder # maps onto /eos/user/b/bainbrid/
 config.Data.publication = False
 config.JobType.allowUndistributedCMSSW = True # e.g. use CMSSW_10_2_15_patch2 on SLC7
 config.JobType.inputFiles = ["../../../PhysicsTools/BParkingNano/test/lowPtEleReg_2018_02062020_nv.db"]
 
 #config.Site.whitelist =['T2_UK_London_IC']
-config.Site.storageSite = 'T2_CH_CERNBOX'
+config.Site.storageSite = 'T3_CH_CERNBOX'
 #config.Site.storageSite = 'T2_UK_London_IC'
