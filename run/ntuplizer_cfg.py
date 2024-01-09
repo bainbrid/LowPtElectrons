@@ -6,20 +6,24 @@ options.setDefault('inputFiles','file:input.root')
 options.setDefault('outputFile','output.root')
 options.setDefault('maxEvents',-1)
 options.register('skipEvents',0,VarParsing.multiplicity.singleton,VarParsing.varType.int,"")
-options.register('useAOD',False,VarParsing.multiplicity.singleton,VarParsing.varType.bool,"")
+options.register('useAOD',True,VarParsing.multiplicity.singleton,VarParsing.varType.bool,"")
 options.register('addSkim',False,VarParsing.multiplicity.singleton,VarParsing.varType.bool,"")
 options.parseArguments()
 
 process = cms.Process('TEST') 
 
+# /store/data/Run2018B/ParkingBPH5/RAW/v1/000/317/626/00001/E0032C29-4C6D-E811-91CA-FA163E8EFCB8.root
+
 # AOD: 9558 + 6230 + 1661 = 17449 events
 # MINOAOD: 17449 events
-default_files = \
-                ['/store/mc/RunIIAutumn18RECOBParking/BuToKee_Mufilter_SoftQCDnonD_TuneCP5_13TeV-pythia8-evtgen/AODSIM/PUPoissonAve20_BParking_102X_upgrade2018_realistic_v15-v2/60000/792E843F-F82F-4642-97D7-A7625ABA83D2.root',
-                 '/store/mc/RunIIAutumn18RECOBParking/BuToKee_Mufilter_SoftQCDnonD_TuneCP5_13TeV-pythia8-evtgen/AODSIM/PUPoissonAve20_BParking_102X_upgrade2018_realistic_v15-v2/60000/DB36F8A5-E77B-4547-9320-6DD1FA5BA58F.root',
-                 '/store/mc/RunIIAutumn18RECOBParking/BuToKee_Mufilter_SoftQCDnonD_TuneCP5_13TeV-pythia8-evtgen/AODSIM/PUPoissonAve20_BParking_102X_upgrade2018_realistic_v15-v2/60000/F617C5AF-E3AB-754D-BFFC-C004AAB2887E.root'] \
-                if options.useAOD else \
-                ['/store/mc/RunIIAutumn18MiniAOD/BuToKee_Mufilter_SoftQCDnonD_TuneCP5_13TeV-pythia8-evtgen/MINIAODSIM/PUPoissonAve20_BParking_102X_upgrade2018_realistic_v15-v2/60000/5A729845-ECB4-8E47-AF73-52C79F53B0B2.root']
+default_files = [
+    #'/store/mc/RunIIAutumn18RECOBParking/BuToKee_Mufilter_SoftQCDnonD_TuneCP5_13TeV-pythia8-evtgen/AODSIM/PUPoissonAve20_BParking_102X_upgrade2018_realistic_v15-v2/60000/792E843F-F82F-4642-97D7-A7625ABA83D2.root',
+    #'/store/mc/RunIIAutumn18RECOBParking/BuToKee_Mufilter_SoftQCDnonD_TuneCP5_13TeV-pythia8-evtgen/AODSIM/PUPoissonAve20_BParking_102X_upgrade2018_realistic_v15-v2/60000/DB36F8A5-E77B-4547-9320-6DD1FA5BA58F.root',
+    #'/store/mc/RunIIAutumn18RECOBParking/BuToKee_Mufilter_SoftQCDnonD_TuneCP5_13TeV-pythia8-evtgen/AODSIM/PUPoissonAve20_BParking_102X_upgrade2018_realistic_v15-v2/60000/F617C5AF-E3AB-754D-BFFC-C004AAB2887E.root',
+    'file:/afs/cern.ch/user/b/bainbrid/eos/WORK/dev/revisit-seed/CMSSW_10_2_14/src/AODSIM_mc.root'
+] if options.useAOD else [
+    '/store/mc/RunIIAutumn18MiniAOD/BuToKee_Mufilter_SoftQCDnonD_TuneCP5_13TeV-pythia8-evtgen/MINIAODSIM/PUPoissonAve20_BParking_102X_upgrade2018_realistic_v15-v2/60000/5A729845-ECB4-8E47-AF73-52C79F53B0B2.root'
+]
 
 process.source = cms.Source(
     "PoolSource",
