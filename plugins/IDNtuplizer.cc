@@ -30,6 +30,8 @@ IDNtuplizer::IDNtuplizer( const edm::ParameterSet& cfg )
     isAOD_(-1),
     isMC_(true),
     minTrackPt_(cfg.getParameter<double>("minTrackPt")),
+    gsfPtThreshold_(0.),
+    gsfEtaThreshold_(5.),
     tagMuonPtThreshold_(cfg.getParameter<double>("tagMuonPtThreshold")),
     tagMuonEtaThreshold_(cfg.getParameter<double>("tagMuonEtaThreshold")),
     filterNtupleContent_(cfg.getParameter<bool>("filterNtupleContent")),
@@ -116,6 +118,8 @@ IDNtuplizer::IDNtuplizer( const edm::ParameterSet& cfg )
     std::cout << "[IDNtuplizer::IDNtuplizer] Verbosity level: "<< verbose_ << std::endl;
     if ( cfg.exists("isAOD") ) { isAOD_ = cfg.getParameter<int>("isAOD"); }
     if ( cfg.exists("isMC") ) { isMC_ = cfg.getParameter<bool>("isMC"); }
+    if ( cfg.exists("gsfPtThreshold") ) { gsfPtThreshold_ = cfg.getParameter<double>("gsfPtThreshold"); }
+    if ( cfg.exists("gsfEtaThreshold") ) { gsfEtaThreshold_ = cfg.getParameter<double>("gsfEtaThreshold"); }
   }
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -165,7 +169,7 @@ bool IDNtuplizer::filter( edm::Event& event, const edm::EventSetup& setup ) { //
   
   // Fill ntuple
   fill(event,setup);
-  
+
   // Print ElectronChain objects
   if ( verbose_ > 0 ) {
     std::cout << "[IDNtuplizer::filter]"
@@ -1159,9 +1163,13 @@ void IDNtuplizer::fill( const edm::Event& event,
     ElectronChain chain = chains_[idx];
 
     // FILTER NTUPLE CONTENT FOR GNN TRAINING !!!
-    if ( filterNtupleContent_ && ( chain.is_egamma_ || 
-				   !validPtr(chain.ele_) || 
-				   !chain.ele_match_ ) ) { 
+    if ( filterNtupleContent_ && // Throw candidate away if ...
+	 ( chain.is_egamma_ || // ... is EG
+	   !validPtr(chain.ele_) || // ... or not valid ptr
+	   !chain.ele_match_ || // ... or not matched 
+	   chain.gsf_->pt() < gsfPtThreshold_ || // ... or below pT threshold
+	   fabs(chain.gsf_->eta()) > gsfEtaThreshold_ // ... or outside eta threshold
+	   ) ) { 
       continue;
     }
     
@@ -1215,6 +1223,7 @@ void IDNtuplizer::fill( const edm::Event& event,
     if ( validPtr(chain.seed_) ) { ntuple_.has_seed(true); }
 
     // PreId
+    //@@ Only possible with RECO (requires reducedEcalRecHitsEB collection)
 //    noZS::EcalClusterLazyTools ecal_tools(event, setup, ebRecHits_, eeRecHits_);
 //    ntuple_.fill_preid( *chain.preid_ecal_,
 //			*chain.preid_hcal_,
@@ -1246,9 +1255,13 @@ void IDNtuplizer::fill( const edm::Event& event,
       ntuple_.pfgsf_dr( chain.pfgsf_dr_ );
     }
 
-    float mva_value = -999.;//@@
-    float mva_value_retrained = -999.;//@@
-    float mva_value_depth10 = -999.;//@@
+    float mva_value_pf = -999.;//@@
+    float mva_value_pf_retrained = -999.;//@@
+    float mva_value_2019Aug07 = -999.;//@@
+    float mva_value_depth10_2020Sept15 = -999.;//@@
+    float mva_value_depth11_2020Nov28 = -999.;
+    float mva_value_depth13_2021May17 = -999.;
+    float mva_value_depth15_unknown = -999.;
 
     // GsfElectron info
     if ( validPtr(chain.ele_) ) {
@@ -1259,50 +1272,43 @@ void IDNtuplizer::fill( const edm::Event& event,
       ntuple_.has_ele( chain.ele_match_ );
       ntuple_.ele_dr( chain.ele_dr_ );
 
-      //@@ dirty hack as ID is not in Event nor embedded in pat::Electron
-      //float mva_value = -999.;//@@
-      //float mva_value_retrained = -999.;//@@
-      //float mva_value_depth10 = -999.;
-      float mva_value_depth11 = -999.;
-      float mva_value_depth13 = -999.;
-      float mva_value_depth15 = -999.;
       if ( !chain.is_egamma_ ) {
 	if ( mvaValueLowPtH_.isValid() && 
 	     mvaValueLowPtH_->size() == gsfElectronsH_->size() ) {
-	  //mva_value = mvaValueLowPtH_->get( chain.ele_.key() );
-	  //chain.id_ = mva_value;//@@
+	  mva_value_2019Aug07 = mvaValueLowPtH_->get( chain.ele_.key() );
+	  //chain.id_ = mva_value_2019Aug07;//@@
 	} else {
 	  std::cout << "[IDNtuplizer::fill] ERROR! Issue matching MVA output to low-pT GsfElectrons!" << std::endl;
 	}
 	if ( mvaValueLowPtDepth10H_.isValid() && 
 	     mvaValueLowPtDepth10H_->size() == gsfElectronsH_->size() ) {
-	  mva_value_depth10 = mvaValueLowPtDepth10H_->get( chain.ele_.key() );
+	  mva_value_depth10_2020Sept15 = mvaValueLowPtDepth10H_->get( chain.ele_.key() );
 	  //} else {
 	  //std::cout << "[IDNtuplizer::fill] ERROR! Issue matching MVA DEPTH10 output to GsfElectrons!" << std::endl;
 	}
 	if ( mvaValueLowPtDepth11H_.isValid() && 
 	     mvaValueLowPtDepth11H_->size() == gsfElectronsH_->size() ) {
-	  mva_value_depth11 = mvaValueLowPtDepth11H_->get( chain.ele_.key() );
+	  mva_value_depth11_2020Nov28 = mvaValueLowPtDepth11H_->get( chain.ele_.key() );
 	  //} else {
 	  //std::cout << "[IDNtuplizer::fill] ERROR! Issue matching MVA DEPTH11 output to GsfElectrons!" << std::endl;
 	}
 	if ( mvaValueLowPtDepth13H_.isValid() && 
 	     mvaValueLowPtDepth13H_->size() == gsfElectronsH_->size() ) {
-	  mva_value_depth13 = mvaValueLowPtDepth13H_->get( chain.ele_.key() );
+	  mva_value_depth13_2021May17 = mvaValueLowPtDepth13H_->get( chain.ele_.key() );
 	  //} else {
 	  //std::cout << "[IDNtuplizer::fill] ERROR! Issue matching MVA DEPTH13 output to GsfElectrons!" << std::endl;
 	}
 //	if ( mvaValueLowPtDepth15H_.isValid() && 
 //	     mvaValueLowPtDepth15H_->size() == gsfElectronsH_->size() ) {
-//	  mva_value_depth15 = mvaValueLowPtDepth15H_->get( chain.ele_.key() );
+//	  mva_value_depth15_unknown = mvaValueLowPtDepth15H_->get( chain.ele_.key() );
 //	  //} else {
 //	  //std::cout << "[IDNtuplizer::fill] ERROR! Issue matching MVA DEPTH15 output to GsfElectrons!" << std::endl;
 //	}
       } else {
 	if ( mvaValueEGammaH_.isValid() && 
 	     mvaValueEGammaH_->size() == gsfElectronsEGammaH_->size() ) {
-	  mva_value = mvaValueEGammaH_->get( chain.ele_.key() );
-	  //chain.id_ = mva_value;//@@
+	  mva_value_pf = mvaValueEGammaH_->get( chain.ele_.key() );
+	  //chain.id_ = mva_value_pf;//@@
 	} else {
 	  std::cout << "[IDNtuplizer::fill] ERROR! Issue matching MVA output to PF GsfElectrons!"
 		    << mvaValueEGammaH_.isValid() << " " 
@@ -1312,7 +1318,7 @@ void IDNtuplizer::fill( const edm::Event& event,
 	}
 	if ( mvaValueEGammaRetrainedH_.isValid() && 
 	     mvaValueEGammaRetrainedH_->size() == gsfElectronsEGammaH_->size() ) {
-	  mva_value_retrained = mvaValueEGammaRetrainedH_->get( chain.ele_.key() );
+	  mva_value_pf_retrained = mvaValueEGammaRetrainedH_->get( chain.ele_.key() );
 	} else {
 	  std::cout << "[IDNtuplizer::fill] ERROR! Issue matching retrained MVA to PF GsfElectrons! "
 	    	    << mvaValueEGammaRetrainedH_.isValid() << " " 
@@ -1329,31 +1335,39 @@ void IDNtuplizer::fill( const edm::Event& event,
       //}
       
       ntuple_.fill_ele( chain.ele_, 
-			mva_value, mva_value_retrained, 
-			mva_value_depth10, mva_value_depth11, mva_value_depth13, mva_value_depth15,
-			conv_vtx_fit_prob, *rhoH_, chain.is_egamma_ );
+			mva_value_pf,
+			mva_value_pf_retrained, 
+			mva_value_2019Aug07,
+			mva_value_depth10_2020Sept15,
+			mva_value_depth11_2020Nov28,
+			mva_value_depth13_2021May17,
+			mva_value_depth15_unknown,
+			conv_vtx_fit_prob,
+			*rhoH_,
+			chain.is_egamma_,
+			chain.unbiased_ );
       
       //ntuple_.fill_supercluster(chain.ele_);
       
     }
     
-    if ( validPtr(chain.gsf_) ) {
-      ntuple_.fill_image( chain.gsf_ref_eta_, chain.gsf_ref_phi_, chain.gsf_ref_R_, // Ref 
-			  chain.gsf_ref_p_, chain.gsf_ref_pt_,
-			  chain.gen_inner_eta_, chain.gen_inner_phi_, chain.gen_inner_R_, // GEN
-			  chain.gen_inner_p_, chain.gen_inner_pt_,
-			  chain.gen_proj_eta_, chain.gen_proj_phi_, chain.gen_proj_R_,
-			  chain.gsf_inner_eta_, chain.gsf_inner_phi_, chain.gsf_inner_R_, // GSF
-			  chain.gsf_inner_p_, chain.gsf_inner_pt_, chain.gsf_->charge(),
-			  chain.gsf_proj_eta_, chain.gsf_proj_phi_, chain.gsf_proj_R_, 
-			  chain.gsf_proj_p_,
-			  chain.gsf_atcalo_eta_, chain.gsf_atcalo_phi_, chain.gsf_atcalo_R_, 
-			  chain.gsf_atcalo_p_,
-			  chain.clu_eta_, chain.clu_phi_, chain.clu_e_, chain.clu_nhit_, // Cluster
-			  chain.pf_eta_, chain.pf_phi_, chain.pf_p_, // PFCands
-			  chain.pf_pdgid_, chain.pf_matched_, chain.pf_lost_ // PFCands
-			  );
-    }
+//    if ( validPtr(chain.gsf_) ) {
+//      ntuple_.fill_image( chain.gsf_ref_eta_, chain.gsf_ref_phi_, chain.gsf_ref_R_, // Ref 
+//			  chain.gsf_ref_p_, chain.gsf_ref_pt_,
+//			  chain.gen_inner_eta_, chain.gen_inner_phi_, chain.gen_inner_R_, // GEN
+//			  chain.gen_inner_p_, chain.gen_inner_pt_,
+//			  chain.gen_proj_eta_, chain.gen_proj_phi_, chain.gen_proj_R_,
+//			  chain.gsf_inner_eta_, chain.gsf_inner_phi_, chain.gsf_inner_R_, // GSF
+//			  chain.gsf_inner_p_, chain.gsf_inner_pt_, chain.gsf_->charge(),
+//			  chain.gsf_proj_eta_, chain.gsf_proj_phi_, chain.gsf_proj_R_, 
+//			  chain.gsf_proj_p_,
+//			  chain.gsf_atcalo_eta_, chain.gsf_atcalo_phi_, chain.gsf_atcalo_R_, 
+//			  chain.gsf_atcalo_p_,
+//			  chain.clu_eta_, chain.clu_phi_, chain.clu_e_, chain.clu_nhit_, // Cluster
+//			  chain.pf_eta_, chain.pf_phi_, chain.pf_p_, // PFCands
+//			  chain.pf_pdgid_, chain.pf_matched_, chain.pf_lost_ // PFCands
+//			  );
+//    }
 
     tree_->Fill();
 //    //@@@@
@@ -1363,7 +1377,7 @@ void IDNtuplizer::fill( const edm::Event& event,
 //	 //&& chain.ele_dr_ > 0.5
 //	 && !chain.is_e_
 //	 //&& mva_value > -666. 
-//	 //&& mva_value_depth10 > -666. 
+//	 //&& mva_value_depth10_2020Sept15 > -666. 
 //	 && mva_value_retrained > -666. 
 //	 ) {
 //      tree_->Fill();
@@ -1772,12 +1786,12 @@ void IDNtuplizer::trkToGsfLinks( std::vector<reco::TrackPtr>& ctfTracks,
 
       if (!matched_dr || !matched_pt) {
 	if (!matched_dr) {
-	  std::cout << "[IDNtuplizer::trkToGsfLinks] " 
-		    << "ERROR: Couldn't find a valid 'best' surrogate track matched in dR to the GSF track!";
+	  //std::cout << "[IDNtuplizer::trkToGsfLinks] " 
+	  //<< "ERROR: Couldn't find a valid 'best' surrogate track matched in dR to the GSF track!";
 	}
 	if (!matched_pt) {
-	  std::cout << "[IDNtuplizer::trkToGsfLinks] " 
-		    << "ERROR: Couldn't find a valid 'best' surrogate track matched in pT to the GSF track!";
+	  //std::cout << "[IDNtuplizer::trkToGsfLinks] " 
+	  //<< "ERROR: Couldn't find a valid 'best' surrogate track matched in pT to the GSF track!";
 	}
 	trk2gsf.emplace_back( reco::TrackPtr(), gsf, id::NEG_FLOATSQ ); // shouldn't ever be called
       }

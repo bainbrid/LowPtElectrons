@@ -242,6 +242,8 @@ private:
   int isAOD_;
   bool isMC_;
   double minTrackPt_;
+  float gsfPtThreshold_;
+  float gsfEtaThreshold_;
   float tagMuonPtThreshold_;
   float tagMuonEtaThreshold_;
   bool filterNtupleContent_;
