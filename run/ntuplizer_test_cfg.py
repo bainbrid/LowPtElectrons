@@ -394,8 +394,8 @@ process.electronMVAVariableHelper = cms.EDProducer(
     vertexCollection = cms.InputTag("offlinePrimaryVertices"),
     beamSpot         = cms.InputTag("offlineBeamSpot"),
     conversions      = cms.InputTag("allConversions"),
-    #srcMiniAOD              = cms.InputTag('slimmedElectrons'),#processName=cms.InputTag.skipCurrentProcess()),
-    srcMiniAOD              = cms.InputTag('regressionForEle:regressedElectrons'),
+    srcMiniAOD              = cms.InputTag('slimmedElectrons'),#processName=cms.InputTag.skipCurrentProcess()),
+    #srcMiniAOD              = cms.InputTag('regressionForEle:regressedElectrons'),
     vertexCollectionMiniAOD = cms.InputTag("offlineSlimmedPrimaryVertices"),
     beamSpotMiniAOD         = cms.InputTag("offlineBeamSpot"),
     conversionsMiniAOD      = cms.InputTag("reducedEgamma:reducedConversions"),
@@ -404,8 +404,8 @@ process.electronMVAVariableHelper = cms.EDProducer(
 process.electronMVAValueMapProducer = cms.EDProducer(
     'ElectronMVAValueMapProducer',
     src = cms.InputTag('gedGsfElectrons'),
-    #srcMiniAOD = cms.InputTag('slimmedElectrons'),#processName=cms.InputTag.skipCurrentProcess()),
-    srcMiniAOD = cms.InputTag('regressionForEle:regressedElectrons'),
+    srcMiniAOD = cms.InputTag('slimmedElectrons'),#processName=cms.InputTag.skipCurrentProcess()),
+    #srcMiniAOD = cms.InputTag('regressionForEle:regressedElectrons'),
     mvaConfigurations = mvaConfigsForEleProducer
 )
 
@@ -416,7 +416,7 @@ process.egmGsfElectronIDs = cms.EDProducer(
 )
 
 process.egmGsfElectronIDTask = cms.Task(
-    process.regressionForEle,
+    #process.regressionForEle,
     process.electronMVAVariableHelper,
     process.electronMVAValueMapProducer,
     #process.egmGsfElectronIDs,
@@ -455,6 +455,7 @@ if AOD == True :
     process.lowPtGsfElectronIDExtra.electrons = 'lowPtGsfElectrons'
     process.lowPtGsfElectronIDExtra.rho = 'fixedGridRhoFastjetAllTmp'
 #else:
+    # use defaults?
     #process.lowPtGsfElectronIDExtra.electrons = 'regressionForEle:regressedLowPtElectrons'
     #process.lowPtGsfElectronIDExtra.rho = 'fixedGridRhoFastjetAll'
 
@@ -485,7 +486,7 @@ else:
 
 process.ntuplizer.verbose = 0
 
-from_tracks = True
+from_tracks = False
 if from_tracks : # Evaluating models for BParking studies
     process.ntuplizer.tagMuonPtThreshold  = 7.
     process.ntuplizer.tagMuonEtaThreshold = 1.5
@@ -495,7 +496,7 @@ else : # Skim to keep just low-pT electrons (no seeds, no PF, etc, ...) for Max 
     process.ntuplizer.tagMuonPtThreshold  = 7.
     process.ntuplizer.tagMuonEtaThreshold = 1.5
     process.ntuplizer.filterNtupleContent = True
-    process.ntuplizer.prescale = -11.5 # Poisson mean number of fakes/event
+    process.ntuplizer.prescale = 25. # Poisson mean number of fakes/event
 
 ################################################################################
 # BParking Analysis sequences to define data control regions

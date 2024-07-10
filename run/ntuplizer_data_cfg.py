@@ -25,9 +25,12 @@ fileNames_cli = options.inputFiles
 # MINIAOD:
 fileNames_miniaod = [
     #'/store/data/Run2018D/ParkingBPH1/MINIAOD/UL2018_MiniAODv2-v1/50002/A16E8E15-1DBF-5044-A16D-88FC78887F59.root',
-    '/store/data/Run2018B/ParkingBPH4/MINIAOD/05May2019-v2/230000/6B5A24B1-0E6E-504B-8331-BD899EB60110.root',
+    #'/store/data/Run2018B/ParkingBPH4/MINIAOD/05May2019-v2/230000/6B5A24B1-0E6E-504B-8331-BD899EB60110.root',
+    '/store/data/Run2018D/ParkingBPH1/MINIAOD/05May2019promptD-v1/130000/00141A1E-02F3-0B4F-9128-2CE371D069B3.root',
 ]
-fileNames_miniaod_UL = ['/store/data/Run2018D/ParkingBPH1/MINIAOD/UL2018_MiniAODv2-v1/2530000/521F0FA1-D91E-ED4D-8920-5BB1E7CDDE38.root']
+fileNames_miniaod_UL = [
+    '/store/data/Run2018D/ParkingBPH1/MINIAOD/UL2018_MiniAODv2-v1/2530000/521F0FA1-D91E-ED4D-8920-5BB1E7CDDE38.root'
+]
 
 # AOD:
 fileNames_aod = []
@@ -429,6 +432,7 @@ if options.useAOD == True :
     process.lowPtGsfElectronIDExtra.electrons = 'lowPtGsfElectrons'
     process.lowPtGsfElectronIDExtra.rho = 'fixedGridRhoFastjetAllTmp'
 #else:
+    # use defaults?
     #process.lowPtGsfElectronIDExtra.electrons = 'regressionForEle:regressedLowPtElectrons'
     #process.lowPtGsfElectronIDExtra.rho = 'fixedGridRhoFastjetAll'
 
@@ -461,7 +465,7 @@ else:
 process.ntuplizer.isMC = cms.bool(False)
 process.ntuplizer.verbose = 0
 
-from_tracks = True
+from_tracks = False
 if from_tracks : # Evaluating models for BParking studies
     process.ntuplizer.tagMuonPtThreshold  = 5.
     process.ntuplizer.tagMuonEtaThreshold = 2.5
@@ -471,7 +475,7 @@ else : # Skim to keep just low-pT electrons (no seeds, no PF, etc, ...) for Max 
     process.ntuplizer.tagMuonPtThreshold  = 7.
     process.ntuplizer.tagMuonEtaThreshold = 1.5
     process.ntuplizer.filterNtupleContent = True
-    process.ntuplizer.prescale = -11.5 # Poisson mean number of fakes/event
+    process.ntuplizer.prescale = 100. # Poisson mean number of fakes/event
 
 ################################################################################
 # BParking Analysis sequences to define data control regions
