@@ -98,15 +98,17 @@ class IDNtuple {
 		 const reco::BeamSpot& spot );
 
   void fill_ele( const reco::GsfElectronPtr ele,
-		 float mva_value,
-		 float mva_value_retrained,
-		 float mva_value_depth10,
-		 float mva_value_depth11,
-		 float mva_value_depth13,
-		 float mva_value_depth15,
+		 float mva_value_pf,
+		 float mva_value_pf_retrained, 
+		 float mva_value_2019Aug07,
+		 float mva_value_depth10_2020Sept15,
+		 float mva_value_depth11_2020Nov28,
+		 float mva_value_depth13_2021May17,
+		 float mva_value_depth15_unknown,
 		 float ele_conv_vtx_fit_prob,
 		 const double rho,
-		 bool is_egamma = false );
+		 bool is_egamma = false,
+		 float seed_unbiased = -10. );
   
   void fill_image( const float gsf_ref_eta, const float gsf_ref_phi, const float gsf_ref_R,
 		   const float gsf_ref_p, const float gsf_ref_pt,
@@ -313,18 +315,16 @@ class IDNtuple {
   float ele_p_ = id::NEG_FLOAT;
 
   // Electrons: IDs
-  float ele_mva_value_ = -999.; //@ id::NEG_FLOAT;
-  float ele_mva_value_retrained_ = -999.; //@ id::NEG_FLOAT;
+  float ele_mva_value_PF_ = -999.; //@ id::NEG_FLOAT;
+  float ele_mva_value_PF_retrained_ = -999.; //@ id::NEG_FLOAT;
+  float ele_mva_value_2019Aug07_ = -999.; //@ id::NEG_FLOAT;
+  float ele_mva_value_2020Sept15_ = -999.; //@ id::NEG_FLOAT;
+  float ele_mva_value_2020Nov28_ = -999.; //@ id::NEG_FLOAT;
+  float ele_mva_value_2021May17_ = -999.; //@ id::NEG_FLOAT;
+  float ele_mva_value_unknown_ = -999.; //@ id::NEG_FLOAT;
   float ele_conv_vtx_fit_prob_ = id::NEG_FLOAT;
-  float ele_mva_value_depth10_ = -999.; //@ id::NEG_FLOAT;
-  float ele_mva_value_depth11_ = -999.; //@ id::NEG_FLOAT;
-  float ele_mva_value_depth13_ = -999.; //@ id::NEG_FLOAT;
-  float ele_mva_value_depth15_ = -999.; //@ id::NEG_FLOAT;
 
-  // Electrons: MVA variables
-  float eid_rho_ = -666; //@@ id::NEG_FLOAT;
-  float eid_ele_pt_ = -666; //@@ id::NEG_FLOAT;
-
+  // Electrons: MVA variables for 2019Aug07
   float eid_trk_p_ = -666; //@@ id::NEG_FLOAT;
   float eid_trk_nhits_ = -666; //@@ id::NEG_FLOAT;
   float eid_trk_chi2red_ = -666; //@@ id::NEG_FLOAT;
@@ -349,7 +349,54 @@ class IDNtuple {
   float eid_shape_full5x5_r9_ = -666; //@@ id::NEG_FLOAT;
   float eid_shape_full5x5_circularity_ = -666; //@@ id::NEG_FLOAT;
 
+  float eid_rho_ = -666; //@@ id::NEG_FLOAT;
   float eid_brem_frac_ = -666; //@@ id::NEG_FLOAT;
+  float eid_ele_pt_ = -666; //@@ id::NEG_FLOAT;
+  float eid_gsf_bdtout1_ = -666; //@@ id::NEG_FLOAT;
+
+  // Electrons: MVA variables for 2020Sept15
+  float eid2_trk_p_ = -666; //@@ id::NEG_FLOAT;
+  float eid2_trk_nhits_ = -666; //@@ id::NEG_FLOAT;
+  float eid2_trk_chi2red_ = -666; //@@ id::NEG_FLOAT;
+  float eid2_trk_dr_ = -666; //@@ id::NEG_FLOAT;
+
+  float eid2_gsf_nhits_ = -666; //@@ id::NEG_FLOAT;
+  float eid2_gsf_chi2red_ = -666; //@@ id::NEG_FLOAT;
+  float eid2_gsf_mode_p_ = -666; //@@ id::NEG_FLOAT;
+  float eid2_gsf_dr_ = -666; //@@ id::NEG_FLOAT;
+
+  float eid2_sc_E_ = -666; //@@ id::NEG_FLOAT;
+  float eid2_sc_eta_ = -666; //@@ id::NEG_FLOAT;
+  float eid2_sc_etaWidth_ = -666; //@@ id::NEG_FLOAT;
+  float eid2_sc_phiWidth_ = -666; //@@ id::NEG_FLOAT;
+  float eid2_sc_Nclus_ = -666; //@@ id::NEG_FLOAT;
+
+  float eid2_match_seed_dEta_ = -666; //@@ id::NEG_FLOAT;
+  float eid2_match_eclu_EoverP_ = -666; //@@ id::NEG_FLOAT;
+  float eid2_match_SC_EoverP_ = -666; //@@ id::NEG_FLOAT;
+  float eid2_match_SC_dEta_ = -666; //@@ id::NEG_FLOAT;
+  float eid2_match_SC_dPhi_ = -666; //@@ id::NEG_FLOAT;
+
+  float eid2_shape_full5x5_r9_ = -666; //@@ id::NEG_FLOAT;
+  float eid2_shape_full5x5_HoverE_ = -666; //@@ id::NEG_FLOAT;
+
+  float eid2_sc_clus1_nxtal_ = -666; //@@ id::NEG_FLOAT;
+  float eid2_sc_clus1_E_ = -666; //@@ id::NEG_FLOAT;
+  float eid2_sc_clus1_E_ov_p_ = -666; //@@ id::NEG_FLOAT;
+  float eid2_sc_clus1_deta_ = -666; //@@ id::NEG_FLOAT;
+  float eid2_sc_clus1_dphi_ = -666; //@@ id::NEG_FLOAT;
+
+  float eid2_sc_clus2_E_ = -666; //@@ id::NEG_FLOAT;
+  float eid2_sc_clus2_E_ov_p_ = -666; //@@ id::NEG_FLOAT;
+  float eid2_sc_clus2_dphi_ = -666; //@@ id::NEG_FLOAT;
+  float eid2_sc_clus2_deta_ = -666; //@@ id::NEG_FLOAT;
+
+  float eid2_rho_ = -666; //@@ id::NEG_FLOAT;
+  float eid2_brem_frac_ = -666; //@@ id::NEG_FLOAT;
+  float eid2_core_shFracHits_ = -666; //@@ id::NEG_FLOAT;
+  float eid2_gsf_bdtout1_ = -666; //@@ id::NEG_FLOAT;
+
+  // Image of electrons for CNN (Max Hart dev's)
 
   float image_gsf_ref_eta_ = id::NEG_FLOAT;
   float image_gsf_ref_phi_ = id::NEG_FLOAT;

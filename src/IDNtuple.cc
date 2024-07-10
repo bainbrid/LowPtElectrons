@@ -2,6 +2,7 @@
 #include "DataFormats/GsfTrackReco/interface/GsfTrackExtra.h"
 #include "LowPtElectrons/LowPtElectrons/interface/IDNtuple.h"
 #include "RecoEgamma/EgammaElectronProducers/interface/LowPtGsfElectronIDHeavyObjectCache.h"
+#include "RecoEgamma/EgammaElectronProducers/interface/LowPtGsfElectronIDExtraHeavyObjectCache.h"
 #include "RecoEgamma/EgammaElectronProducers/interface/LowPtGsfElectronSeedHeavyObjectCache.h"
 #include "TTree.h"
 
@@ -70,11 +71,6 @@ void IDNtuple::link_tree( TTree *tree ) {
   tree->Branch("trk_dz", &trk_dz_, "trk_dz/f");
   tree->Branch("trk_dz_err", &trk_dz_err_, "trk_dz_err/f");
   
-  //tree->Branch("preid_unbiased", &preid_unbiased_, "preid_unbiased/f");
-  //tree->Branch("preid_ptbiased", &preid_ptbiased_, "preid_ptbiased/f");
-  tree->Branch("preid_bdtout1", &preid_unbiased_, "preid_bdtout1/f");
-  tree->Branch("preid_bdtout2", &preid_ptbiased_, "preid_bdtout2/f");
-
   tree->Branch("seed_trk_driven", &seed_trk_driven_, "seed_trk_driven/O");
   tree->Branch("seed_ecal_driven", &seed_ecal_driven_, "seed_ecal_driven/O");
 
@@ -144,85 +140,161 @@ void IDNtuple::link_tree( TTree *tree ) {
   tree->Branch("ele_eta", &ele_eta_, "ele_eta/f");
   tree->Branch("ele_phi", &ele_phi_, "ele_phi/f");
 
-  tree->Branch("ele_mva_value", &ele_mva_value_, "ele_mva_value/f");
-  tree->Branch("ele_mva_value_retrained", &ele_mva_value_retrained_, "ele_mva_value_retrained/f");
-  tree->Branch("ele_conv_vtx_fit_prob", &ele_conv_vtx_fit_prob_, "ele_conv_vtx_fit_prob/f");
-  tree->Branch("ele_mva_value_depth10", &ele_mva_value_depth10_, "ele_mva_value_depth10/f");
-  tree->Branch("ele_mva_value_depth11", &ele_mva_value_depth11_, "ele_mva_value_depth11/f");
-  tree->Branch("ele_mva_value_depth13", &ele_mva_value_depth13_, "ele_mva_value_depth13/f");
-  tree->Branch("ele_mva_value_depth15", &ele_mva_value_depth15_, "ele_mva_value_depth15/f");
+  tree->Branch("RunIIAutumn18_unbiased", &preid_unbiased_, "RunIIAutumn18_unbiased/f"); // was bdtout1
+  tree->Branch("RunIIAutumn18_ptbiased", &preid_ptbiased_, "RunIIAutumn18_ptbiased/f"); // was bdtout2
+  tree->Branch("ele_mva_value_PF", &ele_mva_value_PF_, "ele_mva_value_PF/f");                               // Default PF ID
+  tree->Branch("ele_mva_value_PF_retrained", &ele_mva_value_PF_retrained_, "ele_mva_value_PF_retrained/f"); // Retrained PF ID
+  tree->Branch("ele_mva_value_2019Aug07", &ele_mva_value_2019Aug07_, "ele_mva_value_2019Aug07/f");          // 2019Aug07
+  tree->Branch("ele_mva_value_2020Sept15", &ele_mva_value_2020Sept15_, "ele_mva_value_2020Sept15/f");       // 2020Sept15
+  tree->Branch("ele_mva_value_2020Nov28", &ele_mva_value_2020Nov28_, "ele_mva_value_2020Nov28/f");          // 2020Nov28
+  tree->Branch("ele_mva_value_2021May17", &ele_mva_value_2021May17_, "ele_mva_value_2021May17/f");          // 2020May17
+  tree->Branch("ele_mva_value_unknown", &ele_mva_value_unknown_, "ele_mva_value_unknown/f");                // ???
+  tree->Branch("ele_conv_vtx_fit_prob", &ele_conv_vtx_fit_prob_, "ele_conv_vtx_fit_prob/f");       //
 
-  tree->Branch("eid_rho", &eid_rho_, "eid_rho/f");
-  tree->Branch("eid_ele_pt", &eid_ele_pt_, "eid_ele_pt/f");
-
-  tree->Branch("eid_trk_p", &eid_trk_p_, "eid_trk_p/f");
-  tree->Branch("eid_trk_nhits", &eid_trk_nhits_, "eid_trk_nhits/f");
-  tree->Branch("eid_trk_chi2red", &eid_trk_chi2red_, "eid_trk_chi2red/f");
-
-  tree->Branch("eid_gsf_nhits", &eid_gsf_nhits_, "eid_gsf_nhits/f");
-  tree->Branch("eid_gsf_chi2red", &eid_gsf_chi2red_, "eid_gsf_chi2red/f");
-
-  tree->Branch("eid_sc_E", &eid_sc_E_, "eid_sc_E/f");
-  tree->Branch("eid_sc_eta", &eid_sc_eta_, "eid_sc_eta/f");
-  tree->Branch("eid_sc_etaWidth", &eid_sc_etaWidth_, "eid_sc_etaWidth/f");
-  tree->Branch("eid_sc_phiWidth", &eid_sc_phiWidth_, "eid_sc_phiWidth/f");
-
-  tree->Branch("eid_match_seed_dEta", &eid_match_seed_dEta_, "eid_match_seed_dEta/f");
-  tree->Branch("eid_match_eclu_EoverP", &eid_match_eclu_EoverP_, "eid_match_eclu_EoverP/f");
-  tree->Branch("eid_match_SC_EoverP", &eid_match_SC_EoverP_, "eid_match_SC_EoverP/f");
-  tree->Branch("eid_match_SC_dEta", &eid_match_SC_dEta_, "eid_match_SC_dEta/f");
-  tree->Branch("eid_match_SC_dPhi", &eid_match_SC_dPhi_, "eid_match_SC_dPhi/f");
-
-  tree->Branch("eid_shape_full5x5_sigmaIetaIeta", &eid_shape_full5x5_sigmaIetaIeta_, "eid_shape_full5x5_sigmaIetaIeta/f");
-  tree->Branch("eid_shape_full5x5_sigmaIphiIphi", &eid_shape_full5x5_sigmaIphiIphi_, "eid_shape_full5x5_sigmaIphiIphi/f");
-  tree->Branch("eid_shape_full5x5_HoverE", &eid_shape_full5x5_HoverE_, "eid_shape_full5x5_HoverE/f");
-  tree->Branch("eid_shape_full5x5_r9", &eid_shape_full5x5_r9_, "eid_shape_full5x5_r9/f");
-  tree->Branch("eid_shape_full5x5_circularity", &eid_shape_full5x5_circularity_, "eid_shape_full5x5_circularity/f");
-
-  tree->Branch("eid_brem_frac", &eid_brem_frac_, "eid_brem_frac/f");
-
-  tree->Branch("image_gsf_ref_eta", &image_gsf_ref_eta_, "image_gsf_ref_eta/f");
-  tree->Branch("image_gsf_ref_phi", &image_gsf_ref_phi_, "image_gsf_ref_phi/f");
-  tree->Branch("image_gsf_ref_R", &image_gsf_ref_R_, "image_gsf_ref_R/f");
-  tree->Branch("image_gsf_ref_p", &image_gsf_ref_p_, "image_gsf_ref_p/f");
-  tree->Branch("image_gsf_ref_pt", &image_gsf_ref_pt_, "image_gsf_ref_pt/f");
+  // Inputs to RunIIAutumn18 seeding model
+  //@@ Only possible with RECO (requires reducedEcalRecHitsEB collection)
+  //tree->Branch("RunIIAutumn18_trk_pt",&preid_trk_pt_,"RunIIAutumn18_trk_pt/f");
+  //tree->Branch("RunIIAutumn18_trk_eta",&preid_trk_eta_,"RunIIAutumn18_trk_eta/f");
+  //tree->Branch("RunIIAutumn18_trk_phi",&preid_trk_phi_,"RunIIAutumn18_trk_phi/f");
+  //tree->Branch("RunIIAutumn18_trk_p",&preid_trk_p_,"RunIIAutumn18_trk_p/f");
+  //tree->Branch("RunIIAutumn18_trk_nhits",&preid_trk_nhits_,"RunIIAutumn18_trk_nhits/f");
+  //tree->Branch("RunIIAutumn18_trk_high_quality",&preid_trk_high_quality_,"RunIIAutumn18_trk_high_quality/f");
+  //tree->Branch("RunIIAutumn18_trk_chi2red",&preid_trk_chi2red_,"RunIIAutumn18_trk_chi2red/f");
+  //tree->Branch("RunIIAutumn18_rho",&preid_rho_,"RunIIAutumn18_rho/f");
+  //tree->Branch("RunIIAutumn18_ktf_ecal_cluster_e",&preid_ktf_ecal_cluster_e_,"RunIIAutumn18_ktf_ecal_cluster_e/f");
+  //tree->Branch("RunIIAutumn18_ktf_ecal_cluster_deta",&preid_ktf_ecal_cluster_deta_,"RunIIAutumn18_ktf_ecal_cluster_deta/f");
+  //tree->Branch("RunIIAutumn18_ktf_ecal_cluster_dphi",&preid_ktf_ecal_cluster_dphi_,"RunIIAutumn18_ktf_ecal_cluster_dphi/f");
+  //tree->Branch("RunIIAutumn18_ktf_ecal_cluster_e3x3",&preid_ktf_ecal_cluster_e3x3_,"RunIIAutumn18_ktf_ecal_cluster_e3x3/f");
+  //tree->Branch("RunIIAutumn18_ktf_ecal_cluster_e5x5",&preid_ktf_ecal_cluster_e5x5_,"RunIIAutumn18_ktf_ecal_cluster_e5x5/f");
+  //tree->Branch("RunIIAutumn18_ktf_ecal_cluster_covEtaEta",&preid_ktf_ecal_cluster_covEtaEta_,"RunIIAutumn18_ktf_ecal_cluster_covEtaEta/f");
+  //tree->Branch("RunIIAutumn18_ktf_ecal_cluster_covEtaPhi",&preid_ktf_ecal_cluster_covEtaPhi_,"RunIIAutumn18_ktf_ecal_cluster_covEtaPhi/f");
+  //tree->Branch("RunIIAutumn18_ktf_ecal_cluster_covPhiPhi",&preid_ktf_ecal_cluster_covPhiPhi_,"RunIIAutumn18_ktf_ecal_cluster_covPhiPhi/f");
+  //tree->Branch("RunIIAutumn18_ktf_ecal_cluster_r9",&preid_ktf_ecal_cluster_r9_,"RunIIAutumn18_ktf_ecal_cluster_r9/f");
+  //tree->Branch("RunIIAutumn18_ktf_ecal_cluster_circularity",&preid_ktf_ecal_cluster_circularity_,"RunIIAutumn18_ktf_ecal_cluster_circularity/f");
+  //tree->Branch("RunIIAutumn18_ktf_hcal_cluster_e",&preid_ktf_hcal_cluster_e_,"RunIIAutumn18_ktf_hcal_cluster_e/f");
+  //tree->Branch("RunIIAutumn18_ktf_hcal_cluster_deta",&preid_ktf_hcal_cluster_deta_,"RunIIAutumn18_ktf_hcal_cluster_deta/f");
+  //tree->Branch("RunIIAutumn18_ktf_hcal_cluster_dphi",&preid_ktf_hcal_cluster_dphi_,"RunIIAutumn18_ktf_hcal_cluster_dphi/f");
+  //tree->Branch("RunIIAutumn18_gsf_dpt",&preid_gsf_dpt_,"RunIIAutumn18_gsf_dpt/f");
+  //tree->Branch("RunIIAutumn18_trk_gsf_chiratio",&preid_trk_gsf_chiratio_,"RunIIAutumn18_trk_gsf_chiratio/f");
+  //tree->Branch("RunIIAutumn18_gsf_chi2red",&preid_gsf_chi2red_,"RunIIAutumn18_gsf_chi2red/f");
+  //tree->Branch("RunIIAutumn18_trk_dxy_sig",&preid_trk_dxy_sig_,"RunIIAutumn18_trk_dxy_sig/f");
   
-  tree->Branch("image_gen_inner_eta", &image_gen_inner_eta_, "image_gen_inner_eta/f");
-  tree->Branch("image_gen_inner_phi", &image_gen_inner_phi_, "image_gen_inner_phi/f");
-  tree->Branch("image_gen_inner_R", &image_gen_inner_R_, "image_gen_inner_R/f");
-  tree->Branch("image_gen_inner_p", &image_gen_inner_p_, "image_gen_inner_p/f");
-  tree->Branch("image_gen_inner_pt", &image_gen_inner_pt_, "image_gen_inner_pt/f");
+  // Inputs to 2019Aug07 model
 
-  tree->Branch("image_gsf_inner_eta", &image_gsf_inner_eta_, "image_gsf_inner_eta/f");
-  tree->Branch("image_gsf_inner_phi", &image_gsf_inner_phi_, "image_gsf_inner_phi/f");
-  tree->Branch("image_gsf_inner_R", &image_gsf_inner_R_, "image_gsf_inner_R/f");
-  tree->Branch("image_gsf_inner_p", &image_gsf_inner_p_, "image_gsf_inner_p/f");
-  tree->Branch("image_gsf_inner_pt", &image_gsf_inner_pt_, "image_gsf_inner_pt/f");
-  tree->Branch("image_gsf_charge", &image_gsf_charge_, "image_gsf_charge/I");
+  tree->Branch("2019Aug07_trk_p", &eid_trk_p_, "2019Aug07_trk_p/f");
+  tree->Branch("2019Aug07_trk_nhits", &eid_trk_nhits_, "2019Aug07_trk_nhits/f");
+  tree->Branch("2019Aug07_trk_chi2red", &eid_trk_chi2red_, "2019Aug07_trk_chi2red/f");
 
-  tree->Branch("image_gsf_proj_eta", &image_gsf_proj_eta_, "image_gsf_proj_eta/f");
-  tree->Branch("image_gsf_proj_phi", &image_gsf_proj_phi_, "image_gsf_proj_phi/f");
-  tree->Branch("image_gsf_proj_R", &image_gsf_proj_R_, "image_gsf_proj_R/f");
-  tree->Branch("image_gsf_proj_p", &image_gsf_proj_p_, "image_gsf_proj_p/f");
+  tree->Branch("2019Aug07_gsf_nhits", &eid_gsf_nhits_, "2019Aug07_gsf_nhits/f");
+  tree->Branch("2019Aug07_gsf_chi2red", &eid_gsf_chi2red_, "2019Aug07_gsf_chi2red/f");
 
-  tree->Branch("image_gsf_atcalo_eta", &image_gsf_atcalo_eta_, "image_gsf_atcalo_eta/f");
-  tree->Branch("image_gsf_atcalo_phi", &image_gsf_atcalo_phi_, "image_gsf_atcalo_phi/f");
-  tree->Branch("image_gsf_atcalo_R", &image_gsf_atcalo_R_, "image_gsf_atcalo_R/f");
-  tree->Branch("image_gsf_atcalo_p", &image_gsf_atcalo_p_, "image_gsf_atcalo_p/f");
-  
-  tree->Branch("image_clu_n", &image_clu_n_, "image_clu_n/I");
-  tree->Branch("image_clu_eta", &image_clu_eta_, "image_clu_eta[image_clu_n]/f");
-  tree->Branch("image_clu_phi", &image_clu_phi_, "image_clu_phi[image_clu_n]/f");
-  tree->Branch("image_clu_e", &image_clu_e_, "image_clu_e[image_clu_n]/f");
-  tree->Branch("image_clu_nhit", &image_clu_nhit_, "image_clu_nhit[image_clu_n]/I");
+  tree->Branch("2019Aug07_sc_E", &eid_sc_E_, "2019Aug07_sc_E/f");
+  tree->Branch("2019Aug07_sc_eta", &eid_sc_eta_, "2019Aug07_sc_eta/f");
+  tree->Branch("2019Aug07_sc_etaWidth", &eid_sc_etaWidth_, "2019Aug07_sc_etaWidth/f");
+  tree->Branch("2019Aug07_sc_phiWidth", &eid_sc_phiWidth_, "2019Aug07_sc_phiWidth/f");
 
-  tree->Branch("image_pf_n", &image_pf_n_, "image_pf_n/I");
-  tree->Branch("image_pf_eta", &image_pf_eta_, "image_pf_eta[image_pf_n]/f");
-  tree->Branch("image_pf_phi", &image_pf_phi_, "image_pf_phi[image_pf_n]/f");
-  tree->Branch("image_pf_p", &image_pf_p_, "image_pf_p[image_pf_n]/f");
-  tree->Branch("image_pf_pdgid", &image_pf_pdgid_, "image_pf_pdgid[image_pf_n]/I");
-  tree->Branch("image_pf_matched", &image_pf_matched_, "image_pf_matched[image_pf_n]/I");
-  tree->Branch("image_pf_lost", &image_pf_lost_, "image_pf_lost[image_pf_n]/I");
+  tree->Branch("2019Aug07_match_seed_dEta", &eid_match_seed_dEta_, "2019Aug07_match_seed_dEta/f");
+  tree->Branch("2019Aug07_match_eclu_EoverP", &eid_match_eclu_EoverP_, "2019Aug07_match_eclu_EoverP/f");
+  tree->Branch("2019Aug07_match_SC_EoverP", &eid_match_SC_EoverP_, "2019Aug07_match_SC_EoverP/f");
+  tree->Branch("2019Aug07_match_SC_dEta", &eid_match_SC_dEta_, "2019Aug07_match_SC_dEta/f");
+  tree->Branch("2019Aug07_match_SC_dPhi", &eid_match_SC_dPhi_, "2019Aug07_match_SC_dPhi/f");
+
+  tree->Branch("2019Aug07_shape_full5x5_sigmaIetaIeta", &eid_shape_full5x5_sigmaIetaIeta_, "2019Aug07_shape_full5x5_sigmaIetaIeta/f");
+  tree->Branch("2019Aug07_shape_full5x5_sigmaIphiIphi", &eid_shape_full5x5_sigmaIphiIphi_, "2019Aug07_shape_full5x5_sigmaIphiIphi/f");
+  tree->Branch("2019Aug07_shape_full5x5_HoverE", &eid_shape_full5x5_HoverE_, "2019Aug07_shape_full5x5_HoverE/f");
+  tree->Branch("2019Aug07_shape_full5x5_r9", &eid_shape_full5x5_r9_, "2019Aug07_shape_full5x5_r9/f");
+  tree->Branch("2019Aug07_shape_full5x5_circularity", &eid_shape_full5x5_circularity_, "2019Aug07_shape_full5x5_circularity/f");
+
+  tree->Branch("2019Aug07_rho", &eid_rho_, "2019Aug07_rho/f");
+  tree->Branch("2019Aug07_brem_frac", &eid_brem_frac_, "2019Aug07_brem_frac/f");
+  tree->Branch("2019Aug07_ele_pt", &eid_ele_pt_, "2019Aug07_ele_pt/f");
+  tree->Branch("2019Aug07_gsf_bdtout1", &eid_gsf_bdtout1_, "2019Aug07_gsf_bdtout1/f");
+
+  // Inputs to 2020Sept15 model
+
+  tree->Branch("2020Sept15_trk_p", &eid2_trk_p_, "2020Sept15_trk_p/f");
+  tree->Branch("2020Sept15_trk_nhits", &eid2_trk_nhits_, "2020Sept15_trk_nhits/f");
+  tree->Branch("2020Sept15_trk_chi2red", &eid2_trk_chi2red_, "2020Sept15_trk_chi2red/f");
+  tree->Branch("2020Sept15_trk_dr", &eid2_trk_dr_, "2020Sept15_trk_dr/f");
+
+  tree->Branch("2020Sept15_gsf_nhits", &eid2_gsf_nhits_, "2020Sept15_gsf_nhits/f");
+  tree->Branch("2020Sept15_gsf_chi2red", &eid2_gsf_chi2red_, "2020Sept15_gsf_chi2red/f");
+  tree->Branch("2020Sept15_gsf_mode_p", &eid2_gsf_mode_p_, "2020Sept15_gsf_mode_p/f");
+  tree->Branch("2020Sept15_gsf_dr", &eid2_gsf_dr_, "2020Sept15_gsf_dr/f");
+
+  tree->Branch("2020Sept15_sc_E", &eid2_sc_E_, "2020Sept15_sc_E/f");
+  tree->Branch("2020Sept15_sc_eta", &eid2_sc_eta_, "2020Sept15_sc_eta/f");
+  tree->Branch("2020Sept15_sc_etaWidth", &eid2_sc_etaWidth_, "2020Sept15_sc_etaWidth/f");
+  tree->Branch("2020Sept15_sc_phiWidth", &eid2_sc_phiWidth_, "2020Sept15_sc_phiWidth/f");
+  tree->Branch("2020Sept15_sc_Nclus", &eid2_sc_Nclus_, "2020Sept15_sc_Nclus/f");
+
+  tree->Branch("2020Sept15_match_seed_dEta", &eid2_match_seed_dEta_, "2020Sept15_match_seed_dEta/f");
+  tree->Branch("2020Sept15_match_eclu_EoverP", &eid2_match_eclu_EoverP_, "2020Sept15_match_eclu_EoverP/f");
+  tree->Branch("2020Sept15_match_SC_EoverP", &eid2_match_SC_EoverP_, "2020Sept15_match_SC_EoverP/f");
+  tree->Branch("2020Sept15_match_SC_dEta", &eid2_match_SC_dEta_, "2020Sept15_match_SC_dEta/f");
+  tree->Branch("2020Sept15_match_SC_dPhi", &eid2_match_SC_dPhi_, "2020Sept15_match_SC_dPhi/f");
+
+  tree->Branch("2020Sept15_shape_full5x5_r9", &eid2_shape_full5x5_r9_, "2020Sept15_shape_full5x5_r9/f");
+  tree->Branch("2020Sept15_shape_full5x5_HoverE", &eid2_shape_full5x5_HoverE_, "2020Sept15_shape_full5x5_HoverE/f");
+
+  tree->Branch("2020Sept15_sc_clus1_nxtal", &eid2_sc_clus1_nxtal_, "2020Sept15_sc_clus1_nxtal/f");
+  tree->Branch("2020Sept15_sc_clus1_E", &eid2_sc_clus1_E_, "2020Sept15_sc_clus1_E/f");
+  tree->Branch("2020Sept15_sc_clus1_E_ov_p", &eid2_sc_clus1_E_ov_p_, "2020Sept15_sc_clus1_E_ov_p/f");
+  tree->Branch("2020Sept15_sc_clus1_deta", &eid2_sc_clus1_deta_, "2020Sept15_sc_clus1_deta/f");
+  tree->Branch("2020Sept15_sc_clus1_dphi", &eid2_sc_clus1_dphi_, "2020Sept15_sc_clus1_dphi/f");
+
+  tree->Branch("2020Sept15_sc_clus2_E", &eid2_sc_clus2_E_, "2020Sept15_sc_clus2_E/f");
+  tree->Branch("2020Sept15_sc_clus2_E_ov_p", &eid2_sc_clus2_E_ov_p_, "2020Sept15_sc_clus2_E_ov_p/f");
+  tree->Branch("2020Sept15_sc_clus2_dphi", &eid2_sc_clus2_dphi_, "2020Sept15_sc_clus2_dphi/f");
+  tree->Branch("2020Sept15_sc_clus2_deta", &eid2_sc_clus2_deta_, "2020Sept15_sc_clus2_deta/f");
+
+  tree->Branch("2020Sept15_rho", &eid2_rho_, "2020Sept15_rho/f");
+  tree->Branch("2020Sept15_brem_frac", &eid2_brem_frac_, "2020Sept15_brem_frac/f");
+  tree->Branch("2020Sept15_core_shFracHits", &eid2_core_shFracHits_, "2020Sept15_core_shFracHits/f");
+  tree->Branch("2020Sept15_gsf_bdtout1", &eid2_gsf_bdtout1_, "2020Sept15_gsf_bdtout1/f");
+
+//  tree->Branch("image_gsf_ref_eta", &image_gsf_ref_eta_, "image_gsf_ref_eta/f");
+//  tree->Branch("image_gsf_ref_phi", &image_gsf_ref_phi_, "image_gsf_ref_phi/f");
+//  tree->Branch("image_gsf_ref_R", &image_gsf_ref_R_, "image_gsf_ref_R/f");
+//  tree->Branch("image_gsf_ref_p", &image_gsf_ref_p_, "image_gsf_ref_p/f");
+//  tree->Branch("image_gsf_ref_pt", &image_gsf_ref_pt_, "image_gsf_ref_pt/f");
+//  
+//  tree->Branch("image_gen_inner_eta", &image_gen_inner_eta_, "image_gen_inner_eta/f");
+//  tree->Branch("image_gen_inner_phi", &image_gen_inner_phi_, "image_gen_inner_phi/f");
+//  tree->Branch("image_gen_inner_R", &image_gen_inner_R_, "image_gen_inner_R/f");
+//  tree->Branch("image_gen_inner_p", &image_gen_inner_p_, "image_gen_inner_p/f");
+//  tree->Branch("image_gen_inner_pt", &image_gen_inner_pt_, "image_gen_inner_pt/f");
+//
+//  tree->Branch("image_gsf_inner_eta", &image_gsf_inner_eta_, "image_gsf_inner_eta/f");
+//  tree->Branch("image_gsf_inner_phi", &image_gsf_inner_phi_, "image_gsf_inner_phi/f");
+//  tree->Branch("image_gsf_inner_R", &image_gsf_inner_R_, "image_gsf_inner_R/f");
+//  tree->Branch("image_gsf_inner_p", &image_gsf_inner_p_, "image_gsf_inner_p/f");
+//  tree->Branch("image_gsf_inner_pt", &image_gsf_inner_pt_, "image_gsf_inner_pt/f");
+//  tree->Branch("image_gsf_charge", &image_gsf_charge_, "image_gsf_charge/I");
+//
+//  tree->Branch("image_gsf_proj_eta", &image_gsf_proj_eta_, "image_gsf_proj_eta/f");
+//  tree->Branch("image_gsf_proj_phi", &image_gsf_proj_phi_, "image_gsf_proj_phi/f");
+//  tree->Branch("image_gsf_proj_R", &image_gsf_proj_R_, "image_gsf_proj_R/f");
+//  tree->Branch("image_gsf_proj_p", &image_gsf_proj_p_, "image_gsf_proj_p/f");
+//
+//  tree->Branch("image_gsf_atcalo_eta", &image_gsf_atcalo_eta_, "image_gsf_atcalo_eta/f");
+//  tree->Branch("image_gsf_atcalo_phi", &image_gsf_atcalo_phi_, "image_gsf_atcalo_phi/f");
+//  tree->Branch("image_gsf_atcalo_R", &image_gsf_atcalo_R_, "image_gsf_atcalo_R/f");
+//  tree->Branch("image_gsf_atcalo_p", &image_gsf_atcalo_p_, "image_gsf_atcalo_p/f");
+//  
+//  tree->Branch("image_clu_n", &image_clu_n_, "image_clu_n/I");
+//  tree->Branch("image_clu_eta", &image_clu_eta_, "image_clu_eta[image_clu_n]/f");
+//  tree->Branch("image_clu_phi", &image_clu_phi_, "image_clu_phi[image_clu_n]/f");
+//  tree->Branch("image_clu_e", &image_clu_e_, "image_clu_e[image_clu_n]/f");
+//  tree->Branch("image_clu_nhit", &image_clu_nhit_, "image_clu_nhit[image_clu_n]/I");
+//
+//  tree->Branch("image_pf_n", &image_pf_n_, "image_pf_n/I");
+//  tree->Branch("image_pf_eta", &image_pf_eta_, "image_pf_eta[image_pf_n]/f");
+//  tree->Branch("image_pf_phi", &image_pf_phi_, "image_pf_phi[image_pf_n]/f");
+//  tree->Branch("image_pf_p", &image_pf_p_, "image_pf_p[image_pf_n]/f");
+//  tree->Branch("image_pf_pdgid", &image_pf_pdgid_, "image_pf_pdgid[image_pf_n]/I");
+//  tree->Branch("image_pf_matched", &image_pf_matched_, "image_pf_matched[image_pf_n]/I");
+//  tree->Branch("image_pf_lost", &image_pf_lost_, "image_pf_lost[image_pf_n]/I");
 
 }
 
@@ -353,35 +425,33 @@ void IDNtuple::fill_preid( const reco::PreId& preid_ecal,
   features.set( preid_ecal, preid_hcal, rho, spot, ecal_tools );
   auto vfeatures = features.get();
 
-  //@@ ADD THESE PREID VARS TO THE NTUPLE???
-
-//  //@@ ORDER IS IMPORTANT!
-//  size_t idx = 0;
-//  preid_trk_pt_ = vfeatures[idx++];
-//  preid_trk_eta_ = vfeatures[idx++];
-//  preid_trk_phi_ = vfeatures[idx++];
-//  preid_trk_p_ = vfeatures[idx++];
-//  preid_trk_nhits_ = vfeatures[idx++];
-//  preid_trk_high_quality_ = vfeatures[idx++];
-//  preid_trk_chi2red_ = vfeatures[idx++];
-//  preid_rho_ = vfeatures[idx++];
-//  preid_ktf_ecal_cluster_e_ = vfeatures[idx++];
-//  preid_ktf_ecal_cluster_deta_ = vfeatures[idx++];
-//  preid_ktf_ecal_cluster_dphi_ = vfeatures[idx++];
-//  preid_ktf_ecal_cluster_e3x3_ = vfeatures[idx++];
-//  preid_ktf_ecal_cluster_e5x5_ = vfeatures[idx++];
-//  preid_ktf_ecal_cluster_covEtaEta_ = vfeatures[idx++];
-//  preid_ktf_ecal_cluster_covEtaPhi_ = vfeatures[idx++];
-//  preid_ktf_ecal_cluster_covPhiPhi_ = vfeatures[idx++];
-//  preid_ktf_ecal_cluster_r9_ = vfeatures[idx++];
-//  preid_ktf_ecal_cluster_circularity_ = vfeatures[idx++];
-//  preid_ktf_hcal_cluster_e_ = vfeatures[idx++];
-//  preid_ktf_hcal_cluster_deta_ = vfeatures[idx++];
-//  preid_ktf_hcal_cluster_dphi_ = vfeatures[idx++];
-//  preid_gsf_dpt_ = vfeatures[idx++];
-//  preid_trk_gsf_chiratio_ = vfeatures[idx++];
-//  preid_gsf_chi2red_ = vfeatures[idx++];
-//  preid_trk_dxy_sig_ = vfeatures[idx++]; // must be last (not used by unbiased model)
+  //@@ ORDER IS IMPORTANT!
+  size_t idx = 0;
+  preid_trk_pt_ = vfeatures[idx++];
+  preid_trk_eta_ = vfeatures[idx++];
+  preid_trk_phi_ = vfeatures[idx++];
+  preid_trk_p_ = vfeatures[idx++];
+  preid_trk_nhits_ = vfeatures[idx++];
+  preid_trk_high_quality_ = vfeatures[idx++];
+  preid_trk_chi2red_ = vfeatures[idx++];
+  preid_rho_ = vfeatures[idx++];
+  preid_ktf_ecal_cluster_e_ = vfeatures[idx++];
+  preid_ktf_ecal_cluster_deta_ = vfeatures[idx++];
+  preid_ktf_ecal_cluster_dphi_ = vfeatures[idx++];
+  preid_ktf_ecal_cluster_e3x3_ = vfeatures[idx++];
+  preid_ktf_ecal_cluster_e5x5_ = vfeatures[idx++];
+  preid_ktf_ecal_cluster_covEtaEta_ = vfeatures[idx++];
+  preid_ktf_ecal_cluster_covEtaPhi_ = vfeatures[idx++];
+  preid_ktf_ecal_cluster_covPhiPhi_ = vfeatures[idx++];
+  preid_ktf_ecal_cluster_r9_ = vfeatures[idx++];
+  preid_ktf_ecal_cluster_circularity_ = vfeatures[idx++];
+  preid_ktf_hcal_cluster_e_ = vfeatures[idx++];
+  preid_ktf_hcal_cluster_deta_ = vfeatures[idx++];
+  preid_ktf_hcal_cluster_dphi_ = vfeatures[idx++];
+  preid_gsf_dpt_ = vfeatures[idx++];
+  preid_trk_gsf_chiratio_ = vfeatures[idx++];
+  preid_gsf_chi2red_ = vfeatures[idx++];
+  preid_trk_dxy_sig_ = vfeatures[idx++]; // must be last (not used by unbiased model)
 
 }
 
@@ -490,15 +560,17 @@ void IDNtuple::fill_pfgsf( const reco::GsfTrackPtr pfgsf,
 /////////////////////////////////////////////////////////////////////////////////
 //
 void IDNtuple::fill_ele( const reco::GsfElectronPtr ele,
-			 float mva_value,
-			 float mva_value_retrained,
-			 float mva_value_depth10,
-			 float mva_value_depth11,
-			 float mva_value_depth13,
-			 float mva_value_depth15,
+			 float mva_value_pf,
+			 float mva_value_pf_retrained, 
+			 float mva_value_2019Aug07,
+			 float mva_value_depth10_2020Sept15,
+			 float mva_value_depth11_2020Nov28,
+			 float mva_value_depth13_2021May17,
+			 float mva_value_depth15_unknown,
 			 float ele_conv_vtx_fit_prob,
 			 const double rho,
-			 bool is_egamma ) {
+			 bool is_egamma,
+			 float seed_unbiased ) {
 
   // Kinematics
   if ( is_egamma ) {
@@ -519,43 +591,89 @@ void IDNtuple::fill_ele( const reco::GsfElectronPtr ele,
   }
   
   // MVA IDs: only filled if 'ValueMap->size() == electrons->size()' in IDFeatures::analyze()
-  if ( mva_value > -666. ) { ele_mva_value_ = mva_value; }
-  if ( mva_value_retrained > -666. ) { ele_mva_value_retrained_ = mva_value_retrained; }
+  if ( mva_value_pf > -666. )                 { ele_mva_value_PF_           = mva_value_pf; }
+  if ( mva_value_pf_retrained > -666. )       { ele_mva_value_PF_retrained_ = mva_value_pf_retrained; }
+  if ( mva_value_2019Aug07 > -666. )          { ele_mva_value_2019Aug07_    = mva_value_2019Aug07; }
+  if ( mva_value_depth10_2020Sept15 > -666. ) { ele_mva_value_2020Sept15_   = mva_value_depth10_2020Sept15; }
+  if ( mva_value_depth11_2020Nov28 > -666. )  { ele_mva_value_2020Nov28_    = mva_value_depth11_2020Nov28; }
+  if ( mva_value_depth13_2021May17 > -666. )  { ele_mva_value_2021May17_    = mva_value_depth13_2021May17; }
+  if ( mva_value_depth15_unknown > -666. )    { ele_mva_value_unknown_      = mva_value_depth15_unknown; }
+
   if ( ele_conv_vtx_fit_prob > -666. ) { ele_conv_vtx_fit_prob_ = ele_conv_vtx_fit_prob; }
-  if ( mva_value_depth10 > -666. ) { ele_mva_value_depth10_ = mva_value_depth10; }
-  if ( mva_value_depth11 > -666. ) { ele_mva_value_depth11_ = mva_value_depth11; }
-  if ( mva_value_depth13 > -666. ) { ele_mva_value_depth13_ = mva_value_depth13; }
-  if ( mva_value_depth15 > -666. ) { ele_mva_value_depth15_ = mva_value_depth15; }
 
-  // Set Electron variables
-  lowptgsfeleid::Features features;
-  features.set(ele,rho);
-  auto vfeatures = features.get();
+  {
+    // Set Electron variables for 2019Aug07
+    lowptgsfeleid::Features features;
+    features.set(ele,rho,seed_unbiased);
+    auto vfeatures = features.get();
+    
+    size_t idx = 0; //@@ ORDER IS IMPORTANT!
+    eid_rho_ = vfeatures[idx++];
+    eid_ele_pt_ = vfeatures[idx++];
+    eid_sc_eta_ = vfeatures[idx++];
+    eid_shape_full5x5_sigmaIetaIeta_ = vfeatures[idx++];
+    eid_shape_full5x5_sigmaIphiIphi_ = vfeatures[idx++];
+    eid_shape_full5x5_circularity_ = vfeatures[idx++];
+    eid_shape_full5x5_r9_ = vfeatures[idx++];
+    eid_sc_etaWidth_ = vfeatures[idx++];
+    eid_sc_phiWidth_ = vfeatures[idx++];
+    eid_shape_full5x5_HoverE_ = vfeatures[idx++];
+    eid_trk_nhits_ = vfeatures[idx++];
+    eid_trk_chi2red_ = vfeatures[idx++];
+    eid_gsf_chi2red_ = vfeatures[idx++];
+    eid_brem_frac_ = vfeatures[idx++];
+    eid_gsf_nhits_ = vfeatures[idx++];
+    eid_match_SC_EoverP_ = vfeatures[idx++];
+    eid_match_eclu_EoverP_ = vfeatures[idx++];
+    eid_match_SC_dEta_ = vfeatures[idx++];
+    eid_match_SC_dPhi_ = vfeatures[idx++];
+    eid_match_seed_dEta_ = vfeatures[idx++];
+    eid_sc_E_ = vfeatures[idx++];
+    eid_trk_p_ = vfeatures[idx++];
+    eid_gsf_bdtout1_ = vfeatures[idx++];
+  }
 
-  //@@ ORDER IS IMPORTANT!
-  size_t idx = 0;
-  eid_rho_ = vfeatures[idx++];
-  eid_ele_pt_ = vfeatures[idx++];
-  eid_sc_eta_ = vfeatures[idx++];
-  eid_shape_full5x5_sigmaIetaIeta_ = vfeatures[idx++];
-  eid_shape_full5x5_sigmaIphiIphi_ = vfeatures[idx++];
-  eid_shape_full5x5_circularity_ = vfeatures[idx++];
-  eid_shape_full5x5_r9_ = vfeatures[idx++];
-  eid_sc_etaWidth_ = vfeatures[idx++];
-  eid_sc_phiWidth_ = vfeatures[idx++];
-  eid_shape_full5x5_HoverE_ = vfeatures[idx++];
-  eid_trk_nhits_ = vfeatures[idx++];
-  eid_trk_chi2red_ = vfeatures[idx++];
-  eid_gsf_chi2red_ = vfeatures[idx++];
-  eid_brem_frac_ = vfeatures[idx++];
-  eid_gsf_nhits_ = vfeatures[idx++];
-  eid_match_SC_EoverP_ = vfeatures[idx++];
-  eid_match_eclu_EoverP_ = vfeatures[idx++];
-  eid_match_SC_dEta_ = vfeatures[idx++];
-  eid_match_SC_dPhi_ = vfeatures[idx++];
-  eid_match_seed_dEta_ = vfeatures[idx++];
-  eid_sc_E_ = vfeatures[idx++];
-  eid_trk_p_ = vfeatures[idx++];
+  {
+    // Set Electron variables for 2020Sept15
+    lowptgsfeleidextra::Features features;
+    features.set(ele,rho,seed_unbiased);
+    auto vfeatures = features.get();
+    
+    size_t idx = 0; //@@ ORDER IS IMPORTANT!
+    eid2_rho_ = vfeatures[idx++]; 
+    eid2_sc_eta_ = vfeatures[idx++];
+    eid2_shape_full5x5_r9_ = vfeatures[idx++];
+    eid2_sc_etaWidth_ = vfeatures[idx++];
+    eid2_sc_phiWidth_ = vfeatures[idx++];
+    eid2_shape_full5x5_HoverE_ = vfeatures[idx++];
+    eid2_trk_nhits_ = vfeatures[idx++];
+    eid2_trk_chi2red_ = vfeatures[idx++];
+    eid2_gsf_chi2red_ = vfeatures[idx++];
+    eid2_brem_frac_ = vfeatures[idx++];
+    eid2_gsf_nhits_ = vfeatures[idx++];
+    eid2_match_SC_EoverP_ = vfeatures[idx++];
+    eid2_match_eclu_EoverP_ = vfeatures[idx++];
+    eid2_match_SC_dEta_ = vfeatures[idx++];
+    eid2_match_SC_dPhi_ = vfeatures[idx++];
+    eid2_match_seed_dEta_ = vfeatures[idx++];
+    eid2_sc_E_ = vfeatures[idx++];
+    eid2_trk_p_ = vfeatures[idx++];
+    eid2_gsf_mode_p_ = vfeatures[idx++];
+    eid2_core_shFracHits_ = vfeatures[idx++];
+    eid2_gsf_bdtout1_ = vfeatures[idx++];
+    eid2_gsf_dr_ = vfeatures[idx++];
+    eid2_trk_dr_ = vfeatures[idx++];
+    eid2_sc_Nclus_ = vfeatures[idx++];
+    eid2_sc_clus1_nxtal_ = vfeatures[idx++];
+    eid2_sc_clus1_dphi_ = vfeatures[idx++];
+    eid2_sc_clus2_dphi_ = vfeatures[idx++];
+    eid2_sc_clus1_deta_ = vfeatures[idx++];
+    eid2_sc_clus2_deta_ = vfeatures[idx++];
+    eid2_sc_clus1_E_ = vfeatures[idx++];
+    eid2_sc_clus2_E_ = vfeatures[idx++];
+    eid2_sc_clus1_E_ov_p_ = vfeatures[idx++];
+    eid2_sc_clus2_E_ov_p_ = vfeatures[idx++];
+  }
 
 }
 
