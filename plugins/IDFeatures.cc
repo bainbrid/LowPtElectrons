@@ -1207,7 +1207,7 @@ void IDFeatures::fill( bool is_signal_ele,
       //  conv_vtx_fit_prob = convVtxFitProb->get( matched_ele->second.key() );
       //}
       
-      ntuple_.fill_ele( matched_ele->second, mva_value, mva_id, 
+      ntuple_.fill_ele( matched_ele->second, mva_value, mva_id, mva_id, 
 			-999., -999., -999., -999., 
 			conv_vtx_fit_prob, *rhoH_ );
       
