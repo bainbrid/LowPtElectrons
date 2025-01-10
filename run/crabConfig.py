@@ -4,7 +4,7 @@ from CRABClient.UserUtilities import config
 from datetime import date
 import time
 
-dataset = ["mc","data"][0]
+dataset = ["mc","data"][1]
 
 conf = {
     "mc":{
@@ -43,7 +43,7 @@ if dataset=="data": config.Data.inputBlocks=conf['inputBlocks']
 config.Data.splitting = 'FileBased'
 config.Data.unitsPerJob = 1
 config.Data.totalUnits = -1
-config.Data.outLFNDirBase = '/store/user/bainbrid/work/ntuples/'+folder # maps onto /eos/user/b/bainbrid/
+config.Data.outLFNDirBase = '/store/user/bainbrid/ntuples/'+folder # maps onto /eos/user/b/bainbrid/
 config.Data.publication = False
 
 config.section_('JobType')
@@ -51,4 +51,5 @@ config.JobType.allowUndistributedCMSSW = True
 config.JobType.inputFiles = ["../../../PhysicsTools/BParkingNano/test/lowPtEleReg_2018_02062020_nv.db"]
 
 config.section_('Site')
-config.Site.storageSite = 'T3_CH_CERNBOX'
+#config.Site.storageSite = 'T3_CH_CERNBOX'
+config.Site.storageSite = 'T2_UK_London_IC'
