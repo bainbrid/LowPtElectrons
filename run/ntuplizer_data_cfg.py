@@ -24,12 +24,11 @@ fileNames_cli = options.inputFiles
 
 # MINIAOD:
 fileNames_miniaod = [
-    #'/store/data/Run2018D/ParkingBPH1/MINIAOD/UL2018_MiniAODv2-v1/50002/A16E8E15-1DBF-5044-A16D-88FC78887F59.root',
-    #'/store/data/Run2018B/ParkingBPH4/MINIAOD/05May2019-v2/230000/6B5A24B1-0E6E-504B-8331-BD899EB60110.root',
-    '/store/data/Run2018D/ParkingBPH1/MINIAOD/05May2019promptD-v1/130000/00141A1E-02F3-0B4F-9128-2CE371D069B3.root',
+    #'file:/eos/user/b/bainbrid/samples/LowPtElectrons/10_2_X/ParkingBPH1/Run2018D-05May2019promptD-v1/MINIAOD/00141A1E-02F3-0B4F-9128-2CE371D069B3.root', # 40696 events
+    '/store/data/Run2018D/ParkingBPH1/MINIAOD/05May2019promptD-v1/130000/00141A1E-02F3-0B4F-9128-2CE371D069B3.root', # 40696 events
 ]
 fileNames_miniaod_UL = [
-    '/store/data/Run2018D/ParkingBPH1/MINIAOD/UL2018_MiniAODv2-v1/2530000/521F0FA1-D91E-ED4D-8920-5BB1E7CDDE38.root'
+    '/store/data/Run2018D/ParkingBPH1/MINIAOD/UL2018_MiniAODv2-v1/2530000/521F0FA1-D91E-ED4D-8920-5BB1E7CDDE38.root' # 85447 events
 ]
 
 # AOD:

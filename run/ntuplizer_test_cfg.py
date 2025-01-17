@@ -26,32 +26,39 @@ process = cms.Process('TEST')
 # Command line 
 fileNames_cli = options.inputFiles
 
-# MINIAOD:
-fileNames_miniaod_BuToKee_MufilterPt6 = ['/store/mc/RunIIAutumn18MiniAOD/BuToKee_MufilterPt6A_SoftQCDnonD_TuneCP5_13TeV-pythia8-evtgen/MINIAODSIM/PUPoissonAve20_BParking_102X_upgrade2018_realistic_v15-v1/00000/01501E26-9276-7149-A74D-5E4B2E028DC8.root']
-fileNames_miniaod_BuToKJpsi_Toee_Mufilter = ['/store/mc/RunIIAutumn18MiniAOD/BuToKJpsi_Toee_Mufilter_SoftQCDnonD_TuneCP5_13TeV-pythia8-evtgen/MINIAODSIM/PUPoissonAve20_BParking_102X_upgrade2018_realistic_v15_ext1-v2/280000/C842E5BC-A265-424C-921B-8BF1913D73C4.root']
-fileNames_miniaod_BuToKJpsi_Toee_Mufilter_local = ['file:./root_files/C842E5BC-A265-424C-921B-8BF1913D73C4.root']
-fileNames_miniaod_BuToKee_Mufilter = [ # 17449 events
-    '/store/mc/RunIIAutumn18MiniAOD/BuToKee_Mufilter_SoftQCDnonD_TuneCP5_13TeV-pythia8-evtgen/MINIAODSIM/PUPoissonAve20_BParking_102X_upgrade2018_realistic_v15-v2/60000/5EA6D799-A04A-1D42-A76B-6A564B28B7AF.root',
-    '/store/mc/RunIIAutumn18MiniAOD/BuToKee_Mufilter_SoftQCDnonD_TuneCP5_13TeV-pythia8-evtgen/MINIAODSIM/PUPoissonAve20_BParking_102X_upgrade2018_realistic_v15-v2/60000/5A729845-ECB4-8E47-AF73-52C79F53B0B2.root',
-    '/store/mc/RunIIAutumn18MiniAOD/BuToKee_Mufilter_SoftQCDnonD_TuneCP5_13TeV-pythia8-evtgen/MINIAODSIM/PUPoissonAve20_BParking_102X_upgrade2018_realistic_v15-v2/60000/5270FDD3-DA34-C444-B7DD-B8A84A257BCE.root',
-    '/store/mc/RunIIAutumn18MiniAOD/BuToKee_Mufilter_SoftQCDnonD_TuneCP5_13TeV-pythia8-evtgen/MINIAODSIM/PUPoissonAve20_BParking_102X_upgrade2018_realistic_v15-v2/60000/4D1D7852-44FB-0E4F-882D-1F42B6B81722.root',
-    '/store/mc/RunIIAutumn18MiniAOD/BuToKee_Mufilter_SoftQCDnonD_TuneCP5_13TeV-pythia8-evtgen/MINIAODSIM/PUPoissonAve20_BParking_102X_upgrade2018_realistic_v15-v2/60000/3200A640-1F5C-B44E-89C1-F6CFD4FC3BD9.root',
-    '/store/mc/RunIIAutumn18MiniAOD/BuToKee_Mufilter_SoftQCDnonD_TuneCP5_13TeV-pythia8-evtgen/MINIAODSIM/PUPoissonAve20_BParking_102X_upgrade2018_realistic_v15-v2/60000/26FF8646-13A8-6648-9717-340AE968A408.root',
-    '/store/mc/RunIIAutumn18MiniAOD/BuToKee_Mufilter_SoftQCDnonD_TuneCP5_13TeV-pythia8-evtgen/MINIAODSIM/PUPoissonAve20_BParking_102X_upgrade2018_realistic_v15-v2/60000/0E7ECF47-95EE-6449-9CB2-E06BAF618B3C.root',
-]
-fileNames_miniaod_BuToKJpsi_Toee_Mufilter_derived = ['/store/mc/RunIIAutumn18MiniAOD/BuToKJpsi_Toee_Mufilter_SoftQCDnonD_TuneCP5_13TeV-pythia8-evtgen/MINIAODSIM/PUPoissonAve20_BParking_102X_upgrade2018_realistic_v15-v2/70000/5955A84F-6A21-9C49-9948-0697A60262A0.root']
+## MINIAOD:
+#fileNames_miniaod_BuToKee_MufilterPt6 = ['/store/mc/RunIIAutumn18MiniAOD/BuToKee_MufilterPt6A_SoftQCDnonD_TuneCP5_13TeV-pythia8-evtgen/MINIAODSIM/PUPoissonAve20_BParking_102X_upgrade2018_realistic_v15-v1/00000/01501E26-9276-7149-A74D-5E4B2E028DC8.root']
+#fileNames_miniaod_BuToKJpsi_Toee_Mufilter = ['/store/mc/RunIIAutumn18MiniAOD/BuToKJpsi_Toee_Mufilter_SoftQCDnonD_TuneCP5_13TeV-pythia8-evtgen/MINIAODSIM/PUPoissonAve20_BParking_102X_upgrade2018_realistic_v15_ext1-v2/280000/C842E5BC-A265-424C-921B-8BF1913D73C4.root']
+#fileNames_miniaod_BuToKJpsi_Toee_Mufilter_local = ['file:./root_files/C842E5BC-A265-424C-921B-8BF1913D73C4.root']
+#fileNames_miniaod_BuToKee_Mufilter = [ # 17449 events
+#    '/store/mc/RunIIAutumn18MiniAOD/BuToKee_Mufilter_SoftQCDnonD_TuneCP5_13TeV-pythia8-evtgen/MINIAODSIM/PUPoissonAve20_BParking_102X_upgrade2018_realistic_v15-v2/60000/5EA6D799-A04A-1D42-A76B-6A564B28B7AF.root',
+#    '/store/mc/RunIIAutumn18MiniAOD/BuToKee_Mufilter_SoftQCDnonD_TuneCP5_13TeV-pythia8-evtgen/MINIAODSIM/PUPoissonAve20_BParking_102X_upgrade2018_realistic_v15-v2/60000/5A729845-ECB4-8E47-AF73-52C79F53B0B2.root',
+#    '/store/mc/RunIIAutumn18MiniAOD/BuToKee_Mufilter_SoftQCDnonD_TuneCP5_13TeV-pythia8-evtgen/MINIAODSIM/PUPoissonAve20_BParking_102X_upgrade2018_realistic_v15-v2/60000/5270FDD3-DA34-C444-B7DD-B8A84A257BCE.root',
+#    '/store/mc/RunIIAutumn18MiniAOD/BuToKee_Mufilter_SoftQCDnonD_TuneCP5_13TeV-pythia8-evtgen/MINIAODSIM/PUPoissonAve20_BParking_102X_upgrade2018_realistic_v15-v2/60000/4D1D7852-44FB-0E4F-882D-1F42B6B81722.root',
+#    '/store/mc/RunIIAutumn18MiniAOD/BuToKee_Mufilter_SoftQCDnonD_TuneCP5_13TeV-pythia8-evtgen/MINIAODSIM/PUPoissonAve20_BParking_102X_upgrade2018_realistic_v15-v2/60000/3200A640-1F5C-B44E-89C1-F6CFD4FC3BD9.root',
+#    '/store/mc/RunIIAutumn18MiniAOD/BuToKee_Mufilter_SoftQCDnonD_TuneCP5_13TeV-pythia8-evtgen/MINIAODSIM/PUPoissonAve20_BParking_102X_upgrade2018_realistic_v15-v2/60000/26FF8646-13A8-6648-9717-340AE968A408.root',
+#    '/store/mc/RunIIAutumn18MiniAOD/BuToKee_Mufilter_SoftQCDnonD_TuneCP5_13TeV-pythia8-evtgen/MINIAODSIM/PUPoissonAve20_BParking_102X_upgrade2018_realistic_v15-v2/60000/0E7ECF47-95EE-6449-9CB2-E06BAF618B3C.root',
+#]
+#fileNames_miniaod_BuToKJpsi_Toee_Mufilter_derived = ['/store/mc/RunIIAutumn18MiniAOD/BuToKJpsi_Toee_Mufilter_SoftQCDnonD_TuneCP5_13TeV-pythia8-evtgen/MINIAODSIM/PUPoissonAve20_BParking_102X_upgrade2018_realistic_v15-v2/70000/5955A84F-6A21-9C49-9948-0697A60262A0.root']
+#
+## AOD:
+#fileNames_aod_BuToKee_Mufilter = [ # 17449 events = 9558 + 6230 + 1661
+#    #'/store/mc/RunIIAutumn18RECOBParking/BuToKee_Mufilter_SoftQCDnonD_TuneCP5_13TeV-pythia8-evtgen/AODSIM/PUPoissonAve20_BParking_102X_upgrade2018_realistic_v15-v2/60000/792E843F-F82F-4642-97D7-A7625ABA83D2.root',
+#    #'/store/mc/RunIIAutumn18RECOBParking/BuToKee_Mufilter_SoftQCDnonD_TuneCP5_13TeV-pythia8-evtgen/AODSIM/PUPoissonAve20_BParking_102X_upgrade2018_realistic_v15-v2/60000/DB36F8A5-E77B-4547-9320-6DD1FA5BA58F.root',
+#    #'/store/mc/RunIIAutumn18RECOBParking/BuToKee_Mufilter_SoftQCDnonD_TuneCP5_13TeV-pythia8-evtgen/AODSIM/PUPoissonAve20_BParking_102X_upgrade2018_realistic_v15-v2/60000/F617C5AF-E3AB-754D-BFFC-C004AAB2887E.root',
+#    'file:/afs/cern.ch/user/b/bainbrid/eos/WORK/dev/revisit-seed/CMSSW_10_2_14/src/AODSIM_mc.root'
+#]
 
-# AOD:
-fileNames_aod_BuToKee_Mufilter = [ # 17449 events = 9558 + 6230 + 1661
-    #'/store/mc/RunIIAutumn18RECOBParking/BuToKee_Mufilter_SoftQCDnonD_TuneCP5_13TeV-pythia8-evtgen/AODSIM/PUPoissonAve20_BParking_102X_upgrade2018_realistic_v15-v2/60000/792E843F-F82F-4642-97D7-A7625ABA83D2.root',
-    #'/store/mc/RunIIAutumn18RECOBParking/BuToKee_Mufilter_SoftQCDnonD_TuneCP5_13TeV-pythia8-evtgen/AODSIM/PUPoissonAve20_BParking_102X_upgrade2018_realistic_v15-v2/60000/DB36F8A5-E77B-4547-9320-6DD1FA5BA58F.root',
-    #'/store/mc/RunIIAutumn18RECOBParking/BuToKee_Mufilter_SoftQCDnonD_TuneCP5_13TeV-pythia8-evtgen/AODSIM/PUPoissonAve20_BParking_102X_upgrade2018_realistic_v15-v2/60000/F617C5AF-E3AB-754D-BFFC-C004AAB2887E.root',
-    'file:/afs/cern.ch/user/b/bainbrid/eos/WORK/dev/revisit-seed/CMSSW_10_2_14/src/AODSIM_mc.root'
-]
-
-# nonres_large: /BuToKee_MufilterPt6_SoftQCDnonD_TuneCP5_13TeV-pythia8-evtgen/RunIIAutumn18MiniAOD-PUPoissonAve20_BParking_102X_upgrade2018_realistic_v15-v1/MINIAODSIM
 nonres_large = [
     '/store/mc/RunIIAutumn18MiniAOD/BuToKee_MufilterPt6_SoftQCDnonD_TuneCP5_13TeV-pythia8-evtgen/MINIAODSIM/PUPoissonAve20_BParking_102X_upgrade2018_realistic_v15-v1/00000/01501E26-9276-7149-A74D-5E4B2E028DC8.root'
+]
+
+res_small = [
+    #'file:/eos/user/b/bainbrid/samples/LowPtElectrons/10_2_X/BuToKJpsi_Toee_Mufilter_SoftQCDnonD_TuneCP5_13TeV-pythia8-evtgen/RunIIAutumn18MiniAOD-PUPoissonAve20_BParking_102X_upgrade2018_realistic_v15-v2/MINIAODSIM/013BCC68-A7EF-C24F-B299-7E645AF5FDE4.root', # 9559 events
+    '/store/mc/RunIIAutumn18MiniAOD/BuToKJpsi_Toee_Mufilter_SoftQCDnonD_TuneCP5_13TeV-pythia8-evtgen/MINIAODSIM/PUPoissonAve20_BParking_102X_upgrade2018_realistic_v15-v2/120000/013BCC68-A7EF-C24F-B299-7E645AF5FDE4.root', # 9559 events
+    #'/store/mc/RunIIAutumn18MiniAOD/BuToKJpsi_Toee_Mufilter_SoftQCDnonD_TuneCP5_13TeV-pythia8-evtgen/MINIAODSIM/PUPoissonAve20_BParking_102X_upgrade2018_realistic_v15-v2/120000/6A140855-247E-7D4A-B379-47B84395C6CE.root', # 2636 events
+    #'/store/mc/RunIIAutumn18MiniAOD/BuToKJpsi_Toee_Mufilter_SoftQCDnonD_TuneCP5_13TeV-pythia8-evtgen/MINIAODSIM/PUPoissonAve20_BParking_102X_upgrade2018_realistic_v15-v2/120000/7D6391FF-2EA1-3A40-83C2-113E07DE0481.root', # 39335 events
+    #'/store/mc/RunIIAutumn18MiniAOD/BuToKJpsi_Toee_Mufilter_SoftQCDnonD_TuneCP5_13TeV-pythia8-evtgen/MINIAODSIM/PUPoissonAve20_BParking_102X_upgrade2018_realistic_v15-v2/120000/A6AED45B-AC07-CD46-9C1A-6BC1F3504490.root', # 42915 events
 ]
 
 ################################################################################
@@ -62,7 +69,7 @@ file_maod = ["file:./root_files/example_files/miniaod.root"]
 file_aod = ["file:./root_files/example_files/aod.root"]
 
 fileNames_to_use = None
-if   TEST :    fileNames_to_use = nonres_large #file_maod #fileNames_miniaod_BuToKJpsi_Toee_Mufilter_local
+if   TEST :    fileNames_to_use = res_small #nonres_large
 #if   TEST :    fileNames_to_use = fileNames_miniaod_BuToKee_MufilterPt6
 elif AOD :     fileNames_to_use = file_aod #fileNames_aod_BuToKee_Mufilter
 elif DERIVED : fileNames_to_use = ['file:./local_file.root',]
