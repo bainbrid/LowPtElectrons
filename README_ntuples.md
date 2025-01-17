@@ -13,16 +13,19 @@ git cms-init
 ```
 git cms-addpkg RecoEgamma/EgammaElectronProducers
 git cms-addpkg RecoEgamma/EgammaTools
-git cms-merge-topic -u CMSBParking:from-CMSSW_10_2_15_2020Sept15
+git cms-merge-topic -u bainbrid:from-CMSSW_10_2_15_2020Sept15
 # old branches^^^: from-CMSSW_10_2_15_2019Aug07, from-CMSSW_10_2_15_2019Jul22, from-CMSSW_10_2_15_2019Jun28
 
 git cms-addpkg CommonTools/MVAUtils
-git cms-merge-topic -u CMSBParking:convertXMLToGBRForestROOT
+git cms-merge-topic -u bainbrid:convertXMLToGBRForestROOT
 
 git cms-addpkg RecoEgamma/ElectronIdentification
 git clone --branch 102X_LowPtElectrons git@github.com:bainbrid/RecoEgamma-ElectronIdentification.git $CMSSW_BASE/external/$SCRAM_ARCH/data/RecoEgamma/ElectronIdentification/data
 # old branches^^^: 102X_LowPtElectrons_2019Aug07, 102X_LowPtElectrons_2019Jul22, 102X_LowPtElectrons_2019Jun28
 ```
+
+- Diff for [from-CMSSW_10_2_15_2020Sept15](https://github.com/cms-sw/cmssw/compare/CMSSW_10_2_X...CMSBParking:cmssw:from-CMSSW_10_2_15_2020Sept15)
+- Diff for [convertXMLToGBRForestROOT](https://github.com/cms-sw/cmssw/compare/CMSSW_10_2_X...bainbrid:cmssw:convertXMLToGBRForestROOT)
 
 ## This is required if running on CRAB!
 ```
