@@ -24,7 +24,7 @@ git clone --branch 102X_LowPtElectrons git@github.com:bainbrid/RecoEgamma-Electr
 # old branches^^^: 102X_LowPtElectrons_2019Aug07, 102X_LowPtElectrons_2019Jul22, 102X_LowPtElectrons_2019Jun28
 ```
 
-- Diff for [from-CMSSW_10_2_15_2020Sept15](https://github.com/cms-sw/cmssw/compare/CMSSW_10_2_X...CMSBParking:cmssw:from-CMSSW_10_2_15_2020Sept15)
+- Diff for [from-CMSSW_10_2_15_2020Sept15](https://github.com/cms-sw/cmssw/compare/CMSSW_10_2_X...bainbrid:cmssw:from-CMSSW_10_2_15_2020Sept15)
 - Diff for [convertXMLToGBRForestROOT](https://github.com/cms-sw/cmssw/compare/CMSSW_10_2_X...bainbrid:cmssw:convertXMLToGBRForestROOT)
 
 ## This is required if running on CRAB!
