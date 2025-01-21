@@ -391,96 +391,73 @@ mvaConfigsForEleProducer = cms.VPSet( )
 #    import mvaEleID_BParkRetrain_producer_config
 mvaConfigsForEleProducer.append( mvaEleID_BParkRetrain_producer_config )
 
-from RecoEgamma.ElectronIdentification.Identification.mvaElectronID_Fall17_noIso_V2_cff \
-    import mvaEleID_Fall17_noIso_V2_producer_config
-mvaConfigsForEleProducer.append( mvaEleID_Fall17_noIso_V2_producer_config )
+#from RecoEgamma.ElectronIdentification.Identification.mvaElectronID_Fall17_noIso_V2_cff \
+#    import mvaEleID_Fall17_noIso_V2_producer_config
+#mvaConfigsForEleProducer.append( mvaEleID_Fall17_noIso_V2_producer_config )
 
-process.electronMVAVariableHelper = cms.EDProducer(
-    'GsfElectronMVAVariableHelper',
-    src = cms.InputTag('gedGsfElectrons'),
-    vertexCollection = cms.InputTag("offlinePrimaryVertices"),
-    beamSpot         = cms.InputTag("offlineBeamSpot"),
-    conversions      = cms.InputTag("allConversions"),
-    srcMiniAOD              = cms.InputTag('slimmedElectrons'),#processName=cms.InputTag.skipCurrentProcess()),
-    #srcMiniAOD              = cms.InputTag('regressionForEle:regressedElectrons'),
-    vertexCollectionMiniAOD = cms.InputTag("offlineSlimmedPrimaryVertices"),
-    beamSpotMiniAOD         = cms.InputTag("offlineBeamSpot"),
-    conversionsMiniAOD      = cms.InputTag("reducedEgamma:reducedConversions"),
-)
+#process.electronMVAVariableHelper = cms.EDProducer(
+#    'GsfElectronMVAVariableHelper',
+#    src = cms.InputTag('gedGsfElectrons'),
+#    vertexCollection = cms.InputTag("offlinePrimaryVertices"),
+#    beamSpot         = cms.InputTag("offlineBeamSpot"),
+#    conversions      = cms.InputTag("allConversions"),
+#    srcMiniAOD              = cms.InputTag('slimmedElectrons'),#processName=cms.InputTag.skipCurrentProcess()),
+#    #srcMiniAOD              = cms.InputTag('regressionForEle:regressedElectrons'),
+#    vertexCollectionMiniAOD = cms.InputTag("offlineSlimmedPrimaryVertices"),
+#    beamSpotMiniAOD         = cms.InputTag("offlineBeamSpot"),
+#    conversionsMiniAOD      = cms.InputTag("reducedEgamma:reducedConversions"),
+#)
 
 process.electronMVAValueMapProducer = cms.EDProducer(
     'ElectronMVAValueMapProducer',
-    src = cms.InputTag('gedGsfElectrons'),
-    srcMiniAOD = cms.InputTag('slimmedElectrons'),#processName=cms.InputTag.skipCurrentProcess()),
+    #src = cms.InputTag('gedGsfElectrons'),
+    src = cms.InputTag('slimmedElectrons'),#processName=cms.InputTag.skipCurrentProcess()),
     #srcMiniAOD = cms.InputTag('regressionForEle:regressedElectrons'),
     mvaConfigurations = mvaConfigsForEleProducer
 )
 
-process.egmGsfElectronIDs = cms.EDProducer(
-    "VersionedGsfElectronIdProducer",
-    physicsObjectSrc = cms.InputTag('gedGsfElectrons'),
-    physicsObjectIDs = cms.VPSet( )
-)
+#process.egmGsfElectronIDs = cms.EDProducer(
+#    "VersionedGsfElectronIdProducer",
+#    physicsObjectSrc = cms.InputTag('gedGsfElectrons'),
+#    physicsObjectIDs = cms.VPSet( )
+#)
 
 process.egmGsfElectronIDTask = cms.Task(
     #process.regressionForEle,
-    process.electronMVAVariableHelper,
+    #process.electronMVAVariableHelper,
     process.electronMVAValueMapProducer,
     #process.egmGsfElectronIDs,
 )
 
 ################################################################################
-# Default model, 2019Aug07 (and previous model, 2019Jul22)
+# Default model, 2019Aug07
 ################################################################################
 
-process.load('RecoEgamma.EgammaElectronProducers.lowPtGsfElectronID_cff')
-if AOD is False: 
-    process.lowPtGsfElectronID.electrons = 'slimmedLowPtElectrons'
-    process.lowPtGsfElectronID.rho = 'fixedGridRhoFastjetAll'
-else:
-    process.lowPtGsfElectronID.electrons = 'lowPtGsfElectrons'
-    process.lowPtGsfElectronID.rho = 'fixedGridRhoFastjetAllTmp'
-process.lowPtGsfElectronID.ModelNames = [
-    #'2019Jul22',
-    '2019Aug07',
-]
+process.load('RecoEgamma.EgammaElectronProducers.lowPtGsfElectronID_cfi')
+process.lowPtGsfElectronID.usePAT = True
+process.lowPtGsfElectronID.electrons = 'slimmedLowPtElectrons'
+process.lowPtGsfElectronID.rho = 'fixedGridRhoFastjetAll'
+process.lowPtGsfElectronID.ModelNames = ['2019Aug07',]
 process.lowPtGsfElectronID.ModelWeights = [
-    #'RecoEgamma/ElectronIdentification/data/LowPtElectrons/RunII_Autumn18_LowPtElectrons_mva_id_2019Jul22.root',
-    'RecoEgamma/ElectronIdentification/data/LowPtElectrons/RunII_Autumn18_LowPtElectrons_mva_id.root', # 2109Aug07
-]
-process.lowPtGsfElectronID.ModelThresholds = cms.vdouble([
-    #-99.,
-    -99.,
-])
+    'RecoEgamma/ElectronIdentification/data/LowPtElectrons/RunII_Autumn18_LowPtElectrons_mva_id.root',] # 2109Aug07
+process.lowPtGsfElectronID.ModelThresholds = [-99.,]
+process.lowPtGsfElectronID.Version = "V0"
 
 ################################################################################
-# ROME models, 2020Sep15: depth13 and depth15 (default)
+# ROME models, 2020Sept15: depth13 and depth15 (default)
 ################################################################################
 
-process.load('RecoEgamma.EgammaElectronProducers.lowPtGsfElectronIDExtra_cff')
-if AOD == True : 
-    process.lowPtGsfElectronIDExtra.electrons = 'lowPtGsfElectrons'
-    process.lowPtGsfElectronIDExtra.rho = 'fixedGridRhoFastjetAllTmp'
-#else:
-    # use defaults?
-    #process.lowPtGsfElectronIDExtra.electrons = 'regressionForEle:regressedLowPtElectrons'
-    #process.lowPtGsfElectronIDExtra.rho = 'fixedGridRhoFastjetAll'
-
-process.lowPtGsfElectronIDExtra.ModelNames = [
-    '2020Sept15',
-    '2020Nov28',
-    '2021May17',
-]
+process.lowPtGsfElectronIDExtra = process.lowPtGsfElectronID.clone()
+process.lowPtGsfElectronIDExtra.usePAT = True
+process.lowPtGsfElectronIDExtra.electrons = 'slimmedLowPtElectrons'
+process.lowPtGsfElectronIDExtra.rho = 'fixedGridRhoFastjetAll'
+process.lowPtGsfElectronIDExtra.ModelNames = ['2020Sept15','2020Nov28','2021May17',]
 process.lowPtGsfElectronIDExtra.ModelWeights = [
     'RecoEgamma/ElectronIdentification/data/LowPtElectrons/LowPtElectrons_ID_2020Sept15.root', # ele_mva_value_depth10
     'RecoEgamma/ElectronIdentification/data/LowPtElectrons/LowPtElectrons_ID_2020Nov28.root',  # ele_mva_value_depth11
-    'RecoEgamma/ElectronIdentification/data/LowPtElectrons/LowPtElectrons_ID_2021May17.root',  # ele_mva_value_depth13
-]
-process.lowPtGsfElectronIDExtra.ModelThresholds = cms.vdouble([
-    -99.,
-    -99.,
-    -99.,
-])
+    'RecoEgamma/ElectronIdentification/data/LowPtElectrons/LowPtElectrons_ID_2021May17.root',] # ele_mva_value_depth13
+process.lowPtGsfElectronIDExtra.ModelThresholds = [-99.,-99.,-99.,]
+process.lowPtGsfElectronIDExtra.Version = "V1"
 
 ################################################################################
 # Ntuplizer code
@@ -492,53 +469,10 @@ else:
     process.load('LowPtElectrons.LowPtElectrons.IDNtuplizer_cfi')
 
 process.ntuplizer.verbose = 0
-
-from_tracks = False
-if from_tracks : # Evaluating models for BParking studies
-    process.ntuplizer.tagMuonPtThreshold  = 7.
-    process.ntuplizer.tagMuonEtaThreshold = 1.5
-    process.ntuplizer.filterNtupleContent = False
-    process.ntuplizer.prescale = 0.#-2.94 # Poisson mean number of fakes/event
-else : # Skim to keep just low-pT electrons (no seeds, no PF, etc, ...) for Max Hart training
-    process.ntuplizer.tagMuonPtThreshold  = 7.
-    process.ntuplizer.tagMuonEtaThreshold = 1.5
-    process.ntuplizer.filterNtupleContent = True
-    process.ntuplizer.prescale = 13.5 # Poisson mean number of fakes/event
-
-################################################################################
-# BParking Analysis sequences to define data control regions
-################################################################################
-
-#process.load("TrackingTools/TransientTrack/TransientTrackBuilder_cfi")
-#
-#from PhysicsTools.BParkingNano.muonsBPark_cff import muonTrgSelector
-#process.muonTrgSelector = muonTrgSelector.clone()
-#
-#from PhysicsTools.BParkingNano.electronsBPark_cff import electronsForAnalysis
-#process.electronsForAnalysis = electronsForAnalysis.clone(
-#    lowptSrc = cms.InputTag('regressionForEle:regressedLowPtElectrons'),
-#    pfSrc = cms.InputTag('slimmedElectrons'), #@@ NOT regressionForEle:regressedElectrons for PF!
-#    mvaId = cms.InputTag("lowPtGsfElectronIDExtra:depth15"),
-#    pfmvaId = cms.InputTag("electronMVAValueMapProducer:ElectronMVAEstimatorRun2BParkRetrainRawValues"),
-#    drForCleaning_wrtTrgMuon = cms.double(-1.),
-#    dzForCleaning_wrtTrgMuon = cms.double(-1.),
-#    pf_ptMin = cms.double(0.5),
-#    bdtMin = cms.double(-99.),
-#    )
-#
-#from PhysicsTools.BParkingNano.BToKLL_cff import electronPairsForKee
-#process.electronPairsForKee = electronPairsForKee.clone(
-#    lep1Selection = cms.string('pt > 0.5'),
-#    lep2Selection = cms.string('pt > 0.5'),
-#    preVtxSelection = cms.string('abs(userCand("l1").vz - userCand("l2").vz) <= 1.'\
-#                                 ' && mass() > 0.'\
-#                                 ' && mass() < 5.'\
-#                                 ' && charge() == 0'\
-#                                 ' && userFloat("lep_deltaR") > 0.03'\
-#                                 ' && userInt("nlowpt")<3'
-#                             ),
-#    postVtxSelection = cms.string('userFloat("sv_chi2") < 998 && userFloat("sv_prob") > 1.e-5'),
-#)
+process.ntuplizer.tagMuonPtThreshold  = 7.
+process.ntuplizer.tagMuonEtaThreshold = 1.5
+process.ntuplizer.filterNtupleContent = True
+process.ntuplizer.prescale = 13.5 # Poisson mean number of fakes/event
 
 ################################################################################
 # Paths, Sequences, etc
@@ -547,7 +481,7 @@ else : # Skim to keep just low-pT electrons (no seeds, no PF, etc, ...) for Max 
 process.egamma_path = cms.Path(process.egmGsfElectronIDTask)
 process.path = cms.Path(process.lowPtGsfElectronID
                         #+process.regressionForEle
-                        +process.lowPtGsfElectronIDExtra
+                        #+process.lowPtGsfElectronIDExtra
                         #+process.muonTrgSelector
                         #+process.electronsForAnalysis
                         #+process.electronPairsForKee
@@ -555,7 +489,5 @@ process.path = cms.Path(process.lowPtGsfElectronID
 process.ntuplizer_path = cms.Path(process.ntuplizer)
 process.output_path = cms.EndPath(process.output)
 
-if options.addSkim is False : 
-    process.schedule = cms.Schedule(process.egamma_path,process.path,process.ntuplizer_path)
-else : 
-    process.schedule = cms.Schedule(process.egamma_path,process.path,process.ntuplizer_path,process.output_path)
+process.schedule = cms.Schedule(#process.egamma_path,
+                                process.path,process.ntuplizer_path)

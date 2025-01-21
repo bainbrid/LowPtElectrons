@@ -1,9 +1,10 @@
 #include "DataFormats/GsfTrackReco/interface/GsfTrackExtraFwd.h"
 #include "DataFormats/GsfTrackReco/interface/GsfTrackExtra.h"
 #include "LowPtElectrons/LowPtElectrons/interface/IDNtuple.h"
-#include "RecoEgamma/EgammaElectronProducers/interface/LowPtGsfElectronIDHeavyObjectCache.h"
-#include "RecoEgamma/EgammaElectronProducers/interface/LowPtGsfElectronIDExtraHeavyObjectCache.h"
-#include "RecoEgamma/EgammaElectronProducers/interface/LowPtGsfElectronSeedHeavyObjectCache.h"
+#include "RecoEgamma/EgammaElectronProducers/interface/LowPtGsfElectronFeatures.h"
+//#include "RecoEgamma/EgammaElectronProducers/interface/LowPtGsfElectronIDHeavyObjectCache.h"
+//#include "RecoEgamma/EgammaElectronProducers/interface/LowPtGsfElectronIDExtraHeavyObjectCache.h"
+//#include "RecoEgamma/EgammaElectronProducers/interface/LowPtGsfElectronSeedHeavyObjectCache.h"
 #include "TTree.h"
 
 /////////////////////////////////////////////////////////////////////////////////
@@ -421,9 +422,10 @@ void IDNtuple::fill_preid( const reco::PreId& preid_ecal,
 //  preid_ptbiased_pass_ = preid_ecal.mvaSelected(1);
 
   // Set seed variables
-  lowptgsfeleseed::Features features;
-  features.set( preid_ecal, preid_hcal, rho, spot, ecal_tools );
-  auto vfeatures = features.get();
+  std::vector<float> vfeatures = lowptgsfeleseed::features(preid_ecal, preid_hcal, rho, spot, ecal_tools);
+  //lowptgsfeleseed::Features features;
+  //features.set( preid_ecal, preid_hcal, rho, spot, ecal_tools );
+  //auto vfeatures = features.get();
 
   //@@ ORDER IS IMPORTANT!
   size_t idx = 0;
@@ -603,9 +605,10 @@ void IDNtuple::fill_ele( const reco::GsfElectronPtr ele,
 
   {
     // Set Electron variables for 2019Aug07
-    lowptgsfeleid::Features features;
-    features.set(ele,rho,seed_unbiased);
-    auto vfeatures = features.get();
+    std::vector<float> vfeatures = lowptgsfeleid::features_V0(*ele,rho,seed_unbiased);
+    //lowptgsfeleid::Features features;
+    //features.set(ele,rho,seed_unbiased);
+    //auto vfeatures = features.get();
     
     size_t idx = 0; //@@ ORDER IS IMPORTANT!
     eid_rho_ = vfeatures[idx++];
@@ -635,48 +638,55 @@ void IDNtuple::fill_ele( const reco::GsfElectronPtr ele,
 
   {
     // Set Electron variables for 2020Sept15
-    lowptgsfeleidextra::Features features;
-    features.set(ele,rho,seed_unbiased);
-    auto vfeatures = features.get();
+    if ( ele->core().isNonnull() ) {     
+      reco::TrackRef ref = ele->closestCtfTrackRef(); 
+      if ( ref.isNonnull() ) {
+	reco::Track const* trk = ref.get();
+	float field_z = 3.8;
+	std::vector<float> vfeatures = lowptgsfeleid::features_V1(*ele,rho,seed_unbiased, field_z, trk);
+	//lowptgsfeleidextra::Features features;
+	//features.set(ele,rho,seed_unbiased);
+	//auto vfeatures = features.get();
     
-    size_t idx = 0; //@@ ORDER IS IMPORTANT!
-    eid2_rho_ = vfeatures[idx++]; 
-    eid2_sc_eta_ = vfeatures[idx++];
-    eid2_shape_full5x5_r9_ = vfeatures[idx++];
-    eid2_sc_etaWidth_ = vfeatures[idx++];
-    eid2_sc_phiWidth_ = vfeatures[idx++];
-    eid2_shape_full5x5_HoverE_ = vfeatures[idx++];
-    eid2_trk_nhits_ = vfeatures[idx++];
-    eid2_trk_chi2red_ = vfeatures[idx++];
-    eid2_gsf_chi2red_ = vfeatures[idx++];
-    eid2_brem_frac_ = vfeatures[idx++];
-    eid2_gsf_nhits_ = vfeatures[idx++];
-    eid2_match_SC_EoverP_ = vfeatures[idx++];
-    eid2_match_eclu_EoverP_ = vfeatures[idx++];
-    eid2_match_SC_dEta_ = vfeatures[idx++];
-    eid2_match_SC_dPhi_ = vfeatures[idx++];
-    eid2_match_seed_dEta_ = vfeatures[idx++];
-    eid2_sc_E_ = vfeatures[idx++];
-    eid2_trk_p_ = vfeatures[idx++];
-    eid2_gsf_mode_p_ = vfeatures[idx++];
-    eid2_core_shFracHits_ = vfeatures[idx++];
-    eid2_gsf_bdtout1_ = vfeatures[idx++];
-    eid2_gsf_dr_ = vfeatures[idx++];
-    eid2_trk_dr_ = vfeatures[idx++];
-    eid2_sc_Nclus_ = vfeatures[idx++];
-    eid2_sc_clus1_nxtal_ = vfeatures[idx++];
-    eid2_sc_clus1_dphi_ = vfeatures[idx++];
-    eid2_sc_clus2_dphi_ = vfeatures[idx++];
-    eid2_sc_clus1_deta_ = vfeatures[idx++];
-    eid2_sc_clus2_deta_ = vfeatures[idx++];
-    eid2_sc_clus1_E_ = vfeatures[idx++];
-    eid2_sc_clus2_E_ = vfeatures[idx++];
-    eid2_sc_clus1_E_ov_p_ = vfeatures[idx++];
-    eid2_sc_clus2_E_ov_p_ = vfeatures[idx++];
+	size_t idx = 0; //@@ ORDER IS IMPORTANT!
+	eid2_rho_ = vfeatures[idx++]; 
+	eid2_sc_eta_ = vfeatures[idx++];
+	eid2_shape_full5x5_r9_ = vfeatures[idx++];
+	eid2_sc_etaWidth_ = vfeatures[idx++];
+	eid2_sc_phiWidth_ = vfeatures[idx++];
+	eid2_shape_full5x5_HoverE_ = vfeatures[idx++];
+	eid2_trk_nhits_ = vfeatures[idx++];
+	eid2_trk_chi2red_ = vfeatures[idx++];
+	eid2_gsf_chi2red_ = vfeatures[idx++];
+	eid2_brem_frac_ = vfeatures[idx++];
+	eid2_gsf_nhits_ = vfeatures[idx++];
+	eid2_match_SC_EoverP_ = vfeatures[idx++];
+	eid2_match_eclu_EoverP_ = vfeatures[idx++];
+	eid2_match_SC_dEta_ = vfeatures[idx++];
+	eid2_match_SC_dPhi_ = vfeatures[idx++];
+	eid2_match_seed_dEta_ = vfeatures[idx++];
+	eid2_sc_E_ = vfeatures[idx++];
+	eid2_trk_p_ = vfeatures[idx++];
+	eid2_gsf_mode_p_ = vfeatures[idx++];
+	eid2_core_shFracHits_ = vfeatures[idx++];
+	eid2_gsf_bdtout1_ = vfeatures[idx++];
+	eid2_gsf_dr_ = vfeatures[idx++];
+	eid2_trk_dr_ = vfeatures[idx++];
+	eid2_sc_Nclus_ = vfeatures[idx++];
+	eid2_sc_clus1_nxtal_ = vfeatures[idx++];
+	eid2_sc_clus1_dphi_ = vfeatures[idx++];
+	eid2_sc_clus2_dphi_ = vfeatures[idx++];
+	eid2_sc_clus1_deta_ = vfeatures[idx++];
+	eid2_sc_clus2_deta_ = vfeatures[idx++];
+	eid2_sc_clus1_E_ = vfeatures[idx++];
+	eid2_sc_clus2_E_ = vfeatures[idx++];
+	eid2_sc_clus1_E_ov_p_ = vfeatures[idx++];
+	eid2_sc_clus2_E_ov_p_ = vfeatures[idx++];
+      }
+    }
   }
 
 }
-
 
 /////////////////////////////////////////////////////////////////////////////////
 //

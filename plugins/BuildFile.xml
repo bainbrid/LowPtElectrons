@@ -1,3 +1,4 @@
+<use name="CommonTools/BaseParticlePropagator"/>
 <use name="CommonTools/UtilAlgos"/>
 <use name="DataFormats/BeamSpot"/>
 <use name="DataFormats/CaloRecHit"/>
@@ -15,7 +16,6 @@
 <use name="DataFormats/TrajectorySeed"/>
 <use name="DataFormats/TrackCandidate"/>
 <use name="DataFormats/TrackReco"/>
-<use name="FastSimulation/BaseParticlePropagator"/>
 <use name="FWCore/Common"/>
 <use name="FWCore/Framework"/>
 <use name="FWCore/MessageLogger"/>

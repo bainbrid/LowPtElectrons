@@ -1,6 +1,13 @@
 #ifndef LowPtElectrons_LowPtElectrons_IDNtuplizer
 #define LowPtElectrons_LowPtElectrons_IDNtuplizer
 
+#include "FWCore/Framework/interface/Frameworkfwd.h"
+#include "FWCore/Framework/interface/stream/EDFilter.h"
+#include "FWCore/Framework/interface/Event.h"
+#include "FWCore/Framework/interface/MakerMacros.h"
+#include "FWCore/ParameterSet/interface/ParameterSet.h"
+#include "FWCore/Utilities/interface/StreamID.h"
+
 #include "CommonTools/UtilAlgos/interface/TFileService.h"
 #include "DataFormats/BeamSpot/interface/BeamSpot.h"
 #include "DataFormats/CaloRecHit/interface/CaloCluster.h"
@@ -38,12 +45,8 @@
 #include "DataFormats/TrajectorySeed/interface/TrajectorySeed.h"
 #include "DataFormats/TrackReco/interface/Track.h"
 #include "DataFormats/TrackReco/interface/TrackFwd.h"
-#include "FWCore/Framework/interface/EDFilter.h" // EDAnalyzer.h
-#include "FastSimulation/BaseParticlePropagator/interface/BaseParticlePropagator.h"
+#include "CommonTools/BaseParticlePropagator/interface/BaseParticlePropagator.h"
 #include "FWCore/Framework/interface/ESHandle.h"
-#include "FWCore/Framework/interface/Frameworkfwd.h"
-#include "FWCore/Framework/interface/Event.h"
-#include "FWCore/ParameterSet/interface/ParameterSet.h"
 #include "FWCore/ServiceRegistry/interface/Service.h"
 #include "FWCore/Utilities/interface/EDGetToken.h"
 #include "LowPtElectrons/LowPtElectrons/interface/Common.h"
@@ -53,6 +56,7 @@
 #include <set>
 #include <vector>
 #include <math.h>
+#include <memory>
 #include <boost/core/demangle.hpp>
 #include <algorithm>
 #include <random>
@@ -61,171 +65,171 @@
 ////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////
 //
-class IDNtuplizer : public edm::EDFilter { // edm::EDAnalyzer
+class IDNtuplizer : public edm::stream::EDFilter<> {
   
 public:
   
   explicit IDNtuplizer( const edm::ParameterSet& );
-  ~IDNtuplizer();
+  ~IDNtuplizer() override;
   
-  virtual void beginRun( const edm::Run&, const edm::EventSetup& ) override;
-  virtual bool filter( edm::Event&, const edm::EventSetup& ) override; // analyze(const,const)
+  void beginRun( const edm::Run&, const edm::EventSetup& ) override;
+  bool filter( edm::Event&, const edm::EventSetup& ) override;
   
-  ///////////////
-  // Main methods
-  ///////////////
-
-  // Reads all collections from the Event
-  void readCollections( const edm::Event&, const edm::EventSetup& );
-  
-  // Wraps other methods to provide a sample of "signal" electrons
-  void signalElectrons( std::set<reco::CandidatePtr>& signal_electrons,
-			std::set<reco::CandidatePtr>& tag_side_muons );
-  
-  // GEN-based method to provide a sample of "signal" electrons
-  void genElectronsFromB( std::set<reco::GenParticlePtr>& electrons_from_B, 
-			  std::set<reco::GenParticlePtr>& gen_muons, 
-			  float tag_muon_pt_threshold,
-			  float tag_muon_eta_threshold );
-  
-  // Data-based method to provide a sample of "signal" electrons
-  void electronsFromB( std::set<reco::CandidatePtr>& electrons_from_B, 
-		       std::set<reco::CandidatePtr>& muons, 
-		       float tag_muon_pt_threshold,
-		       float tag_muon_eta_threshold );
-  
-  // 
-  void createChains( std::set<reco::CandidatePtr>& signal_electrons,
-		     std::set<reco::CandidatePtr>& tag_side_muons );
-
-  // Method that creates ElectronChain objects for both low-pT and PF electron signal candiates
-  void signal( std::set<reco::CandidatePtr>& signal_electrons,
-	       std::set<reco::CandidatePtr>& tag_side_muons,
-	       std::vector<SigToTrkDR2>& sig2trk,
-	       std::vector<SigToGsfDR2>& sig2gsf,
-	       std::vector<SigToGsfDR2>& sig2pfgsf,
-	       std::vector<SigToTrkDR2>& other_trk,
-	       std::vector<TrkToGsfDR2>& trk2gsf,
-	       std::vector<TrkToGsfDR2>& trk2pfgsf,
-	       std::vector<GsfToGsfDR2>& gsf2pfgsf,
-	       std::vector<GsfToEleDR2>& gsf2ele,
-	       std::vector<GsfToEleDR2>& pfgsf2ele );
-
-  // Method that creates ElectronChain objects for both low-pT and PF electron bkgd candidates
-  void bkgd( std::set<reco::CandidatePtr>& signal_electrons,
-	     std::set<reco::CandidatePtr>& tag_side_muons,
-	     std::vector<SigToTrkDR2>& sig2trk,
-	     std::vector<SigToGsfDR2>& sig2gsf,
-	     std::vector<SigToGsfDR2>& sig2pfgsf,
-	     std::vector<SigToTrkDR2>& other_trk,
-	     std::vector<TrkToGsfDR2>& trk2gsf,
-	     std::vector<TrkToGsfDR2>& trk2pfgsf,
-	     std::vector<GsfToGsfDR2>& gsf2pfgsf,
-	     std::vector<GsfToEleDR2>& gsf2ele,
-	     std::vector<GsfToEleDR2>& pfgsf2ele );
-  
-  // Fills tree per ElectronChain object
-  void fill( const edm::Event& event, const edm::EventSetup& setup );
-
-  //////////////////
-  // Utility methods
-  //////////////////
-
-  // Extracts TrackPtrs to common vector, obtained from AOD or mAOD collections via Handles
-  void extractTrackPtrs();
-  
-  // Various navigation methods (high- to low-level objects)
-  bool gsfToTrk( reco::GsfTrackPtr& gsf, reco::TrackPtr& trk, bool is_egamma);// = false );
-  bool eleToGsf( reco::GsfElectronPtr& ele, reco::GsfTrackPtr& gsf );
-  bool eleToTrk( reco::GsfElectronPtr& gsf, reco::TrackPtr& trk, bool is_egamma);// = false );
-  bool gsfToSeed( reco::GsfTrackPtr& gsf, reco::ElectronSeedPtr& seed );
-  bool seedToTrk( reco::ElectronSeedPtr& seed, reco::TrackPtr& trk );
-  bool seedToCalo( reco::ElectronSeedPtr& seed, reco::CaloClusterPtr& calo );
-
-  // Various navigation maps (low- to high-level objects)
-  void trkToGsfLinks( std::vector<reco::TrackPtr>& ctfTracks,
-		      edm::Handle< std::vector<reco::GsfTrack> >& gsfTracks,
-		      std::vector<TrkToGsfDR2>& trk2gsf,
-		      bool is_egamma);// = false );
-  void trkToEleLinks( std::vector<reco::TrackPtr>& ctfTracks,
-		      edm::Handle< edm::View<reco::GsfElectron> >& gsfElectrons,
-		      std::vector<TrkToEleDR2>& trk2ele,
-		      bool is_egamma);// = false );
-  void gsfToEleLinks( const edm::Handle< std::vector<reco::GsfTrack> >& gsfTracks,
-		      const edm::Handle< edm::View<reco::GsfElectron> >& gsfElectrons,
-		      std::vector<GsfToEleDR2>& gsf2ele );
-  void gsfToPfGsfLinks( edm::Handle< std::vector<reco::GsfTrack> >& gsfTracks,
-			edm::Handle< std::vector<reco::GsfTrack> >& gsfTracksEGamma,
-			std::vector<GsfToGsfDR2>& gsf2pfgsf );
-
-  // Links "signal" electrons to reconstructed objects
-  template <typename T> 
-  void sigToCandLinks( std::set<reco::CandidatePtr>& signal_electrons,
-		       std::vector< edm::Ptr<T> >& candidates,
-		       std::vector< DeltaR2<reco::Candidate,T> >& sig2cand,
-		       std::vector< DeltaR2<reco::Candidate,T> >& other_cand, 
-		       bool append = false );
-
-  // Wraps method above to allow use of Handle<View<T>>
-  template <typename T> 
-  void sigToCandLinks( std::set<reco::CandidatePtr>& signal_electrons,
-		       edm::Handle< edm::View<T> >& candidates,
-		       std::vector< DeltaR2<reco::Candidate,T> >& sig2cand,
-		       std::vector< DeltaR2<reco::Candidate,T> >& other_cand, 
-		       bool append = false );
-
-  // Wraps method above to allow use of Handle<vector<T>>
-  template <typename T> 
-  void sigToCandLinks( std::set<reco::CandidatePtr>& signal_electrons,
-		       edm::Handle< std::vector<T> >& candidates,
-		       std::vector< DeltaR2<reco::Candidate,T> >& sig2cand,
-		       std::vector< DeltaR2<reco::Candidate,T> >& other_cand, 
-		       bool append = false );
-
-  // Return by reference the 'cand' that is matched to 'sig' in 'sig2cand' map
-  template <typename T>
-  void match( reco::CandidatePtr& sig,
-	      std::vector< DeltaR2<reco::Candidate,T> >& sig2cand,
-	      edm::Ptr<T>& cand, float& dr, bool& match ); // pass by ref
-
-  // Wrap reco::deltaR2 method for various types, specifically GsfTrack uses eta and phi 'Mode'
-  template <typename T1, typename T2> 
-  float deltaR2( edm::Ptr<T1>& cand1, edm::Ptr<T2>& cand2 ); // used by sigToCandLinks
-  float deltaR2( reco::TrackPtr& trk, reco::GsfTrackPtr& gsf ); // overload
-  float deltaR2( reco::GsfTrackPtr& gsf, reco::TrackPtr& trk ); // overload
-  float deltaR2( reco::GsfElectronPtr& ele, reco::TrackPtr& trk ); // overload
-  float deltaR2( reco::GsfTrackPtr& pfgsf, reco::GsfTrackPtr& gsf ); // overload
-  float deltaR2( reco::CandidatePtr& sig, reco::GsfTrackPtr& gsf ); // overload
-
-  // Filter track candidates by quality flag, simple pass for all other cands
-  template <typename T> 
-  bool filterCand( edm::Ptr<T>& cand );
-  bool filterCand( edm::Ptr<reco::Track>& trk );
-  bool filterCand( edm::Ptr<reco::GsfTrack>& gsf );
-
-  // Check is Ptr is valid and available
-  template <typename T> bool validPtr( edm::Ptr<T>& ptr );
-
-
-  // Electron "images"
-  typedef math::XYZVector Vector;
-  typedef math::XYZPoint Point;
-  BaseParticlePropagator extrapolate_track( const Vector& mom, const Point& pos, int charge,
-					    int& reach_ECAL, GlobalPoint& pos_ECAL,
-					    int& reach_HCAL, GlobalPoint& pos_HCAL,
-					    int& reach_EXIT, GlobalPoint& pos_EXIT );
-  //void debug_image( const edm::Event& event, const edm::EventSetup& setup );
-  void build_image( const edm::Event& event, const edm::EventSetup& setup );
-
-  inline float adj_eta( float eta, float ref_eta, int charge = 0 ) { 
-    return eta-ref_eta; 
-    //return eta; //@@ DON'T MODIFY ETA !!!
-  }
-  inline float adj_phi( float phi, float ref_phi, int charge = 0 ) { 
-    return charge == 0 ? reco::deltaPhi(phi,ref_phi) : float(charge)*reco::deltaPhi(phi,ref_phi); 
-    //return charge == 0 ? phi : float(charge)*phi; //@@ DON'T SUBTRACT REF_PHI !!!
-    //return phi; //@@ DON'T MODIFY PHI !!!
-  }
+//  ///////////////
+//  // Main methods
+//  ///////////////
+//
+//  // Reads all collections from the Event
+//  void readCollections( const edm::Event&, const edm::EventSetup& );
+//  
+//  // Wraps other methods to provide a sample of "signal" electrons
+//  void signalElectrons( std::set<reco::CandidatePtr>& signal_electrons,
+//			std::set<reco::CandidatePtr>& tag_side_muons );
+//  
+//  // GEN-based method to provide a sample of "signal" electrons
+//  void genElectronsFromB( std::set<reco::GenParticlePtr>& electrons_from_B, 
+//			  std::set<reco::GenParticlePtr>& gen_muons, 
+//			  float tag_muon_pt_threshold,
+//			  float tag_muon_eta_threshold );
+//  
+//  // Data-based method to provide a sample of "signal" electrons
+//  void electronsFromB( std::set<reco::CandidatePtr>& electrons_from_B, 
+//		       std::set<reco::CandidatePtr>& muons, 
+//		       float tag_muon_pt_threshold,
+//		       float tag_muon_eta_threshold );
+//  
+//  // 
+//  void createChains( std::set<reco::CandidatePtr>& signal_electrons,
+//		     std::set<reco::CandidatePtr>& tag_side_muons );
+//
+//  // Method that creates ElectronChain objects for both low-pT and PF electron signal candiates
+//  void signal( std::set<reco::CandidatePtr>& signal_electrons,
+//	       std::set<reco::CandidatePtr>& tag_side_muons,
+//	       std::vector<SigToTrkDR2>& sig2trk,
+//	       std::vector<SigToGsfDR2>& sig2gsf,
+//	       std::vector<SigToGsfDR2>& sig2pfgsf,
+//	       std::vector<SigToTrkDR2>& other_trk,
+//	       std::vector<TrkToGsfDR2>& trk2gsf,
+//	       std::vector<TrkToGsfDR2>& trk2pfgsf,
+//	       std::vector<GsfToGsfDR2>& gsf2pfgsf,
+//	       std::vector<GsfToEleDR2>& gsf2ele,
+//	       std::vector<GsfToEleDR2>& pfgsf2ele );
+//
+//  // Method that creates ElectronChain objects for both low-pT and PF electron bkgd candidates
+//  void bkgd( std::set<reco::CandidatePtr>& signal_electrons,
+//	     std::set<reco::CandidatePtr>& tag_side_muons,
+//	     std::vector<SigToTrkDR2>& sig2trk,
+//	     std::vector<SigToGsfDR2>& sig2gsf,
+//	     std::vector<SigToGsfDR2>& sig2pfgsf,
+//	     std::vector<SigToTrkDR2>& other_trk,
+//	     std::vector<TrkToGsfDR2>& trk2gsf,
+//	     std::vector<TrkToGsfDR2>& trk2pfgsf,
+//	     std::vector<GsfToGsfDR2>& gsf2pfgsf,
+//	     std::vector<GsfToEleDR2>& gsf2ele,
+//	     std::vector<GsfToEleDR2>& pfgsf2ele );
+//  
+//  // Fills tree per ElectronChain object
+//  void fill( const edm::Event& event, const edm::EventSetup& setup );
+//
+//  //////////////////
+//  // Utility methods
+//  //////////////////
+//
+//  // Extracts TrackPtrs to common vector, obtained from AOD or mAOD collections via Handles
+//  void extractTrackPtrs();
+//  
+//  // Various navigation methods (high- to low-level objects)
+//  bool gsfToTrk( reco::GsfTrackPtr& gsf, reco::TrackPtr& trk, bool is_egamma);// = false );
+//  bool eleToGsf( reco::GsfElectronPtr& ele, reco::GsfTrackPtr& gsf );
+//  bool eleToTrk( reco::GsfElectronPtr& gsf, reco::TrackPtr& trk, bool is_egamma);// = false );
+//  bool gsfToSeed( reco::GsfTrackPtr& gsf, reco::ElectronSeedPtr& seed );
+//  bool seedToTrk( reco::ElectronSeedPtr& seed, reco::TrackPtr& trk );
+//  bool seedToCalo( reco::ElectronSeedPtr& seed, reco::CaloClusterPtr& calo );
+//
+//  // Various navigation maps (low- to high-level objects)
+//  void trkToGsfLinks( std::vector<reco::TrackPtr>& ctfTracks,
+//		      edm::Handle< std::vector<reco::GsfTrack> >& gsfTracks,
+//		      std::vector<TrkToGsfDR2>& trk2gsf,
+//		      bool is_egamma);// = false );
+//  void trkToEleLinks( std::vector<reco::TrackPtr>& ctfTracks,
+//		      edm::Handle< edm::View<reco::GsfElectron> >& gsfElectrons,
+//		      std::vector<TrkToEleDR2>& trk2ele,
+//		      bool is_egamma);// = false );
+//  void gsfToEleLinks( const edm::Handle< std::vector<reco::GsfTrack> >& gsfTracks,
+//		      const edm::Handle< edm::View<reco::GsfElectron> >& gsfElectrons,
+//		      std::vector<GsfToEleDR2>& gsf2ele );
+//  void gsfToPfGsfLinks( edm::Handle< std::vector<reco::GsfTrack> >& gsfTracks,
+//			edm::Handle< std::vector<reco::GsfTrack> >& gsfTracksEGamma,
+//			std::vector<GsfToGsfDR2>& gsf2pfgsf );
+//
+//  // Links "signal" electrons to reconstructed objects
+//  template <typename T> 
+//  void sigToCandLinks( std::set<reco::CandidatePtr>& signal_electrons,
+//		       std::vector< edm::Ptr<T> >& candidates,
+//		       std::vector< DeltaR2<reco::Candidate,T> >& sig2cand,
+//		       std::vector< DeltaR2<reco::Candidate,T> >& other_cand, 
+//		       bool append = false );
+//
+//  // Wraps method above to allow use of Handle<View<T>>
+//  template <typename T> 
+//  void sigToCandLinks( std::set<reco::CandidatePtr>& signal_electrons,
+//		       edm::Handle< edm::View<T> >& candidates,
+//		       std::vector< DeltaR2<reco::Candidate,T> >& sig2cand,
+//		       std::vector< DeltaR2<reco::Candidate,T> >& other_cand, 
+//		       bool append = false );
+//
+//  // Wraps method above to allow use of Handle<vector<T>>
+//  template <typename T> 
+//  void sigToCandLinks( std::set<reco::CandidatePtr>& signal_electrons,
+//		       edm::Handle< std::vector<T> >& candidates,
+//		       std::vector< DeltaR2<reco::Candidate,T> >& sig2cand,
+//		       std::vector< DeltaR2<reco::Candidate,T> >& other_cand, 
+//		       bool append = false );
+//
+//  // Return by reference the 'cand' that is matched to 'sig' in 'sig2cand' map
+//  template <typename T>
+//  void match( reco::CandidatePtr& sig,
+//	      std::vector< DeltaR2<reco::Candidate,T> >& sig2cand,
+//	      edm::Ptr<T>& cand, float& dr, bool& match ); // pass by ref
+//
+//  // Wrap reco::deltaR2 method for various types, specifically GsfTrack uses eta and phi 'Mode'
+//  template <typename T1, typename T2> 
+//  float deltaR2( edm::Ptr<T1>& cand1, edm::Ptr<T2>& cand2 ); // used by sigToCandLinks
+//  float deltaR2( reco::TrackPtr& trk, reco::GsfTrackPtr& gsf ); // overload
+//  float deltaR2( reco::GsfTrackPtr& gsf, reco::TrackPtr& trk ); // overload
+//  float deltaR2( reco::GsfElectronPtr& ele, reco::TrackPtr& trk ); // overload
+//  float deltaR2( reco::GsfTrackPtr& pfgsf, reco::GsfTrackPtr& gsf ); // overload
+//  float deltaR2( reco::CandidatePtr& sig, reco::GsfTrackPtr& gsf ); // overload
+//
+//  // Filter track candidates by quality flag, simple pass for all other cands
+//  template <typename T> 
+//  bool filterCand( edm::Ptr<T>& cand );
+//  bool filterCand( edm::Ptr<reco::Track>& trk );
+//  bool filterCand( edm::Ptr<reco::GsfTrack>& gsf );
+//
+//  // Check is Ptr is valid and available
+//  template <typename T> bool validPtr( edm::Ptr<T>& ptr );
+//
+//
+//  // Electron "images"
+//  typedef math::XYZVector Vector;
+//  typedef math::XYZPoint Point;
+//  BaseParticlePropagator extrapolate_track( const Vector& mom, const Point& pos, int charge,
+//					    int& reach_ECAL, GlobalPoint& pos_ECAL,
+//					    int& reach_HCAL, GlobalPoint& pos_HCAL,
+//					    int& reach_EXIT, GlobalPoint& pos_EXIT );
+//  //void debug_image( const edm::Event& event, const edm::EventSetup& setup );
+//  void build_image( const edm::Event& event, const edm::EventSetup& setup );
+//
+//  inline float adj_eta( float eta, float ref_eta, int charge = 0 ) { 
+//    return eta-ref_eta; 
+//    //return eta; //@@ DON'T MODIFY ETA !!!
+//  }
+//  inline float adj_phi( float phi, float ref_phi, int charge = 0 ) { 
+//    return charge == 0 ? reco::deltaPhi(phi,ref_phi) : float(charge)*reco::deltaPhi(phi,ref_phi); 
+//    //return charge == 0 ? phi : float(charge)*phi; //@@ DON'T SUBTRACT REF_PHI !!!
+//    //return phi; //@@ DON'T MODIFY PHI !!!
+//  }
   
 private:
   
@@ -369,59 +373,59 @@ private:
   // Obsolete methods
   //////////////////
 
-  // Top-level method that creates ElectronChain objects for low-pT electrons
-  void lowPtElectrons( std::set<reco::CandidatePtr>& signal_electrons,
-		       std::vector<SigToTrkDR2>& sig2trk,
-		       std::vector<SigToTrkDR2>& other_trk,
-		       std::vector<SigToGsfDR2>& sig2gsf,
-		       std::vector<TrkToGsfDR2>& trk2gsf,
-		       std::vector<GsfToGsfDR2>& gsf2pfgsf );
-
-  // Method that creates ElectronChain objects for low-pT electron signal candiates
-  void lowPtElectrons_signal( std::set<reco::CandidatePtr>& signal_electrons,
-			      std::vector<SigToTrkDR2>& sig2trk,
-			      std::vector<SigToTrkDR2>& other_trk,
-			      std::vector<SigToGsfDR2>& sig2gsf,
-			      std::vector<GsfToGsfDR2>& gsf2pfgsf,
-			      std::vector<GsfToEleDR2>& gsf2ele );
-
-  // Method that creates ElectronChain objects for low-pT electron fake candidates
-  void lowPtElectrons_fakes( std::vector<SigToTrkDR2>& other_trk,
-			     std::vector<TrkToGsfDR2>& trk2gsf,
-			     std::vector<GsfToGsfDR2>& gsf2pfgsf,
-			     std::vector<GsfToEleDR2>& gsf2ele );
-  
-  // Top-level method that creates ElectronChain objects for EGamma electrons
-  void pfElectrons( std::set<reco::CandidatePtr>& signal_electrons,
-		    std::vector<SigToTrkDR2>& sig2trk,
-		    std::vector<SigToTrkDR2>& other_trk,
-		    std::vector<SigToGsfDR2>& sig2gsf,
-		    std::vector<TrkToGsfDR2>& trk2gsf,
-		    std::vector<GsfToGsfDR2>& gsf2pfgsf );
-
-  // Method that creates ElectronChain objects for EGamma signal candidates
-  void pfElectrons_signal( std::set<reco::CandidatePtr>& signal_electrons,
-			   std::vector<SigToTrkDR2>& sig2trk,
-			   std::vector<SigToTrkDR2>& other_trk,
-			   std::vector<SigToGsfDR2>& sig2gsf,
-			   std::vector<SigToGsfDR2>& sig2pfgsf,
-			   std::vector<TrkToGsfDR2>& trk2pfgsf,
-			   std::vector<GsfToGsfDR2>& gsf2pfgsf,
-			   std::vector<GsfToEleDR2>& pfgsf2ele );
-  
-  // Method that creates ElectronChain objects for EGamma fake candidates
-  void pfElectrons_fakes( std::vector<SigToTrkDR2>& other_trk,
-			  std::vector<TrkToGsfDR2>& trk2gsf,
-			  std::vector<TrkToGsfDR2>& trk2pfgsf,
-			  std::vector<GsfToGsfDR2>& gsf2pfgsf,
-			  std::vector<GsfToEleDR2>& pfgsf2ele );
-  
-  // Method that creates ElectronChain objects for EGamma fake candidates
-  void pfElectrons_fakes_temp( std::vector<SigToTrkDR2>& other_trk,
-			       std::vector<TrkToGsfDR2>& trk2gsf,
-			       std::vector<TrkToGsfDR2>& trk2pfgsf,
-			       std::vector<GsfToGsfDR2>& gsf2pfgsf,
-			       std::vector<TrkToEleDR2>& trk2ele );
+//  // Top-level method that creates ElectronChain objects for low-pT electrons
+//  void lowPtElectrons( std::set<reco::CandidatePtr>& signal_electrons,
+//		       std::vector<SigToTrkDR2>& sig2trk,
+//		       std::vector<SigToTrkDR2>& other_trk,
+//		       std::vector<SigToGsfDR2>& sig2gsf,
+//		       std::vector<TrkToGsfDR2>& trk2gsf,
+//		       std::vector<GsfToGsfDR2>& gsf2pfgsf );
+//
+//  // Method that creates ElectronChain objects for low-pT electron signal candiates
+//  void lowPtElectrons_signal( std::set<reco::CandidatePtr>& signal_electrons,
+//			      std::vector<SigToTrkDR2>& sig2trk,
+//			      std::vector<SigToTrkDR2>& other_trk,
+//			      std::vector<SigToGsfDR2>& sig2gsf,
+//			      std::vector<GsfToGsfDR2>& gsf2pfgsf,
+//			      std::vector<GsfToEleDR2>& gsf2ele );
+//
+//  // Method that creates ElectronChain objects for low-pT electron fake candidates
+//  void lowPtElectrons_fakes( std::vector<SigToTrkDR2>& other_trk,
+//			     std::vector<TrkToGsfDR2>& trk2gsf,
+//			     std::vector<GsfToGsfDR2>& gsf2pfgsf,
+//			     std::vector<GsfToEleDR2>& gsf2ele );
+//  
+//  // Top-level method that creates ElectronChain objects for EGamma electrons
+//  void pfElectrons( std::set<reco::CandidatePtr>& signal_electrons,
+//		    std::vector<SigToTrkDR2>& sig2trk,
+//		    std::vector<SigToTrkDR2>& other_trk,
+//		    std::vector<SigToGsfDR2>& sig2gsf,
+//		    std::vector<TrkToGsfDR2>& trk2gsf,
+//		    std::vector<GsfToGsfDR2>& gsf2pfgsf );
+//
+//  // Method that creates ElectronChain objects for EGamma signal candidates
+//  void pfElectrons_signal( std::set<reco::CandidatePtr>& signal_electrons,
+//			   std::vector<SigToTrkDR2>& sig2trk,
+//			   std::vector<SigToTrkDR2>& other_trk,
+//			   std::vector<SigToGsfDR2>& sig2gsf,
+//			   std::vector<SigToGsfDR2>& sig2pfgsf,
+//			   std::vector<TrkToGsfDR2>& trk2pfgsf,
+//			   std::vector<GsfToGsfDR2>& gsf2pfgsf,
+//			   std::vector<GsfToEleDR2>& pfgsf2ele );
+//  
+//  // Method that creates ElectronChain objects for EGamma fake candidates
+//  void pfElectrons_fakes( std::vector<SigToTrkDR2>& other_trk,
+//			  std::vector<TrkToGsfDR2>& trk2gsf,
+//			  std::vector<TrkToGsfDR2>& trk2pfgsf,
+//			  std::vector<GsfToGsfDR2>& gsf2pfgsf,
+//			  std::vector<GsfToEleDR2>& pfgsf2ele );
+//  
+//  // Method that creates ElectronChain objects for EGamma fake candidates
+//  void pfElectrons_fakes_temp( std::vector<SigToTrkDR2>& other_trk,
+//			       std::vector<TrkToGsfDR2>& trk2gsf,
+//			       std::vector<TrkToGsfDR2>& trk2pfgsf,
+//			       std::vector<GsfToGsfDR2>& gsf2pfgsf,
+//			       std::vector<TrkToEleDR2>& trk2ele );
 
   std::map<int,int> pf_pdgids_;
 
