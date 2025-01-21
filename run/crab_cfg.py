@@ -65,7 +65,6 @@ config.JobType.numCores = 1
 
 config.Data.inputDBS = {'aod':'global','miniaod':'global','derived':'phys03'}.get(data_tier,'')
 config.Data.inputDataset = data_set
-
 #from files import files
 #config.Data.userInputFiles=files
 
